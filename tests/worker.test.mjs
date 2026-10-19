@@ -34,3 +34,8 @@ test('서버 저장 토큰을 재사용하고 OAuth 응답을 클라이언트로
  const env={DB:{prepare:()=>({first:async()=>({payload:JSON.stringify({token:'server-only-token',expires:Date.now()+3600000})})})}};
  assert.equal(await accessToken(env,()=>{throw Error('must not issue a new token');}),'server-only-token');
 });
+
+test('OAuth 타임아웃은 키 오류와 구분하고 오류 원문을 노출하지 않는다',async()=>{
+ const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare:()=>({first:async()=>null})}};
+ await assert.rejects(accessToken(env,async()=>{throw new DOMException('private diagnostics','TimeoutError');}),e=>e.message==='LS_AUTH_TIMEOUT');
+});
