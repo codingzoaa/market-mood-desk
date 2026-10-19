@@ -39,3 +39,14 @@ test('OAuth 타임아웃은 키 오류와 구분하고 오류 원문을 노출�
  const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare:()=>({first:async()=>null})}};
  await assert.rejects(accessToken(env,async()=>{throw new DOMException('private diagnostics','TimeoutError');}),e=>e.message==='LS_AUTH_TIMEOUT');
 });
+
+test('네트워크 진단은 Secret과 상위 URL을 제거한다',async()=>{
+ const {networkFailure}=await import('../worker/ls.mjs');
+ const error=networkFailure(new TypeError('Invalid request for https://example.test/oauth2/token key=private-key secret=private-secret'),'AUTH',['private-key','private-secret']);
+ assert.equal(error.code,'LS_AUTH_REQUEST_REJECTED');assert.doesNotMatch(error.safeDetail,/private-key|private-secret|https:\/\//);
+});
+
+test('인증 리다이렉트는 따라가지 않고 주소의 쿼리와 경로를 진단에서 제외한다',async()=>{
+ const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare:()=>({first:async()=>null})}};
+ await assert.rejects(accessToken(env,async(url,options)=>{assert.equal(options.redirect,'manual');return new Response(null,{status:302,headers:{Location:'https://other.test/private-path?token=private-value'}});}),e=>e.code==='LS_REDIRECT_REJECTED'&&e.safeDetail==='HTTP 302 redirect to https://other.test');
+});

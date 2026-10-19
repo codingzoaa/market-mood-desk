@@ -47,6 +47,7 @@ export async function collect(env){
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 시장별 최대100개 · 관측 시각 확인'});
  }catch(error){
+  if(error instanceof LSFailure&&error.safeDetail)await state(env,'diagnostic',{code:error.code,message:error.safeDetail,checkedAt:new Date().toISOString()});
   if(error instanceof LSFailure&&error.code==='LS_AUTH_FAILED')await env.DB.prepare("DELETE FROM state WHERE id='oauth'").run();
   const prev=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const old=prev?JSON.parse(prev.payload):{};
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',message:'LS 수집 실패 · 마지막 정상 기록 유지'});
