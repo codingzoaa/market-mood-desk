@@ -23,7 +23,7 @@ async function json(response,secrets=[]) {
 export async function accessToken(env, fetcher=fetch, now=Date.now(), cache=true) {
  const row=cache?await env.DB.prepare("SELECT payload FROM state WHERE id='oauth'").first():null;
  if(row){const saved=JSON.parse(row.payload);if(saved.expires>now+120000)return saved.token;}
- const response=await fetcher(BASE+'/oauth2/token',{method:'POST',redirect:'manual',signal:AbortSignal.timeout(30000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'client_credentials',appkey:env.LS_APP_KEY,appsecretkey:env.LS_APP_SECRET,scope:'oob'})}).catch(error=>{throw networkFailure(error,'AUTH',[env.LS_APP_KEY,env.LS_APP_SECRET,env.DASHBOARD_TOKEN]);});
+ const response=await fetcher(BASE+'/oauth2/token',{method:'POST',redirect:'manual',signal:AbortSignal.timeout(30000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'client_credentials',appkey:env.LS_APP_KEY,appsecretkey:env.LS_APP_SECRET,scope:'oob'})}).catch(error=>{if(error instanceof LSFailure)throw error;throw networkFailure(error,'AUTH',[env.LS_APP_KEY,env.LS_APP_SECRET,env.DASHBOARD_TOKEN]);});
  const data=await json(response,[env.LS_APP_KEY,env.LS_APP_SECRET,env.DASHBOARD_TOKEN]),ttl=Number(data.expires_in);
  if(typeof data.access_token!=='string'||!data.access_token||!Number.isFinite(ttl)||ttl<=0)throw new LSFailure('LS_AUTH_FAILED');
  if(cache)await env.DB.prepare("INSERT INTO state(id,payload) VALUES('oauth',?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload").bind(JSON.stringify({token:data.access_token,expires:now+ttl*1000})).run();
@@ -31,7 +31,7 @@ export async function accessToken(env, fetcher=fetch, now=Date.now(), cache=true
 }
 export async function tr(token,code,body,continuation={flag:'N',key:''},fetcher=fetch){
  if(!ROUTES[code])throw new LSFailure('TR_NOT_ALLOWED');
- const response=await fetcher(BASE+ROUTES[code],{method:'POST',redirect:'manual',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:code,tr_cont:continuation.flag,tr_cont_key:continuation.key},body:JSON.stringify({[code+'InBlock']:body})}).catch(error=>{throw networkFailure(error,'TR');});
+ const response=await fetcher(BASE+ROUTES[code],{method:'POST',redirect:'manual',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:code,tr_cont:continuation.flag,tr_cont_key:continuation.key},body:JSON.stringify({[code+'InBlock']:body})}).catch(error=>{if(error instanceof LSFailure)throw error;throw networkFailure(error,'TR');});
  let data;try{data=await json(response,[token]);}catch(error){if(error.safeDetail)error.safeDetail=code+' '+error.safeDetail;throw error;}
  if(typeof data.rsp_cd!=='string'||!/^0+$/.test(data.rsp_cd))throw new LSFailure('LS_TR_FAILED');
  return {data,continuation:{flag:response.headers.get('tr_cont')||'N',key:response.headers.get('tr_cont_key')||''}};
@@ -46,10 +46,24 @@ export function normalizeStock(row,market,themes=[]){
  return {symbol:row.shcode,name:row.hname.trim(),market,themes:themes.slice(0,5),price:number(row.price,0,1e9),changePct:signed(row.diff,row.sign),turnoverKRW:number(row.value,0,1e9)*1000000};
 }
 export function kst(now=new Date()){return {date:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(now),time:new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(now).replace(':',''),weekday:new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',weekday:'short'}).format(now)};}
-export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<='1630';}
+export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<='1530';}
 export function verifySession(data,now=new Date()){
  const rows=data.t8410OutBlock1;if(!Array.isArray(rows)||!rows.length){const e=new LSFailure('LS_RESPONSE_INVALID');e.safeDetail='Chart rows are missing';throw e;}
  const latest=rows.map(x=>x.date).sort().at(-1);const k=kst(now);if(latest!==k.date.replaceAll('-',''))return false;
  const start=data.t8410OutBlock?.s_time;if(typeof start!=='string'||!/^\d{6}$/.test(start)){const e=new LSFailure('LS_RESPONSE_INVALID');e.safeDetail='Chart session start is not HHMMSS';throw e;}
  return k.time>=start.slice(0,4);
+}
+
+// 15:30 is the final minute, including the closing snapshot; 15:31 is closed.
+export function assertCollectionWindow(now=new Date()){if(!collectWindow(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');}
+export function collectionFetch(fetcher,clock=()=>new Date()){
+ return async(url,options={})=>{
+  const now=clock();assertCollectionWindow(now);
+  const remaining=Date.parse(kst(now).date+'T15:31:00+09:00')-now.getTime();
+  const deadline=AbortSignal.timeout(Math.max(1,remaining));
+  let response;
+  try{response=await fetcher(url,{...options,signal:options.signal?AbortSignal.any([options.signal,deadline]):deadline});}
+  catch(error){if(!collectWindow(clock())||deadline.aborted)throw new LSFailure('COLLECTION_WINDOW_CLOSED');throw error;}
+  assertCollectionWindow(clock());return response;
+ };
 }

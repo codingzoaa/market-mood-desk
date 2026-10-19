@@ -1,6 +1,6 @@
 import {collectDetails} from './details.mjs';
 import {createSession} from './tls.mjs';
-import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,verifySession,LSFailure} from './ls.mjs';
+import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET&&env.DASHBOARD_TOKEN&&env.DASHBOARD_TOKEN.length>=32);
 async function state(env,id,value){await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();}
@@ -14,8 +14,9 @@ export async function collect(env){
   await state(env,'progress',{stage:'AUTH',startedAt:new Date(now).toISOString()});
   session=await createSession();
   stage='AUTH';
-  const token=await accessToken(env,session.fetch,Date.now(),false);
-  const requestTR=(code,body,continuation)=>tr(token,code,body,continuation,session.fetch);
+  const fetcher=collectionFetch(session.fetch);
+  const token=await accessToken(env,fetcher,Date.now(),false);
+  const requestTR=(code,body,continuation)=>tr(token,code,body,continuation,fetcher);
   stage='CHART';
   const chart=(await requestTR('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:'99999999',cts_date:'',comp_yn:'N',sujung:'N'})).data;
   stage='CHART_VALIDATE';
@@ -52,20 +53,22 @@ export async function collect(env){
    try{const data=(await requestTR('t1532',{shcode:item.symbol})).data;if(!Array.isArray(data.t1532OutBlock))continue;
     const names=[...new Set(data.t1532OutBlock.map(x=>x.tmname).filter(x=>typeof x==='string'&&x.trim()&&x.length<=40))].slice(0,5);item.themes=names;
     themesToWrite.push(env.DB.prepare('INSERT INTO themes(symbol,payload,expires_at) VALUES(?,?,?) ON CONFLICT(symbol) DO UPDATE SET payload=excluded.payload,expires_at=excluded.expires_at').bind(item.symbol,JSON.stringify(names),now+86400000));
-   }catch{/* Keep missing themes unclassified; never invent a classification. */}
+   }catch(error){if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED')throw error;/* Keep missing themes unclassified; never invent a classification. */}
   }
   await state(env,'progress',{stage:'INDICES',startedAt:new Date(now).toISOString()});
   const metrics={};
   for(const [upcode,key] of [['001','kospi'],['301','kosdaq']]){stage='INDEX_'+key;const data=(await requestTR('t1511',{upcode})).data;const row=data.t1511OutBlock;if(!row)throw new LSFailure('LS_RESPONSE_INVALID');metrics[key]=number(row.pricejisu,0,1e7);metrics[key+'ChangePct']=signed(row.diffjisu,row.sign);}
   // Persist only if collection started and ended on the same verified trading day.
   const end=kst();if(end.date!==kst(new Date(now)).date)throw new LSFailure('COLLECTION_DAY_CHANGED');
+  assertCollectionWindow();
   stage='STORE';
   const asOf=new Date(now).toISOString();
   const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강',stocks,etfs,metrics,note:''};
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
-  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 시장별 최대100개 · 관측 시각 확인'});
+  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · KRX 15:30까지 · 시장별 최대100개'});
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
  }catch(error){
+  if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
   await state(env,'diagnostic',{code:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:error instanceof LSFailure&&error.safeDetail?error.safeDetail:'Response shape validation failed',checkedAt:new Date().toISOString()});
   if(error instanceof LSFailure&&error.code==='LS_AUTH_FAILED')await env.DB.prepare("DELETE FROM state WHERE id='oauth'").run();
   const prev=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const old=prev?JSON.parse(prev.payload):{};
@@ -100,11 +103,11 @@ export default {
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
-   if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('market-details-v2');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
+   if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR){const id=env.COLLECTOR.idFromName('market-details-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
@@ -113,10 +116,11 @@ export default {
 // LS calls still pass through the same D1 five-minute lease as Cron Triggers.
 export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
- async fetch(request){
+ async fetch(request,now=new Date()){
   if(request.method!=='POST'||new URL(request.url).pathname!=='/wake')return new Response(null,{status:405});
+  if(!collectWindow(now))return new Response(null,{status:204});
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collect(this.env);if(await collectDetails(this.env))await this.state.storage.setAlarm(Date.now()+1500);}
+ async alarm(){await collect(this.env);if(await collectDetails(this.env)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
 }

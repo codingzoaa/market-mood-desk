@@ -59,8 +59,8 @@ test('LS HTTP 오류 코드와 안내에서 인증정보를 제거한다',async(
 test('알람 예약은 HTTP 요청에서 수집하지 않고 중복 예약을 합친다',async()=>{
  const {CollectorAlarm}=await import('../worker/index.mjs');let scheduled=null,sets=0;
  const alarm=new CollectorAlarm({storage:{getAlarm:async()=>scheduled,setAlarm:async value=>{scheduled=value;sets++;}}},{});
- let r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}));assert.equal(r.status,202);
- r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}));assert.equal(r.status,202);assert.equal(sets,1);
+ let r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}),new Date('2026-10-20T01:00:00Z'));assert.equal(r.status,202);
+ r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}),new Date('2026-10-20T01:00:00Z'));assert.equal(r.status,202);assert.equal(sets,1);
  r=await alarm.fetch(new Request('https://collector.internal/wake'));assert.equal(r.status,405);
 });
 

@@ -28,7 +28,7 @@ export async function liveDashboard(to: string) {
     snapshots.forEach(s => dates.set(s.date, s));
     const cached = [...dates.values()].map(s=>s.details?.heatmap?{...s,details:{...s.details,heatmap:undefined}}:s).sort((a,b) => a.date.localeCompare(b.date)).slice(-365);
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(cached)); } catch { /* Server remains the durable quote store. */ }
-    return { snapshots: snapshots.sort((a,b) => a.date.localeCompare(b.date)), feed: { configured: true, failed: !!raw.feed?.failed, lastSuccessAt: typeof raw.feed?.lastSuccessAt === 'string' ? raw.feed.lastSuccessAt : null, message: raw.feed?.failed ? (typeof raw.feed?.error === 'string' && /^LS_AUTH_(NETWORK_FAILED|TIMEOUT|TLS_FAILED|PORT_REJECTED|DNS_FAILED|CONNECTION_FAILED|REQUEST_REJECTED|EDGE_INTERNAL)$/.test(raw.feed.error) ? 'LS 인증 서버 통신 실패 · '+raw.feed.error : 'LS 수집 오류 · 마지막 정상 기록 유지') : 'LS증권 KRX · 5분 수집 · 시장별 최대100개 · 테마 부분 보강' } };
+    return { snapshots: snapshots.sort((a,b) => a.date.localeCompare(b.date)), feed: { configured: true, failed: !!raw.feed?.failed, lastSuccessAt: typeof raw.feed?.lastSuccessAt === 'string' ? raw.feed.lastSuccessAt : null, message: raw.feed?.failed ? (typeof raw.feed?.error === 'string' && /^LS_AUTH_(NETWORK_FAILED|TIMEOUT|TLS_FAILED|PORT_REJECTED|DNS_FAILED|CONNECTION_FAILED|REQUEST_REJECTED|EDGE_INTERNAL)$/.test(raw.feed.error) ? 'LS 인증 서버 통신 실패 · '+raw.feed.error : 'LS 수집 오류 · 마지막 정상 기록 유지') : 'LS증권 KRX · 5분 수집 · KRX 15:30까지 · 시장별 최대100개 · 테마 부분 보강' } };
   } catch (error) {
     const cached = liveCache().filter(s => s.date <= to && s.date >= new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10));
     // Never display cached quotes after an authorization or server-key error.
