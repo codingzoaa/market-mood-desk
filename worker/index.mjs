@@ -1,3 +1,4 @@
+import {collectDetails} from './details.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -88,7 +89,7 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/dashboard','/api/status','/api/market-details'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!await authorized(request,env))return reply({error:'ACCESS_CODE_REQUIRED'},401);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
@@ -96,13 +97,15 @@ export default {
    if(path==='/api/status')return reply({configured:true,...sync});
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
+   if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
    if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
-   return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
+   const detailRows=await env.DB.prepare("SELECT payload FROM state WHERE id>=? AND id<=?").bind('details:'+from,'details:'+to).all();const details=new Map(detailRows.results.map(x=>{const d=JSON.parse(x.payload);delete d.heatmap;return [d.date,d];}));
+   return reply({schemaVersion:2,snapshots:rows.results.map(x=>{const s=JSON.parse(x.payload);return {...s,...(details.has(s.date)?{details:details.get(s.date)}:{})};}),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil(collect(env));}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);await collectDetails(env);})());}
 };
 
 // An alarm invocation outlives the HTTP request's 30-second waitUntil window.
@@ -114,5 +117,5 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collect(this.env);}
+ async alarm(){await collect(this.env);await collectDetails(this.env);}
 }

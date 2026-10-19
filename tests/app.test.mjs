@@ -27,6 +27,17 @@ test('default demo, personal empty state, import confirmation, filters, note and
   assert.equal(document.querySelectorAll('.etf-panel').length, 2);
   assert.equal(document.querySelectorAll('.calendar-grid .day').length, 28);
   assert.match(document.querySelector('.brand').textContent, /marketnote/);
+  await click(document.querySelector('[aria-label="코스피 섹터 히트맵 열기"]'));
+  assert.ok(document.querySelector('.sector-heatmap'));
+  assert.match(document.querySelector('.heatmap-heading').textContent,/KOSPI/);
+  await click([...document.querySelectorAll('.map-tabs button')].find(b=>b.textContent==='코스닥'));
+  assert.match(document.querySelector('.heatmap-heading').textContent,/KOSDAQ/);
+  await click([...document.querySelectorAll('.heatmap-controls button')].find(b=>b.textContent==='시가총액'));
+  assert.equal(document.querySelector('.heatmap-controls button.active').textContent,'시가총액');
+  await click(document.querySelector('[aria-label="오늘의 시장 투자자별 매매동향 열기"]'));
+  assert.match(document.querySelector('.investor-panel').textContent,/콜옵션/);
+  assert.equal(document.querySelectorAll('.investor-panel .flow-row').length,17);
+  await click(document.querySelector('a[href="#overview"]'));
   await click(button('나의 데이터로 전환'));
   assert.match(document.querySelector('.empty-state').textContent, /데이터가 없습니다/);
   assert.equal([...document.querySelectorAll('.index-tile>strong')].every(el => el.textContent === '—'), true);

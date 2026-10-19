@@ -1,5 +1,5 @@
 const BASE = 'https://openapi.ls-sec.co.kr:8080';
-const ROUTES = { t1463:'/stock/high-item', t1511:'/indtp/market-data', t1532:'/stock/sector', t8410:'/stock/chart' };
+const ROUTES = { t1463:'/stock/high-item', t1511:'/indtp/market-data', t1532:'/stock/sector', t8410:'/stock/chart', t8409:'/indtp/chart', t1601:'/stock/investor' };
 export class LSFailure extends Error { constructor(code){ super(code); this.code=code; } }
 export function networkFailure(error,phase='AUTH',secrets=[]) {
  const message=String(error?.message||'').toLowerCase();

@@ -1,7 +1,8 @@
+import {validateDetails,type MarketDetails} from './market-details.ts';
 export type Stock = { symbol: string; name: string; market: 'KOSPI' | 'KOSDAQ'; themes: string[]; price: number; changePct: number; turnoverKRW: number };
 export type Etf = { symbol: string; name: string; price: number; changePct: number; turnoverKRW: number };
 export type Metrics = { kospi?: number; kospiChangePct?: number; kosdaq?: number; kosdaqChangePct?: number; nasdaqFutures?: number; nasdaqFuturesChangePct?: number; usdKrw?: number; usdKrwChangePct?: number; sox?: number; soxChangePct?: number; soxRs20d?: number; yield2y?: number; yield10y?: number; yield2yChangeBp?: number; yield10yChangeBp?: number; breadthAbove50?: number; advances?: number; declines?: number; vix?: number; creditSpreadBp?: number; riskFactors?: { breadth: number; vix: number; credit: number; sox: number; treasury: number } };
-export type Snapshot = { date: string; asOf: string; source: string; stocks: Stock[]; etfs?: Etf[]; metrics: Metrics; note: string; stockAsOf?:string; marketUpdate?:{collectedAt:string;source:string;quoteTimes:{kospi:string;kosdaq:string;nasdaqFutures:string;usdKrw:string}} };
+export type Snapshot = { date: string; asOf: string; source: string; stocks: Stock[]; etfs?: Etf[]; metrics: Metrics; note: string; details?:MarketDetails; stockAsOf?:string; marketUpdate?:{collectedAt:string;source:string;quoteTimes:{kospi:string;kosdaq:string;nasdaqFutures:string;usdKrw:string}} };
 export const FACTORS = [{key:'breadth',name:'Breadth',weight:30},{key:'vix',name:'VIX',weight:25},{key:'credit',name:'Credit Spread',weight:20},{key:'sox',name:'SOX RS',weight:15},{key:'treasury',name:'Treasury',weight:10}] as const;
 export function dayKey(date = new Date()) { return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date); }
 export function validDate(value: unknown): value is string { return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value+'T12:00:00Z')) && new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value; }
@@ -40,7 +41,7 @@ export function validateSnapshot(raw: any, today=dayKey()): Snapshot {
  for(const [key,range] of Object.entries(ranges)) if(r[key]!==undefined&&r[key]!==null) (metrics as any)[key]=num(r[key],key,...range);
  if(r.riskFactors!==undefined&&r.riskFactors!==null) { const f:any={};FACTORS.forEach(x=>{f[x.key]=num(r.riskFactors[x.key],x.name+' 위험점수',0,100);});metrics.riskFactors=f; }
  const stockAsOf=raw.stockAsOf;if(stockAsOf!==undefined&&(typeof stockAsOf!=='string'||!Number.isFinite(Date.parse(stockAsOf))||dayKey(new Date(stockAsOf))!==raw.date))throw new Error('개별 종목 기준 시각을 확인하세요.');
- return {date:raw.date,asOf,source:text(raw.source,'출처',120),stocks,etfs,metrics,...(stockAsOf?{stockAsOf}:{}),note:typeof raw.note==='string'?raw.note.slice(0,3000):''};
+ return {...(raw.details?{details:validateDetails(raw.details,raw.date)}:{}),date:raw.date,asOf,source:text(raw.source,'출처',120),stocks,etfs,metrics,...(stockAsOf?{stockAsOf}:{}),note:typeof raw.note==='string'?raw.note.slice(0,3000):''};
 }
 export function validateImport(raw:any,today=dayKey()) { if(raw?.schemaVersion!==2||!Array.isArray(raw.snapshots)||!raw.snapshots.length||raw.snapshots.length>60)throw new Error('schemaVersion: 2와 1–60개 snapshots가 필요합니다.');const snapshots=raw.snapshots.map((x:any)=>validateSnapshot(x,today));if(new Set(snapshots.map((s:Snapshot)=>s.date)).size!==snapshots.length)throw new Error('파일 안에 중복 날짜가 있습니다.');return snapshots as Snapshot[]; }
 export function parseCSV(content:string,source='CSV 업로드'): Snapshot[] {
