@@ -94,3 +94,5 @@
 }
 @media(max-width:350px){.etf-panel{padding:11px 8px}.etf-panel .section-title h2{font-size:12px}.etf-values strong{font-size:10px}.etf-name small{font-size:7px}}
 .auto-market-note{font-size:10px;color:#829078;display:flex;justify-content:space-between;gap:10px;margin:-4px 2px 14px;line-height:1.7;flex-wrap:wrap}
+
+.ls-connect-form{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.ls-connect-form input{flex:1;min-width:230px}.ls-connection form label{font-size:12px;font-weight:600}.ls-connection [role=status]{margin-top:12px;font-size:12px;overflow-wrap:anywhere}@media(max-width:500px){.ls-connect-form input{flex-basis:100%;min-width:0}.ls-connect-form .btn{flex:1}}

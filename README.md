@@ -6,7 +6,7 @@ Market Mood Desk 원본 프런트엔드를 바탕으로 만든 별도 브라우�
 
 `dist/index.html`을 브라우저에서 열면 됩니다. 외부 CDN이나 서버 없이 실행하는 단일 HTML입니다. 정적 호스팅에도 그대로 올릴 수 있습니다.
 
-첫 화면의 숫자는 **가상 시세**입니다. 실제 시세 API나 자동 수집은 연결되어 있지 않습니다.
+첫 화면의 숫자는 **가상 시세**입니다. LS증권 실제 시세는 Cloudflare Secret 등록 후 데이터 관리에서 별도로 연결합니다. [LS + Cloudflare 설정 안내](docs/LS_CLOUDFLARE.md)를 따르세요.
 
 ## 기능
 
@@ -40,4 +40,4 @@ GitHub Actions는 main 변경 시 의존성 설치 → 테스트 → TypeScript 
 설정 후 Actions → Build and deploy dashboard → Run workflow를 실행하거나 실패한 배포 작업을 다시 실행하세요.
 배포 성공 후 주소: https://codingzoaa.github.io/market-mood-desk/
 
-설정 전에는 이 주소에서 사이트가 열리지 않을 수 있습니다. 실제 시세 연동에는 별도 제공자와 서버 구성이 필요합니다.
+설정 전에는 이 주소에서 사이트가 열리지 않을 수 있습니다. LS증권 연결은 별도 Cloudflare Worker가 담당합니다. 앱키·시크릿·사이트 접속 코드 등록 후 실호출 검증이 필요합니다.

@@ -1,3 +1,4 @@
+import { accessCode, liveDashboard, liveCache, NOTES_KEY } from './live';
 import { dayKey, shiftDay, validateImport, type Snapshot } from './market';
 
 const KEY = 'market-note:v1';
@@ -17,10 +18,11 @@ function write(data: Store) {
 }
 export async function localApi(path: string, body?: any): Promise<any> {
   const url = new URL(path, 'https://local.invalid');
-  if (url.pathname === '/api/connection') return { connected: false, lsConfigured: false };
+  if (url.pathname === '/api/connection') return { connected: !!accessCode(), lsConfigured: !!accessCode() };
   const data = read();
   if (url.pathname === '/api/dashboard') {
     const to = url.searchParams.get('date') || dayKey();
+    if (accessCode()) { const result = await liveDashboard(to); const notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); return { ...result, snapshots: result.snapshots.map(s => ({ ...s, note: typeof notes[s.date] === 'string' ? notes[s.date] : '' })), watchlist: data.watchlist }; }
     return { snapshots: data.snapshots.filter(s => s.date <= to && s.date >= shiftDay(to, -364)), watchlist: data.watchlist,
       feed: { configured: false, failed: false, message: '파일 기반 기록 · 실시간 시세 연결 없음', lastSuccessAt: null } };
   }
@@ -30,6 +32,7 @@ export async function localApi(path: string, body?: any): Promise<any> {
     return { ok: true };
   }
   if (url.pathname === '/api/note') {
+    if(accessCode()) { if(typeof body?.note !== 'string'||body.note.length>3000||!liveCache().some(s=>s.date===body.date))throw Error('메모 날짜를 확인하세요.'); const notes=JSON.parse(localStorage.getItem(NOTES_KEY)||'{}'); notes[body.date]=body.note;try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes));}catch{throw Error('메모를 저장하지 못했습니다. 브라우저 저장 공간을 확인하세요.');}return {ok:true}; }
     if (typeof body?.note !== 'string' || body.note.length > 3000 || !data.snapshots.some(s => s.date === body.date)) throw Error('저장할 날짜와 메모를 확인하세요.');
     write({ ...data, snapshots: data.snapshots.map(s => s.date === body.date ? { ...s, note: body.note } : s) });
     return { ok: true };
