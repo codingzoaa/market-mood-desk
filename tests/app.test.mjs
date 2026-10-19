@@ -1,0 +1,73 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { JSDOM } from 'jsdom';
+import { build } from 'esbuild';
+import { mkdirSync } from 'node:fs';
+mkdirSync('work', { recursive: true });
+await build({ entryPoints: ['src/desk.tsx', 'src/storage.ts', 'src/market.ts'], bundle: true, platform: 'node', format: 'esm', outdir: 'work', packages: 'external', jsx: 'automatic' });
+const dom = new JSDOM('<html><body><div id="root"></div></body></html>', { url: 'https://market-note.test/' });
+for (const key of ['window', 'document', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'Event', 'MouseEvent', 'KeyboardEvent', 'File', 'location', 'localStorage']) globalThis[key] = dom.window[key];
+Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true });
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const React = await import('react');
+const { createRoot } = await import('react-dom/client');
+const { act } = React;
+const { default: Desk } = await import('../work/desk.js');
+const { localApi } = await import('../work/storage.js');
+const { dayKey, demoSnapshots } = await import('../work/market.js');
+const click = async el => { assert.ok(el, 'click target exists'); await act(async () => el.dispatchEvent(new MouseEvent('click', { bubbles: true }))); };
+const button = text => [...document.querySelectorAll('button')].find(b => b.textContent.includes(text));
+
+test('default demo, personal empty state, import confirmation, filters, note and watchlist survive remount', async () => {
+  localStorage.clear();
+  let root = createRoot(document.getElementById('root'));
+  try {
+  await act(async () => root.render(React.createElement(Desk)));
+  assert.match(document.querySelector('.mode-banner').textContent, /모든 수치가 가상/);
+  assert.equal(document.querySelectorAll('.etf-panel').length, 2);
+  assert.equal(document.querySelectorAll('.calendar-grid .day').length, 28);
+  assert.match(document.querySelector('.brand').textContent, /marketnote/);
+  await click(button('나의 데이터로 전환'));
+  assert.match(document.querySelector('.empty-state').textContent, /데이터가 없습니다/);
+  assert.equal([...document.querySelectorAll('.index-tile>strong')].every(el => el.textContent === '—'), true);
+  const record = { ...demoSnapshots(dayKey()).at(-1), source: '사용자가 확인한 파일', note: '' };
+  const file = new File(['unused'], 'records.json');
+  file.text = async () => JSON.stringify({ schemaVersion: 2, snapshots: [record] });
+  const input = document.querySelector('input[type="file"]');
+  Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+  await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+  assert.match(document.querySelector('[role="dialog"]').textContent, /가져올 데이터를 확인/);
+  assert.equal((await localApi('/api/dashboard')).snapshots.length, 0);
+  await click(button('브라우저에 저장'));
+  assert.equal(document.querySelector('[role="dialog"]'), null);
+  assert.equal((await localApi('/api/dashboard')).snapshots.length, 1);
+  await click(document.querySelector('a[href="#stocks"]'));
+  const star = document.querySelector('tbody button[aria-label]');
+  await click(star);
+  assert.equal((await localApi('/api/dashboard')).watchlist.length, 1);
+  const search = document.querySelector('[aria-label="종목·테마 검색"]');
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(search, '없는종목'); search.dispatchEvent(new Event('input', { bubbles: true })); });
+  assert.match(document.body.textContent, /조건에 맞는 종목이 없습니다/);
+  await click(document.querySelector('a[href="#calendar"]'));
+  const note = document.querySelector('textarea');
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(note, '오늘의 관찰 기록'); note.dispatchEvent(new Event('input', { bubbles: true })); });
+  await click(button('메모 저장'));
+  assert.equal((await localApi('/api/dashboard')).snapshots[0].note, '오늘의 관찰 기록');
+  await act(async () => root.unmount());
+  root = createRoot(document.getElementById('root'));
+  await act(async () => root.render(React.createElement(Desk)));
+  assert.match(document.querySelector('.mode-banner').textContent, /이 브라우저에 저장한 데이터/);
+  assert.equal(document.querySelector('textarea').value, '오늘의 관찰 기록');
+  } finally { await act(async () => root.unmount()); }
+});
+
+test('duplicate dates require explicit overwrite; invalid and demo imports preserve records', async () => {
+  const before = localStorage.getItem('market-note:v1');
+  const saved = (await localApi('/api/dashboard')).snapshots[0];
+  await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [saved] }), /同じ|같은 날짜/);
+  await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [demoSnapshots().at(-1)] }), /가상 시세/);
+  await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [{ ...saved, stocks: [{ ...saved.stocks[0], price: -1 }] }] }), /가격/);
+  assert.equal(localStorage.getItem('market-note:v1'), before);
+  await localApi('/api/import', { schemaVersion: 2, snapshots: [{ ...saved, note: '교체한 메모' }], overwrite: true });
+  assert.equal((await localApi('/api/dashboard')).snapshots[0].note, '교체한 메모');
+});
