@@ -38,6 +38,6 @@ export async function liveDashboard(to: string) {
 }
 
 export async function liveMarketDetails(date:string,signal?:AbortSignal){
- const response=await fetch(API_URL+'/api/market-details?date='+encodeURIComponent(date),{credentials:'omit',headers:{Authorization:'Bearer '+accessCode()},signal:signal||AbortSignal.timeout(12000),redirect:'error'});
+ const response=await fetch(API_URL+'/api/market-details?date='+encodeURIComponent(date),{credentials:'omit',headers:{Authorization:'Bearer '+accessCode()},signal:signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000),redirect:'error'});
  if(!response.ok)throw Error('시장 상세 데이터 연결을 확인하세요.');const text=await response.text();if(text.length>3000000)throw Error('시장 상세 응답 크기 오류');const raw=JSON.parse(text);return raw.details?validateDetails(raw.details,date):null;
 }

@@ -19,6 +19,7 @@ test('접속 코드·Origin 검증 전에 DB 또는 LS API를 호출하지 않�
  const env={LS_APP_KEY:'test-appkey',LS_APP_SECRET:'test-appsecret',DASHBOARD_TOKEN:'x'.repeat(40),DB:{prepare(){throw Error('DB not expected');}}};
  try{
   let r=await worker.fetch(new Request('https://worker.test/api/dashboard'),env,{});assert.equal(r.status,401);
+  r=await worker.fetch(new Request('https://worker.test/api/market-details?date=2026-10-19'),env,{});assert.equal(r.status,401);
   r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Origin:'https://evil.test',Authorization:'Bearer '+env.DASHBOARD_TOKEN}}),env,{});assert.equal(r.status,403);
   r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'OPTIONS',headers:{Origin:'https://codingzoaa.github.io'}}),env,{});assert.equal(r.status,204);assert.equal(r.headers.get('Access-Control-Allow-Origin'),'https://codingzoaa.github.io');
   r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Authorization:'Bearer '+env.DASHBOARD_TOKEN}}),{...env,LS_APP_SECRET:''},{});assert.equal(r.status,503);assert.equal((await r.json()).error,'LS_KEYS_REQUIRED');assert.equal(calls,0);

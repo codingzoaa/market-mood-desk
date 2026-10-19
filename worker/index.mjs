@@ -101,8 +101,7 @@ export default {
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
    if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
-   const detailRows=await env.DB.prepare("SELECT payload FROM state WHERE id>=? AND id<=?").bind('details:'+from,'details:'+to).all();const details=new Map(detailRows.results.map(x=>{const d=JSON.parse(x.payload);delete d.heatmap;return [d.date,d];}));
-   return reply({schemaVersion:2,snapshots:rows.results.map(x=>{const s=JSON.parse(x.payload);return {...s,...(details.has(s.date)?{details:details.get(s.date)}:{})};}),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
+   return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}

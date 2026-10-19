@@ -17,17 +17,14 @@ export function rawFlows(data){
   return [key,Object.fromEntries([['foreign','17'],['institution','18'],['individual','08'],['financial','01']].map(([name,code])=>[name,number(row['svolume_'+code],-1e13,1e13)]))];
  }));
 }
-const numeric=v=>{if(typeof v==='string')v=v.replaceAll(',','').trim();if(v===''||v===null||v===undefined||!Number.isFinite(Number(v)))throw new Error('NAVER_NUMBER');return Number(v);};
-export async function naver(path,fetcher=fetch){
- const r=await fetcher('https://m.stock.naver.com/front-api'+path,{headers:{Accept:'application/json','User-Agent':'MarketNote/1.0'},redirect:'manual',signal:AbortSignal.timeout(15000)});
- if(!r.ok)throw new Error('NAVER_HTTP_'+r.status);const s=await r.text();if(s.length>3000000)throw new Error('NAVER_SIZE');const d=JSON.parse(s);if(d.isSuccess===false)throw new Error('NAVER_RESPONSE');return d.result??d;
-}
+const numeric=v=>{if(!['string','number'].includes(typeof v))throw new Error('NAVER_NUMBER');if(typeof v==='string')v=v.replaceAll(',','').trim();if(v===''||v===null||v===undefined||!Number.isFinite(Number(v)))throw new Error('NAVER_NUMBER');return Number(v);};
 export async function collectDetails(env){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET)return;
  const latest=await env.DB.prepare('SELECT date FROM snapshots ORDER BY date DESC LIMIT 1').first();if(!latest||Date.parse(kst().date)-Date.parse(latest.date)>7*86400000)return;
+ const current=kst();if(latest.date!==current.date&&current.time>='0900'&&!['Sat','Sun'].includes(current.weekday))return;
  const date=latest.date,now=Date.now(),oldRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();
  const old=oldRow?JSON.parse(oldRow.payload):{};
- if(old.checkedAt&&now-Date.parse(old.checkedAt)<(old.errors?.heatmap==='CLASSIFICATION_LOADING'?1000:300000))return;
+ if(old.checkedAt&&now-Date.parse(old.checkedAt)<((old.errors?.heatmap==='CLASSIFICATION_LOADING'||old.errors?.flows==='UNIT_VERIFICATION_PENDING')?1000:300000))return;
  if(!collectWindow()&&old.flows&&old.heatmap&&Object.keys(old.indices||{}).length===2&&!Object.keys(old.errors||{}).length)return;
  // Independent enrichment lease; never changes or replaces the core quote snapshot.
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('details-lease','0')").run();
@@ -36,7 +33,8 @@ export async function collectDetails(env){
  let session;
  try{
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);const request=(code,body)=>tr(token,code,body,undefined,session.fetch);
-  const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:'99999999',cts_date:'',comp_yn:'N',sujung:'N'})).data;
+  const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
+  await put(env,'details-diagnostic',{date,chartDates:daily.t8410OutBlock1?.map(r=>r.date)||[],checkedAt:new Date().toISOString()});
   if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-',''))throw new Error('TRADE_DATE');
   for(const [code,market] of [['001','KOSPI'],['301','KOSDAQ']]){
    try{
@@ -46,10 +44,15 @@ export async function collectDetails(env){
     details.indices[market]={...quote,series,asOf:details.asOf};
    }catch(e){details.errors[market]=e instanceof LSFailure?e.code:e.message;}
   }
-  try{const raw=rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data);await put(env,'flow-unit-check',{date,raw});details.errors.flows='UNIT_VERIFICATION_PENDING';}catch(e){details.errors.flows=e instanceof LSFailure?e.code:e.message;}
+  try{
+   // Amount mode is already in 억원; do not multiply by the stock-ranking 백만원 scale.
+   // 2026-10-19 live cross-check: LS foreign net buy 947 = Naver index flow +947억원.
+   details.flows={asOf:details.asOf,unit:'억원',source:'LS증권 KRX · t1601 금액 순매수',segments:rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data)};
+  }catch(e){details.errors.flows=e instanceof LSFailure?e.code:e.message;}
  }catch(e){details.errors.ls=e instanceof LSFailure?e.code:e.message;}finally{if(session)await session.close();}
  try{details.heatmap=await collectHeatmap(env,date);}catch(e){details.errors.heatmap=String(e.message).slice(0,80);if(old.heatmap)details.heatmap=old.heatmap;}
  await put(env,'details:'+date,details);
+ await env.DB.prepare("DELETE FROM state WHERE id LIKE 'details:%' AND id < 'details:' || date('now','-365 day')").run();
  await env.DB.prepare("UPDATE state SET payload='0' WHERE id='details-lease' AND payload=?").bind(String(now+300000)).run();
  return details.errors.heatmap==='CLASSIFICATION_LOADING';
 }
@@ -94,7 +97,7 @@ export async function collectHeatmap(env,date,fetcher=naverMarket){
    await new Promise(r=>setTimeout(r,350));
   }
   const byCode=progress.byCode;
-  membership={asOf:new Date().toISOString(),byCode};await put(env,'naver-industries',membership);await env.DB.prepare("DELETE FROM state WHERE id='naver-industry-progress'").run();
+  membership={asOf:new Date().toISOString(),byCode};await put(env,'naver-industries',membership);await env.DB.prepare("DELETE FROM state WHERE id='naver-industry-progress'").run();throw new Error('CLASSIFICATION_LOADING');
  }
  const stocks=[],seen=new Set();
  for(const market of ['KOSPI','KOSDAQ']){
