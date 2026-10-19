@@ -6,7 +6,7 @@ export default function Connection() {
   async function connect() {
     if(code.trim().length<32){setMessage('32자 이상으로 설정한 사이트 접속 코드를 입력하세요. LS 앱키는 입력하지 마세요.');return;}
     const previous=accessCode(); setBusy(true); setMessage('서버 확인 중…');
-    try { setAccessCode(code.trim()); const result=await liveDashboard(dayKey()); setConnected(true); setCode('');setMessage(result.snapshots.length?'LS 저장 시세를 연결했습니다.':'서버 연결 완료 · 첫 시세 수집을 기다립니다.');window.dispatchEvent(new Event('market-note-connection')); }
+    try { setAccessCode(code.trim()); const result=await liveDashboard(dayKey()); setConnected(true); setCode('');setMessage(result.feed.failed?'Cloudflare 서버 연결 완료 · '+result.feed.message:result.snapshots.length?'LS 저장 시세를 연결했습니다.':'서버 연결 완료 · 첫 시세 수집을 기다립니다.');window.dispatchEvent(new Event('market-note-connection')); }
     catch(error){setAccessCode(previous);setMessage(error instanceof Error?error.message:'연결하지 못했습니다.');}
     finally{setBusy(false);}
   }

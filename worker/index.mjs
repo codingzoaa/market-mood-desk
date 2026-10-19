@@ -80,7 +80,7 @@ export default {
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
    ctx.waitUntil(collect(env));
-   return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
+   return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil(collect(env));}
