@@ -9,7 +9,7 @@ async function json(response) {
 export async function accessToken(env, fetcher=fetch, now=Date.now()) {
  const row=await env.DB.prepare("SELECT payload FROM state WHERE id='oauth'").first();
  if(row){const saved=JSON.parse(row.payload);if(saved.expires>now+120000)return saved.token;}
- const response=await fetcher(BASE+'/oauth2/token',{method:'POST',redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'client_credentials',appkey:env.LS_APP_KEY,appsecretkey:env.LS_APP_SECRET,scope:'oob'})});
+ const response=await fetcher(BASE+'/oauth2/token',{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'client_credentials',appkey:env.LS_APP_KEY,appsecretkey:env.LS_APP_SECRET,scope:'oob'})}).catch(error=>{throw new LSFailure(error?.name==='TimeoutError'?'LS_AUTH_TIMEOUT':'LS_AUTH_NETWORK_FAILED');});
  const data=await json(response),ttl=Number(data.expires_in);
  if(typeof data.access_token!=='string'||!data.access_token||!Number.isFinite(ttl)||ttl<=0)throw new LSFailure('LS_AUTH_FAILED');
  await env.DB.prepare("INSERT INTO state(id,payload) VALUES('oauth',?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload").bind(JSON.stringify({token:data.access_token,expires:now+ttl*1000})).run();
@@ -17,7 +17,7 @@ export async function accessToken(env, fetcher=fetch, now=Date.now()) {
 }
 export async function tr(token,code,body,continuation={flag:'N',key:''},fetcher=fetch){
  if(!ROUTES[code])throw new LSFailure('TR_NOT_ALLOWED');
- const response=await fetcher(BASE+ROUTES[code],{method:'POST',redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:code,tr_cont:continuation.flag,tr_cont_key:continuation.key},body:JSON.stringify({[code+'InBlock']:body})});
+ const response=await fetcher(BASE+ROUTES[code],{method:'POST',redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:code,tr_cont:continuation.flag,tr_cont_key:continuation.key},body:JSON.stringify({[code+'InBlock']:body})}).catch(error=>{throw new LSFailure(error?.name==='TimeoutError'?'LS_TR_TIMEOUT':'LS_TR_NETWORK_FAILED');});
  const data=await json(response);
  if(typeof data.rsp_cd!=='string'||!/^0+$/.test(data.rsp_cd))throw new LSFailure('LS_TR_FAILED');
  return {data,continuation:{flag:response.headers.get('tr_cont')||'N',key:response.headers.get('tr_cont_key')||''}};
