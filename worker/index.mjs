@@ -100,13 +100,15 @@ export default {
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
-   if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
+   if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('market-details-v2');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR){const id=env.COLLECTOR.idFromName('market-details-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
+// The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
+// A versioned coordinator starts the new collector without replacing any quote records.
 // An alarm invocation outlives the HTTP request's 30-second waitUntil window.
 // LS calls still pass through the same D1 five-minute lease as Cron Triggers.
 export class CollectorAlarm {

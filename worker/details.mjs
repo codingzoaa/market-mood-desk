@@ -29,7 +29,7 @@ export async function collectDetails(env){
  // Independent enrichment lease; never changes or replaces the core quote snapshot.
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('details-lease','0')").run();
  const lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='details-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(String(now+300000),now).first();if(!lock)return;
- const details={date,asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:old.indices||{},...(old.flows?{flows:old.flows}:{}),errors:{}};
+ const details={collectorRevision:'market-details-20261020',date,asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:old.indices||{},...(old.flows?{flows:old.flows}:{}),errors:{}};
  let session;
  try{
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);const request=(code,body)=>tr(token,code,body,undefined,session.fetch);
