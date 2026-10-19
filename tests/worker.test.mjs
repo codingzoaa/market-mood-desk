@@ -9,9 +9,9 @@ test('LS 백만원 거래대금은 원 단위로 변환하고 하락 부호·종
 });
 test('휴장일·개장 전 시세를 오늘 거래일로 저장하지 않는다',()=>{
  const now=new Date('2026-10-19T00:30:00Z');
- assert.equal(verifySession({t8451OutBlock1:[{date:'20261016'}],t8451OutBlock:{s_time:'090000'}},now),false);
- assert.equal(verifySession({t8451OutBlock1:[{date:'20261019'}],t8451OutBlock:{s_time:'100000'}},now),false);
- assert.equal(verifySession({t8451OutBlock1:[{date:'20261019'}],t8451OutBlock:{s_time:'090000'}},now),true);
+ assert.equal(verifySession({t8410OutBlock1:[{date:'20261016'}],t8410OutBlock:{s_time:'090000'}},now),false);
+ assert.equal(verifySession({t8410OutBlock1:[{date:'20261019'}],t8410OutBlock:{s_time:'100000'}},now),false);
+ assert.equal(verifySession({t8410OutBlock1:[{date:'20261019'}],t8410OutBlock:{s_time:'090000'}},now),true);
  assert.equal(collectWindow(new Date('2026-10-18T01:30:00Z')),false);
 });
 test('접속 코드·Origin 검증 전에 DB 또는 LS API를 호출하지 않는다',async()=>{
@@ -49,4 +49,23 @@ test('네트워크 진단은 Secret과 상위 URL을 제거한다',async()=>{
 test('인증 리다이렉트는 따라가지 않고 주소의 쿼리와 경로를 진단에서 제외한다',async()=>{
  const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare:()=>({first:async()=>null})}};
  await assert.rejects(accessToken(env,async(url,options)=>{assert.equal(options.redirect,'manual');return new Response(null,{status:302,headers:{Location:'https://other.test/private-path?token=private-value'}});}),e=>e.code==='LS_REDIRECT_REJECTED'&&e.safeDetail==='HTTP 302 redirect to https://other.test');
+});
+
+test('LS HTTP 오류 코드와 안내에서 인증정보를 제거한다',async()=>{
+ await assert.rejects(tr('private-credential','t8410',{},undefined,async()=>Response.json({error:'IGW00216',error_description:'유효하지 않은 tr_cd 입니다. private-credential'},{status:500})),e=>e.code==='LS_HTTP_500'&&e.safeDetail.includes('IGW00216')&&e.safeDetail.includes('tr_cd')&&!e.safeDetail.includes('private'));
+});
+
+test('알람 예약은 HTTP 요청에서 수집하지 않고 중복 예약을 합친다',async()=>{
+ const {CollectorAlarm}=await import('../worker/index.mjs');let scheduled=null,sets=0;
+ const alarm=new CollectorAlarm({storage:{getAlarm:async()=>scheduled,setAlarm:async value=>{scheduled=value;sets++;}}},{});
+ let r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}));assert.equal(r.status,202);
+ r=await alarm.fetch(new Request('https://collector.internal/wake',{method:'POST'}));assert.equal(r.status,202);assert.equal(sets,1);
+ r=await alarm.fetch(new Request('https://collector.internal/wake'));assert.equal(r.status,405);
+});
+
+test('동일 TLS 수집은 다른 IP에서 발급한 DB 토큰을 재사용하지 않는다',async()=>{
+ let calls=0;
+ const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare(){throw Error('TLS session must not read or write the shared OAuth cache');}}};
+ const token=await accessToken(env,async()=>{calls++;return Response.json({access_token:'same-connection-token',expires_in:86400});},Date.now(),false);
+ assert.equal(token,'same-connection-token');assert.equal(calls,1);
 });
