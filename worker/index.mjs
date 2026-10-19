@@ -105,7 +105,7 @@ export default {
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>{const s=JSON.parse(x.payload);return {...s,...(details.has(s.date)?{details:details.get(s.date)}:{})};}),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);await collectDetails(env);})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR){const id=env.COLLECTOR.idFromName('global');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // An alarm invocation outlives the HTTP request's 30-second waitUntil window.
@@ -117,5 +117,5 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collect(this.env);await collectDetails(this.env);}
+ async alarm(){await collect(this.env);if(await collectDetails(this.env))await this.state.storage.setAlarm(Date.now()+1500);}
 }

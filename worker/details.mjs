@@ -19,7 +19,7 @@ export function rawFlows(data){
 }
 const numeric=v=>{if(typeof v==='string')v=v.replaceAll(',','').trim();if(v===''||v===null||v===undefined||!Number.isFinite(Number(v)))throw new Error('NAVER_NUMBER');return Number(v);};
 export async function naver(path,fetcher=fetch){
- const r=await fetcher('https://m.stock.naver.com/front-api'+path,{headers:{Accept:'application/json','User-Agent':'MarketNote/1.0'},redirect:'error',signal:AbortSignal.timeout(15000)});
+ const r=await fetcher('https://m.stock.naver.com/front-api'+path,{headers:{Accept:'application/json','User-Agent':'MarketNote/1.0'},redirect:'manual',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw new Error('NAVER_HTTP_'+r.status);const s=await r.text();if(s.length>3000000)throw new Error('NAVER_SIZE');const d=JSON.parse(s);if(d.isSuccess===false)throw new Error('NAVER_RESPONSE');return d.result??d;
 }
 export async function collectDetails(env){
@@ -27,7 +27,7 @@ export async function collectDetails(env){
  const latest=await env.DB.prepare('SELECT date FROM snapshots ORDER BY date DESC LIMIT 1').first();if(!latest||Date.parse(kst().date)-Date.parse(latest.date)>7*86400000)return;
  const date=latest.date,now=Date.now(),oldRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();
  const old=oldRow?JSON.parse(oldRow.payload):{};
- if(old.checkedAt&&now-Date.parse(old.checkedAt)<300000)return;
+ if(old.checkedAt&&now-Date.parse(old.checkedAt)<(old.errors?.heatmap==='CLASSIFICATION_LOADING'?1000:300000))return;
  if(!collectWindow()&&old.flows&&old.heatmap&&Object.keys(old.indices||{}).length===2&&!Object.keys(old.errors||{}).length)return;
  // Independent enrichment lease; never changes or replaces the core quote snapshot.
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('details-lease','0')").run();
@@ -37,7 +37,7 @@ export async function collectDetails(env){
  try{
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);const request=(code,body)=>tr(token,code,body,undefined,session.fetch);
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:'99999999',cts_date:'',comp_yn:'N',sujung:'N'})).data;
-  if(daily.t8410OutBlock1?.[0]?.date!==date.replaceAll('-',''))throw new Error('TRADE_DATE');
+  if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-',''))throw new Error('TRADE_DATE');
   for(const [code,market] of [['001','KOSPI'],['301','KOSDAQ']]){
    try{
     const quote=indexQuote((await request('t1511',{upcode:code})).data.t1511OutBlock);await pause();
@@ -50,10 +50,12 @@ export async function collectDetails(env){
  }catch(e){details.errors.ls=e instanceof LSFailure?e.code:e.message;}finally{if(session)await session.close();}
  try{details.heatmap=await collectHeatmap(env,date);}catch(e){details.errors.heatmap=String(e.message).slice(0,80);if(old.heatmap)details.heatmap=old.heatmap;}
  await put(env,'details:'+date,details);
+ await env.DB.prepare("UPDATE state SET payload='0' WHERE id='details-lease' AND payload=?").bind(String(now+300000)).run();
+ return details.errors.heatmap==='CLASSIFICATION_LOADING';
 }
 
 export async function naverMarket(path,fetcher=fetch){
- const r=await fetcher('https://stock.naver.com/api/domestic/market'+path,{headers:{Accept:'application/json','User-Agent':'MarketNote/1.0'},redirect:'error',signal:AbortSignal.timeout(15000)});
+ const r=await fetcher('https://stock.naver.com/api/domestic/market'+path,{headers:{Accept:'application/json','User-Agent':'MarketNote/1.0'},redirect:'manual',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw new Error('NAVER_HTTP_'+r.status);const s=await r.text();if(s.length>3000000)throw new Error('NAVER_SIZE');return JSON.parse(s);
 }
 export function heatStock(row,market,sector){
@@ -67,29 +69,32 @@ export async function collectHeatmap(env,date,fetcher=naverMarket){
  const cached=await env.DB.prepare("SELECT payload FROM state WHERE id='naver-industries'").first();
  let membership=cached?JSON.parse(cached.payload):null;
  if(!membership||Date.now()-Date.parse(membership.asOf)>86400000){
-  const categories=[],ids=new Set();let finished=false;
-  for(let page=0;page<20;page++){
-   const rows=await fetcher('/upjong/list?startIdx='+page+'&pageSize=100&sortType=changeRate');if(!Array.isArray(rows))throw new Error('INDUSTRY_SHAPE');
-   if(!rows.length){finished=true;break;}
-   for(const row of rows){const id=String(row.no);if(!/^\d{1,5}$/.test(id)||ids.has(id)||typeof row.name!=='string'||!row.name.trim()||row.name.length>60)throw new Error('INDUSTRY_ID');if(row.thistime&&String(row.thistime).slice(0,8)!==date.replaceAll('-',''))throw new Error('INDUSTRY_DATE');ids.add(id);categories.push({id,name:row.name});}
-   await new Promise(r=>setTimeout(r,350));
-  }
-  if(!finished||!categories.length)throw new Error('INDUSTRY_INCOMPLETE');
-  const byCode={};
-  for(const category of categories)for(const market of ['KOSPI','KOSDAQ']){
-   let cursor='',ended=false;const cursors=new Set();
-   for(let page=0;page<100;page++){
-    const params=new URLSearchParams({marketType:market,sortType:'tradingVolume',sortDirection:'desc',size:'100',...(cursor?{cursor}:{})});
-    const data=await fetcher('/upjong/'+category.id+'/stocklist?'+params);if(!Array.isArray(data.items)||typeof data.hasNext!=='boolean')throw new Error('MEMBERS_SHAPE');
-    for(const row of data.items){if(!/^[0-9A-Z]{6}$/.test(row.itemCode)||byCode[row.itemCode])throw new Error('MEMBERS_DUPLICATE');byCode[row.itemCode]={sector:category.name,market};}
-    if(!data.hasNext){ended=true;break;}
-    if(typeof data.cursor!=='string'||!data.cursor||cursors.has(data.cursor))throw new Error('MEMBERS_CURSOR');cursor=data.cursor;cursors.add(cursor);
-    await new Promise(r=>setTimeout(r,350));
+  const saved=await env.DB.prepare("SELECT payload FROM state WHERE id='naver-industry-progress'").first();
+  let progress=saved?JSON.parse(saved.payload):null;
+  if(!progress||progress.date!==date){
+   const categories=[],ids=new Set();let finished=false;
+   for(let page=0;page<20;page++){
+    const rows=await fetcher('/upjong/list?startIdx='+page+'&pageSize=100&sortType=changeRate');if(!Array.isArray(rows))throw new Error('INDUSTRY_SHAPE');
+    if(!rows.length){finished=true;break;}
+    for(const row of rows){const id=String(row.no);if(!/^\d{1,5}$/.test(id)||ids.has(id)||typeof row.name!=='string'||!row.name.trim()||row.name.length>60)throw new Error('INDUSTRY_ID');if(row.thistime&&String(row.thistime).slice(0,8)!==date.replaceAll('-',''))throw new Error('INDUSTRY_DATE');ids.add(id);categories.push({id,name:row.name});}
    }
-   if(!ended)throw new Error('MEMBERS_INCOMPLETE');
+   if(!finished||!categories.length)throw new Error('INDUSTRY_INCOMPLETE');
+   progress={date,categories,byCode:{},category:0,market:0,cursor:''};
+  }
+  let requests=0;
+  while(progress.category<progress.categories.length){
+   const category=progress.categories[progress.category],market=['KOSPI','KOSDAQ'][progress.market];
+   const params=new URLSearchParams({marketType:market,sortType:'tradingVolume',sortDirection:'desc',size:'100',...(progress.cursor?{cursor:progress.cursor}:{})});
+   const data=await fetcher('/upjong/'+category.id+'/stocklist?'+params);requests++;
+   if(!Array.isArray(data.items)||typeof data.hasNext!=='boolean')throw new Error('MEMBERS_SHAPE');
+   for(const row of data.items){if(!/^[0-9A-Z]{6}$/.test(row.itemCode)||progress.byCode[row.itemCode])throw new Error('MEMBERS_DUPLICATE');progress.byCode[row.itemCode]={sector:category.name,market};}
+   if(data.hasNext){if(typeof data.cursor!=='string'||!data.cursor||data.cursor===progress.cursor)throw new Error('MEMBERS_CURSOR');progress.cursor=data.cursor;}
+   else{progress.cursor='';progress.market++;if(progress.market===2){progress.market=0;progress.category++;}}
+   if(requests>=24&&progress.category<progress.categories.length){await put(env,'naver-industry-progress',progress);throw new Error('CLASSIFICATION_LOADING');}
    await new Promise(r=>setTimeout(r,350));
   }
-  membership={asOf:new Date().toISOString(),byCode};await put(env,'naver-industries',membership);
+  const byCode=progress.byCode;
+  membership={asOf:new Date().toISOString(),byCode};await put(env,'naver-industries',membership);await env.DB.prepare("DELETE FROM state WHERE id='naver-industry-progress'").run();
  }
  const stocks=[],seen=new Set();
  for(const market of ['KOSPI','KOSDAQ']){
