@@ -4,6 +4,7 @@ import {authenticate,browserLogin,check,privateHeaders} from './security.mjs';
 import {loadTrades,readState} from './store.mjs';
 import {reviewedContract} from './provider.mjs';
 import {syncAccount} from './sync.mjs';
+import {checkAccountConnection} from './connection.mjs';
 import {analyzeAccount} from '../../src/account/analysis.ts';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...privateHeaders,'Content-Type':'application/json; charset=utf-8'}});
 export function accountWorker({sessionFactory,verify=authenticate}={}){return {
@@ -14,8 +15,11 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
   }
   const url=new URL(request.url);
   if(request.method==='POST'){
-   if(url.pathname!=='/api/sync')return json({error:'NOT_FOUND'},404);
+   if(!['/api/sync','/api/connection-test'].includes(url.pathname))return json({error:'NOT_FOUND'},404);
    if(request.headers.get('Origin')!==url.origin||request.headers.get('Sec-Fetch-Site')==='cross-site'||request.headers.get('Content-Type')!=='application/json')return json({error:'REQUEST_REJECTED'},403);
+   if(url.pathname==='/api/connection-test'){
+    try{const result=await checkAccountConnection(env,sessionFactory);return json(result,result.ok?200:409);}catch{return json({ok:false,error:'ACCOUNT_CONNECTION_UNAVAILABLE'},503);}
+   }
    if(env.ENABLE_ACCOUNT_SYNC!=='true')return json({error:'SYNC_DISABLED'},409);
    try{reviewedContract(env);}catch{return json({error:'LS_CONTRACT_REQUIRED'},409);}
    ctx.waitUntil(syncAccount(env,sessionFactory).catch(()=>{}));return json({accepted:true},202);
