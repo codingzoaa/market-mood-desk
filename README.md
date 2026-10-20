@@ -44,3 +44,7 @@ GitHub Actions는 main 변경 시 의존성 설치 → 테스트 → TypeScript 
 배포 성공 후 주소: https://codingzoaa.github.io/market-mood-desk/
 
 설정 전에는 이 주소에서 사이트가 열리지 않을 수 있습니다. LS증권 연결은 별도 Cloudflare Worker가 담당합니다. 앱키·시크릿은 Cloudflare Secret에만 보관합니다. 화면은 접속 코드 없이 저장 시세를 자동 조회합니다.
+
+## Leadership V2 개발 브랜치
+
+운영 미연결 Phase 1·2 구현은 `feature/leadership-scoring-v2` PR에서 검토합니다. [코드·데이터 감사](docs/leadership-v2/AUDIT.md), [실험 점수 산식](docs/leadership-v2/METHODOLOGY.md), [운영 확장·롤백 계획](docs/leadership-v2/PLAN.md)을 참고하세요. 새 순수 계산 모듈은 기존 UI/Worker에 연결하지 않으며 운영 배포·DB 변경은 별도 승인 대상입니다.
