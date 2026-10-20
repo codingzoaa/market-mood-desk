@@ -75,6 +75,13 @@ export async function collect(env){
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
  }finally{if(session)await session.close();}
 }
+// Accept only the closing-minute observations from both independent LS series.
+// A later enrichment timestamp must never turn intraday flows into a closing point.
+export function closingPoints(rows,now=new Date()){
+ const current=kst(now),seen=new Set();
+ const closing=(value,date)=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;const t=kst(new Date(value));return t.date===date&&t.time==='1530';};
+ return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p.date)||!closing(p.flowAt,p.date)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(({date,kospi,changePct,individual})=>({date,kospi,changePct,individual})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
+}
 export default {
  async fetch(request,env,ctx){
   const origin=request.headers.get('origin');const allowed=env.ALLOWED_ORIGIN||'https://codingzoaa.github.io';
@@ -86,11 +93,21 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status','/api/market-details'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/correlation'){
+    const rows=await env.DB.prepare(`SELECT substr(id,9) AS date,
+     json_extract(payload,'$.indices.KOSPI.value') AS kospi,
+     json_extract(payload,'$.indices.KOSPI.changePct') AS changePct,
+     json_extract(payload,'$.indices.KOSPI.asOf') AS indexAt,
+     json_extract(payload,'$.flows.segments.KOSPI.individual') AS individual,
+     json_extract(payload,'$.flows.asOf') AS flowAt
+     FROM state WHERE id LIKE 'details:%' AND substr(id,9)>=date('now','-365 day') ORDER BY id DESC LIMIT 365`).all();
+    return reply({points:closingPoints(rows.results),unit:'억원',market:'KOSPI'});
+   }
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}

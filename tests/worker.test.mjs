@@ -18,7 +18,7 @@ test('public reads require no token and never wake upstream collection; invalid 
  let upstream=0,alarm=0;const previous=globalThis.fetch;globalThis.fetch=async()=>{upstream++;throw Error('unexpected');};
  const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare(){return {first:async()=>null,bind(){return this;},all:async()=>({results:[]})};}},COLLECTOR:{idFromName(){alarm++;throw Error('must not wake');}}};
  try{
-  for(const path of ['/api/dashboard','/api/market-details','/api/status']){const r=await worker.fetch(new Request('https://worker.test'+path),env,{});assert.equal(r.status,200);assert.doesNotMatch(await r.text(),/test-key|test-secret/);}
+  for(const path of ['/api/dashboard','/api/market-details','/api/status','/api/correlation']){const r=await worker.fetch(new Request('https://worker.test'+path),env,{});assert.equal(r.status,200);assert.doesNotMatch(await r.text(),/test-key|test-secret/);}
   let r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Origin:'https://evil.test'}}),env,{});assert.equal(r.status,403);
   r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'POST'}),env,{});assert.equal(r.status,405);
   r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'OPTIONS',headers:{Origin:'https://codingzoaa.github.io'}}),env,{});assert.equal(r.status,204);

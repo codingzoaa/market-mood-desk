@@ -1,3 +1,4 @@
+import Correlation from './correlation';
 import FullscreenPanel from './fullscreen-panel';
 import {MarketCards,HeatmapPanel,InvestorPanel} from './market-panels';
 import {demoMarketDetails,type Board} from './market-details';
@@ -79,6 +80,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {!demo&&feed?.failed&&<div className="auto-market-note negative" role="status"><span>{feed.message||'연결 오류 · 마지막 정상 기록 유지'}</span></div>}
     {view==='overview'&&<>
      {metricsRow()}
+     <Correlation/>
      <div className="summary-bar"><div><span>주도섹터</span><strong>{sectors[0]?.name||'—'}</strong></div><div><span>+4% 강세</span><strong>{snap?stocks.length:'—'}<small>종목</small></strong></div><div><span>강세 대금</span><strong>{snap?money(stocks.reduce((n,s)=>n+s.turnoverKRW,0)):'—'}</strong></div></div>
      <div className="main-grid">{sectorPanel()}{stockTable(true)}</div>
     </>}
