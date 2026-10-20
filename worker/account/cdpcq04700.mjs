@@ -9,11 +9,21 @@ export function ledgerRequest(job){
 }
 const textFields={TrdDt:8,TpCodeNm:50,SmryNo:4,SmryNm:40,CancTpNm:20,IsuNm:40,TrxTime:9,IsuNo:12,CrcyCode:3,OrdDt:8,LoanDt:8};
 const numberFields=['TrdNo','OrgTrdNo','TrdQty','TrdUprc','TrdAmt','CmsnAmt','Trtax','TaxSumAmt','EvrTax','Ictax','Ihtax','AdjstAmt','SecCrbalQty','BnsplAmt','MnyDvdAmt','FcurrTrdAmt','FcurrCmsnAmt','FcurrTaxSumAmt','RdctCmsn','LoanIntrstAmt','RcvblOcrAmt'];
-export function decimal(value){
+// Precision from the supplied LS catalog: field length is digits.scale.
+const precision={TrdNo:[10,0],OrgTrdNo:[10,0],TrdUprc:[13,2],FcurrCmsnAmt:[15,2],FcurrTaxSumAmt:[26,6],FcurrTrdAmt:[24,4],RdctCmsn:[21,4]};
+export function decimal(value,{digits=26,scale=6}={}){
  check(typeof value==='string'||typeof value==='number'&&Number.isFinite(value)&&(Number.isSafeInteger(value)||Math.abs(value)<1e12),'INVALID_LEDGER_NUMBER');
- const s=String(value);check(/^-?\d{1,25}(?:\.\d{1,4})?$/.test(s),'INVALID_LEDGER_NUMBER');
- const [whole,fraction='']=s.split('.'),negative=whole.startsWith('-'),digits=whole.replace('-','').replace(/^0+(?=\d)/,''),tail=fraction.replace(/0+$/,'');
- return (negative&&(digits!=='0'||tail)?'-':'')+digits+(tail?'.'+tail:'');
+ const source=String(value).trim();check(source.length>0&&source.length<=128,'INVALID_LEDGER_NUMBER');
+ const match=/^([+-]?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d{1,3}))?$/.exec(source);check(match,'INVALID_LEDGER_NUMBER');
+ const exponent=Number(match[4]||0);check(Math.abs(exponent)<=100,'INVALID_LEDGER_NUMBER');
+ const raw=match[2]+(match[3]||''),point=match[2].length+exponent;
+ let whole,fraction;
+ if(point<=0){whole='0';fraction='0'.repeat(-point)+raw;}
+ else if(point>=raw.length){whole=raw+'0'.repeat(point-raw.length);fraction='';}
+ else{whole=raw.slice(0,point);fraction=raw.slice(point);}
+ whole=whole.replace(/^0+(?=\d)/,'');fraction=fraction.replace(/0+$/,'');
+ check(whole.length<=digits&&fraction.length<=scale,'INVALID_LEDGER_NUMBER');
+ return (match[1]==='-'&&(whole!=='0'||fraction)?'-':'')+whole+(fraction?'.'+fraction:'');
 }
 export function normalizeLedgerRow(row,env){
  check(row&&typeof row==='object'&&!Array.isArray(row),'INVALID_LEDGER_ROW');
@@ -23,7 +33,12 @@ export function normalizeLedgerRow(row,env){
  check(typeof env.LS_ACCOUNT_NO==='string'&&env.LS_ACCOUNT_NO.trim().length>0&&account(row.AcntNo)===account(env.LS_ACCOUNT_NO),'LEDGER_ACCOUNT_MISMATCH');
  const fields={};
  for(const [name,max] of Object.entries(textFields))if(row[name]!==undefined){check(row[name]===null||typeof row[name]==='string'&&row[name].length<=max,'INVALID_LEDGER_TEXT');fields[name]=row[name];}
- for(const name of numberFields)if(row[name]!==undefined)fields[name]=row[name]===null||row[name]===''?row[name]:decimal(row[name]);
+ for(const name of numberFields)if(row[name]!==undefined){
+  const value=row[name];
+  if(value===null||typeof value==='string'&&value.trim()===''){fields[name]=value===null?null:'';continue;}
+  const [digits,scale]=precision[name]||[16,0];
+  try{fields[name]=decimal(value,{digits,scale});}catch(error){error.field=name;throw error;}
+ }
  check(/^\d{8}$/.test(fields.TrdDt)&&/^\d{1,10}$/.test(fields.TrdNo||''),'LEDGER_ID_MISSING');
  const date=fields.TrdDt.slice(0,4)+'-'+fields.TrdDt.slice(4,6)+'-'+fields.TrdDt.slice(6);check(new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date,'INVALID_LEDGER_DATE');
  // Drop echoed passwords, counterpart accounts/names, OAuth, unknown attributes and summaries.
