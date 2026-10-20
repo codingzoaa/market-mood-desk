@@ -1,3 +1,4 @@
+import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {pipelineRead} from './pipeline/read.mjs';
 import {preopenMaintenance} from './pipeline/maintenance.mjs';
 import {Meter,meteredD1} from './pipeline/db.mjs';
@@ -127,7 +128,9 @@ export default {
      json_extract(payload,'$.closingRecovery.tradeDate') AS recoveryDate,
      json_extract(payload,'$.closingRecovery.observedAt') AS recoveryAt
      FROM state WHERE id LIKE 'details:%' AND substr(id,9)>=date('now','-365 day') ORDER BY id DESC LIMIT 365`).all();
-    return reply({points:closingPoints(rows.results),unit:'억원',market:'KOSPI'});
+    const history=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'correlation-history:%:KOSPI:%' ORDER BY id DESC LIMIT 365").all();
+    const records=history.results.flatMap(row=>{try{return [JSON.parse(row.payload)];}catch{return [];}});
+    return reply({points:mergeCorrelationHistory(closingPoints(rows.results),records),unit:'억원',market:'KOSPI'});
    }
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
