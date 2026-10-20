@@ -10,7 +10,7 @@ export function indexQuote(row){
 }
 export function indexSeries(rows,date){
  if(!Array.isArray(rows))throw new Error('CHART_SHAPE');
- const points=rows.filter(r=>r.date===date.replaceAll('-','')).map(r=>{if(!/^\d{6}$/.test(r.time))throw new Error('CHART_TIME');return {time:r.time,value:number(r.close,0,1e7)};}).filter(p=>p.time<='153000').sort((a,b)=>a.time.localeCompare(b.time));
+ const points=rows.filter(r=>r.date===date.replaceAll('-','')).map(r=>{if(!/^\d{6}$/.test(r.time))throw new Error('CHART_TIME');return {time:r.time,value:number(r.close,0,1e7)};}).filter(p=>p.time<='161000').sort((a,b)=>a.time.localeCompare(b.time));
  if(!points.length)throw new Error('CHART_DATE');return points;
 }
 export function rawFlows(data){
@@ -45,7 +45,7 @@ export async function collectDetails(env){
    try{
     const quote=indexQuote((await request('t1511',{upcode:code})).data.t1511OutBlock);await pause();
     let series=[];
-    try{const r=await request('t8409',{shcode:code,ncnt:5,qrycnt:100,nday:'1',sdate:date.replaceAll('-',''),stime:'',edate:date.replaceAll('-',''),etime:'153000',cts_date:'',cts_time:'',comp_yn:'N'});series=indexSeries(r.data.t8409OutBlock1,date);}catch(e){details.errors['chart'+market]=e instanceof LSFailure?e.code:e.message;}
+    try{const r=await request('t8409',{shcode:code,ncnt:5,qrycnt:100,nday:'1',sdate:date.replaceAll('-',''),stime:'',edate:date.replaceAll('-',''),etime:'161000',cts_date:'',cts_time:'',comp_yn:'N'});series=indexSeries(r.data.t8409OutBlock1,date);}catch(e){details.errors['chart'+market]=e instanceof LSFailure?e.code:e.message;}
     details.indices[market]={...quote,series,asOf:details.asOf};
    }catch(e){details.errors[market]=e instanceof LSFailure?e.code:e.message;}
   }

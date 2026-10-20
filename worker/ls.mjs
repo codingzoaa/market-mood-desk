@@ -46,7 +46,7 @@ export function normalizeStock(row,market,themes=[]){
  return {symbol:row.shcode,name:row.hname.trim(),market,themes:themes.slice(0,5),price:number(row.price,0,1e9),changePct:signed(row.diff,row.sign),turnoverKRW:number(row.value,0,1e9)*1000000};
 }
 export function kst(now=new Date()){return {date:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(now),time:new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(now).replace(':',''),weekday:new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',weekday:'short'}).format(now)};}
-export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<='1530';}
+export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<='1610';}
 export function verifySession(data,now=new Date()){
  const rows=data.t8410OutBlock1;if(!Array.isArray(rows)||!rows.length){const e=new LSFailure('LS_RESPONSE_INVALID');e.safeDetail='Chart rows are missing';throw e;}
  const latest=rows.map(x=>x.date).sort().at(-1);const k=kst(now);if(latest!==k.date.replaceAll('-',''))return false;
@@ -54,12 +54,12 @@ export function verifySession(data,now=new Date()){
  return k.time>=start.slice(0,4);
 }
 
-// 15:30 is the final minute, including the closing snapshot; 15:31 is closed.
+// 16:10 is the final collection minute; reject requests/responses from16:11.
 export function assertCollectionWindow(now=new Date()){if(!collectWindow(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');}
 export function collectionFetch(fetcher,clock=()=>new Date()){
  return async(url,options={})=>{
   const now=clock();assertCollectionWindow(now);
-  const remaining=Date.parse(kst(now).date+'T15:31:00+09:00')-now.getTime();
+  const remaining=Date.parse(kst(now).date+'T16:11:00+09:00')-now.getTime();
   const deadline=AbortSignal.timeout(Math.max(1,remaining));
   let response;
   try{response=await fetcher(url,{...options,signal:options.signal?AbortSignal.any([options.signal,deadline]):deadline});}

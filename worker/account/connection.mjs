@@ -6,7 +6,7 @@ import {kst} from '../ls.mjs';
 // Keep the shared app key idle throughout the public collector's market session.
 export async function checkAccountConnection(env,sessionFactory,now=Date.now()){
  const clock=kst(new Date(now));
- if(!['Sat','Sun'].includes(clock.weekday)&&clock.time>='0850'&&clock.time<='1535')return {ok:false,error:'PUBLIC_COLLECTOR_ACTIVE'};
+ if(!['Sat','Sun'].includes(clock.weekday)&&clock.time>='0850'&&clock.time<='1625')return {ok:false,error:'PUBLIC_COLLECTOR_ACTIVE'};
  const owner=crypto.randomUUID(),started=performance.now();
  const lease=await env.PRIVATE_DB.prepare("UPDATE account_lease SET expires=?,owner=? WHERE id='sync' AND expires<=? RETURNING id").bind(now+120000,owner,now).first();
  if(!lease)return {ok:false,error:'ACCOUNT_BUSY'};
