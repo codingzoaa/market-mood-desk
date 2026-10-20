@@ -2,7 +2,7 @@ import {collectDetails} from './details.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET&&env.DASHBOARD_TOKEN&&env.DASHBOARD_TOKEN.length>=32);
+const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET);
 async function state(env,id,value){await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();}
 export async function collect(env){
  if(!READY(env)||!collectWindow())return;
@@ -75,12 +75,6 @@ export async function collect(env){
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
  }finally{if(session)await session.close();}
 }
-async function authorized(request,env){
- if(!env.DASHBOARD_TOKEN||env.DASHBOARD_TOKEN.length<32)return false;
- const supplied=request.headers.get('authorization')||'';if(supplied.length>512)return false;
- const digest=async x=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x)));
- const [a,b]=await Promise.all([digest(supplied),digest('Bearer '+env.DASHBOARD_TOKEN)]);let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0;
-}
 export default {
  async fetch(request,env,ctx){
   const origin=request.headers.get('origin');const allowed=env.ALLOWED_ORIGIN||'https://codingzoaa.github.io';
@@ -93,7 +87,6 @@ export default {
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
   if(!['/api/dashboard','/api/status','/api/market-details'].includes(path))return reply({error:'NOT_FOUND'},404);
-  if(!await authorized(request,env))return reply({error:'ACCESS_CODE_REQUIRED'},401);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
@@ -103,7 +96,6 @@ export default {
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
-   if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');ctx.waitUntil(env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'}));}
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },

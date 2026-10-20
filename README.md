@@ -1,4 +1,4 @@
-# 마켓노트 — 투자 관제실
+# 마켓노트 — 국장
 
 Market Mood Desk 원본 프런트엔드를 바탕으로 만든 별도 브라우저용 주식 대시보드입니다. 원본 사이트와 서버·계정·데이터를 공유하지 않습니다.
 
@@ -10,7 +10,7 @@ Market Mood Desk 원본 프런트엔드를 바탕으로 만든 별도 브라우�
 
 ## 기능
 
-- 모바일 WORKSPACE 4개: 투자 관제실 / 주도 섹터 / 거래대금 / 주도주 캘린더
+- 모바일 WORKSPACE 4개: 국장 / 주도 섹터 / 거래대금 / 주도주 캘린더
 - 한 줄 지수 요약, 화면 전체로 펼치는 업종 히트맵·투자자별 수급, X/ESC 닫기
 - 거래대금 전체 종목과 +4% 강세 필터, 종목 상세
 - 시장·테마 필터, 종목 검색·정렬, 관심종목
@@ -43,4 +43,4 @@ GitHub Actions는 main 변경 시 의존성 설치 → 테스트 → TypeScript 
 설정 후 Actions → Build and deploy dashboard → Run workflow를 실행하거나 실패한 배포 작업을 다시 실행하세요.
 배포 성공 후 주소: https://codingzoaa.github.io/market-mood-desk/
 
-설정 전에는 이 주소에서 사이트가 열리지 않을 수 있습니다. LS증권 연결은 별도 Cloudflare Worker가 담당합니다. 앱키·시크릿·사이트 접속 코드 등록 후 실호출 검증이 필요합니다.
+설정 전에는 이 주소에서 사이트가 열리지 않을 수 있습니다. LS증권 연결은 별도 Cloudflare Worker가 담당합니다. 앱키·시크릿은 Cloudflare Secret에만 보관합니다. 화면은 접속 코드 없이 저장 시세를 자동 조회합니다.

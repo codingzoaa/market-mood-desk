@@ -14,16 +14,16 @@ test('휴장일·개장 전 시세를 오늘 거래일로 저장하지 않는다
  assert.equal(verifySession({t8410OutBlock1:[{date:'20261019'}],t8410OutBlock:{s_time:'090000'}},now),true);
  assert.equal(collectWindow(new Date('2026-10-18T01:30:00Z')),false);
 });
-test('접속 코드·Origin 검증 전에 DB 또는 LS API를 호출하지 않는다',async()=>{
- const previous=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('not expected');};
- const env={LS_APP_KEY:'test-appkey',LS_APP_SECRET:'test-appsecret',DASHBOARD_TOKEN:'x'.repeat(40),DB:{prepare(){throw Error('DB not expected');}}};
+test('public reads require no token and never wake upstream collection; invalid origins and methods are rejected',async()=>{
+ let upstream=0,alarm=0;const previous=globalThis.fetch;globalThis.fetch=async()=>{upstream++;throw Error('unexpected');};
+ const env={LS_APP_KEY:'test-key',LS_APP_SECRET:'test-secret',DB:{prepare(){return {first:async()=>null,bind(){return this;},all:async()=>({results:[]})};}},COLLECTOR:{idFromName(){alarm++;throw Error('must not wake');}}};
  try{
-  let r=await worker.fetch(new Request('https://worker.test/api/dashboard'),env,{});assert.equal(r.status,401);
-  r=await worker.fetch(new Request('https://worker.test/api/market-details?date=2026-10-19'),env,{});assert.equal(r.status,401);
-  r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Origin:'https://evil.test',Authorization:'Bearer '+env.DASHBOARD_TOKEN}}),env,{});assert.equal(r.status,403);
-  r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'OPTIONS',headers:{Origin:'https://codingzoaa.github.io'}}),env,{});assert.equal(r.status,204);assert.equal(r.headers.get('Access-Control-Allow-Origin'),'https://codingzoaa.github.io');
-  r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Authorization:'Bearer '+env.DASHBOARD_TOKEN}}),{...env,LS_APP_SECRET:''},{});assert.equal(r.status,503);assert.equal((await r.json()).error,'LS_KEYS_REQUIRED');assert.equal(calls,0);
-  r=await worker.fetch(new Request('https://worker.test/health'),env,{});const text=await r.text();assert.doesNotMatch(text,/test-appkey|test-appsecret|xxxxxxxx/);
+  for(const path of ['/api/dashboard','/api/market-details','/api/status']){const r=await worker.fetch(new Request('https://worker.test'+path),env,{});assert.equal(r.status,200);assert.doesNotMatch(await r.text(),/test-key|test-secret/);}
+  let r=await worker.fetch(new Request('https://worker.test/api/dashboard',{headers:{Origin:'https://evil.test'}}),env,{});assert.equal(r.status,403);
+  r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'POST'}),env,{});assert.equal(r.status,405);
+  r=await worker.fetch(new Request('https://worker.test/api/dashboard',{method:'OPTIONS',headers:{Origin:'https://codingzoaa.github.io'}}),env,{});assert.equal(r.status,204);
+  r=await worker.fetch(new Request('https://worker.test/api/dashboard'),{...env,LS_APP_SECRET:''},{});assert.equal(r.status,503);
+  assert.equal(upstream,0);assert.equal(alarm,0);
  }finally{globalThis.fetch=previous;}
 });
 test('LS 에러 원문·인증정보는 반환하지 않고 허용한 시세 TR만 호출한다',async()=>{
