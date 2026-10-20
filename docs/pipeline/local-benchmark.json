@@ -1,0 +1,37 @@
+{
+  "kind": "LOCAL_SQLITE_NODE_SYNTHETIC_NOT_CLOUDFLARE_BILL",
+  "calendar": "synthetic weekdays, not exchange validation",
+  "notes": "RVOL aggregation measures20 sessions only for10:00;19 of them contain just that slot. Scores are a complete synthetic fixture. CPU is Node process CPU, not Workers CPU. SQLite rows_written excludes index billing. No production calls.",
+  "reports": [
+    {
+      "stocks": 100,
+      "rawFullSessionRows": 7900,
+      "rawFullSessionInsertionMs": 1332.87,
+      "sqliteFileGrowthBytes": 1544192,
+      "sqliteBytesPerRawRow": 195.5,
+      "rvolBenchmarkRows": 9800,
+      "rvolAggregationMs": 12.46,
+      "scoreBatchWallMs": 521.73,
+      "scoreBatchProcessCpuMs": 558.55,
+      "scoreStatusCounts": {
+        "PROVISIONAL": 100
+      },
+      "replayCompressedBytes": 4391,
+      "replayContextBytes": 19199,
+      "rawArchive": {
+        "done": true,
+        "invocations": 16,
+        "wallMs": 145.21,
+        "objects": 17,
+        "requests": {
+          "put": 17,
+          "get": 17,
+          "head": 17
+        },
+        "compressedBytes": 123335
+      },
+      "cloudflareBilledRowsRead": null,
+      "cloudflareBilledRowsWritten": null
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "asOf": "2026-10-20",
+  "kind": "ASSUMPTION_BASED_ESTIMATE_NOT_CLOUDFLARE_BILL",
+  "limits": {
+    "d1ReadsPerDay": 5000000,
+    "d1WritesPerDay": 100000,
+    "d1DatabaseBytes": 500000000,
+    "d1AccountBytes": 5000000000,
+    "d1QueriesPerInvocation": 50,
+    "workersCpuMs": 10,
+    "r2GBMonth": 10,
+    "r2ClassA": 1000000,
+    "r2ClassB": 10000000
+  },
+  "scenarios": [
+    {
+      "stocks": 100,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 20,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": false,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 202760,
+        "rowsWritten": 52319,
+        "rawRows": 7900
+      },
+      "retainedEstimatedBytes": 94909000,
+      "monthly": {
+        "reads": 4460720,
+        "writes": 1151018,
+        "rawNewRows": 173800,
+        "rawLogicalBytes": 39974000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 0,
+        "r2ClassA": 0,
+        "r2ClassB": 0,
+        "r2FirstMonthStoredBytes": 0
+      },
+      "warnings": [
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 100,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 20,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": true,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 202760,
+        "rowsWritten": 52319,
+        "rawRows": 7900
+      },
+      "retainedEstimatedBytes": 94909000,
+      "monthly": {
+        "reads": 4460720,
+        "writes": 1151018,
+        "rawNewRows": 173800,
+        "rawLogicalBytes": 39974000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 2134,
+        "r2ClassA": 2134,
+        "r2ClassB": 11352,
+        "r2FirstMonthStoredBytes": 35073500
+      },
+      "warnings": [
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    }
+  ]
+}

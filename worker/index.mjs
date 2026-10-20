@@ -1,3 +1,7 @@
+import {pipelineRead} from './pipeline/read.mjs';
+import {preopenMaintenance} from './pipeline/maintenance.mjs';
+import {Meter,meteredD1} from './pipeline/db.mjs';
+import {captureAfterLatest,persistCollectorMetrics} from './pipeline/hook.mjs';
 import {collectDetails} from './details.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
@@ -6,6 +10,8 @@ const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET);
 async function state(env,id,value){await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();}
 export async function collect(env){
  if(!READY(env)||!collectWindow())return;
+ const originalEnv=env,collectionMeter=new Meter(),trCounts={};
+ if(env.ENABLE_HISTORY_PIPELINE==='true')env={...env,DB:meteredD1(env.DB,collectionMeter)};
  const now=Date.now();
  const lease=await env.DB.prepare("UPDATE state SET payload=? WHERE id='lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(String(now+300000),now).first();
  if(!lease)return;
@@ -16,7 +22,8 @@ export async function collect(env){
   stage='AUTH';
   const fetcher=collectionFetch(session.fetch);
   const token=await accessToken(env,fetcher,Date.now(),false);
-  const requestTR=(code,body,continuation)=>tr(token,code,body,continuation,fetcher);
+  const historyObservedAt={};
+  const requestTR=(code,body,continuation)=>{trCounts[code]=(trCounts[code]||0)+1;return tr(token,code,body,continuation,fetcher);};
   stage='CHART';
   const chart=(await requestTR('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:'99999999',cts_date:'',comp_yn:'N',sujung:'N'})).data;
   stage='CHART_VALIDATE';
@@ -31,11 +38,12 @@ export async function collect(env){
     await wait(1100);
     stage='RANK_'+market+'_PAGE_'+page;
     const response=await requestTR('t1463',{gubun,jnilgubun:'0',jc_num:0,sprice:0,eprice:0,volume:0,idx,jc_num2:0},continuation);
+    const receivedAt=new Date().toISOString();
     const rows=response.data.t1463OutBlock1;if(!Array.isArray(rows))throw new LSFailure('LS_RESPONSE_INVALID');
     for(const row of rows){if(count>=100)break;if(seen.has(row.shcode))throw new LSFailure('LS_RESPONSE_INVALID');seen.add(row.shcode);count++;
      stage='RANK_NORMALIZE_'+market;
      if(/^[0-9A-Z]{6}$/.test(row.shcode)&&!/^\d{6}$/.test(row.shcode)){if(typeof row.hname==='string'&&/^KODEX/i.test(row.hname))etfs.push({symbol:row.shcode,name:row.hname,price:number(row.price,0,1e9),changePct:signed(row.diff,row.sign),turnoverKRW:number(row.value,0,1e9)*1000000});continue;}
-     const item=normalizeStock(row,market,themeMap.get(row.shcode)||[]);stocks.push(item);if(/^KODEX/i.test(item.name))etfs.push({symbol:item.symbol,name:item.name,price:item.price,changePct:item.changePct,turnoverKRW:item.turnoverKRW});
+     const item=normalizeStock(row,market,themeMap.get(row.shcode)||[]);stocks.push(item);historyObservedAt[item.symbol]=receivedAt;if(/^KODEX/i.test(item.name))etfs.push({symbol:item.symbol,name:item.name,price:item.price,changePct:item.changePct,turnoverKRW:item.turnoverKRW});
     }
     stage='RANK_CURSOR_'+market;
     const next=response.data.t1463OutBlock?.idx;if(next===undefined)throw new LSFailure('LS_RESPONSE_INVALID');
@@ -67,13 +75,15 @@ export async function collect(env){
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · KRX 15:30까지 · 시장별 최대100개'});
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
+  // Opt-in only; the hook cannot roll back or invalidate the latest snapshot.
+  try{await captureAfterLatest(originalEnv,snapshot,historyObservedAt);}catch{/* Preserve the successful latest quote collection. */}
  }catch(error){
   if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
   await state(env,'diagnostic',{code:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:error instanceof LSFailure&&error.safeDetail?error.safeDetail:'Response shape validation failed',checkedAt:new Date().toISOString()});
   if(error instanceof LSFailure&&error.code==='LS_AUTH_FAILED')await env.DB.prepare("DELETE FROM state WHERE id='oauth'").run();
   const prev=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const old=prev?JSON.parse(prev.payload):{};
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
- }finally{if(session)await session.close();}
+ }finally{if(session)await session.close();await persistCollectorMetrics(originalEnv,collectionMeter,'core',trCounts);}
 }
 // Accept only the closing-minute observations from both independent LS series.
 // A later enrichment timestamp must never turn intraday flows into a closing point.
@@ -92,6 +102,7 @@ export default {
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
+  if(['/api/history','/api/rvol','/api/replay'].includes(path)){const result=await pipelineRead(request,env);return reply(result.data,result.status);}
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
   if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
@@ -116,7 +127,7 @@ export default {
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);if(await collectDetails(env)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{try{await preopenMaintenance(env);}catch{}await collect(env);if(await collectDetails(env)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.

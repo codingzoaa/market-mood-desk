@@ -28,6 +28,7 @@ export type Quote = {
   asOf: string; availableAt: string; price?: number; previousClose?: number; turnoverKRW?: number;
   open?: number; high?: number; low?: number; finality?: Finality;
   bars?: IntradayBar[]; history: DailyBar[];
+  rvolBaseline?: {targetDate:string;symbol:string;slot:string;sumTurnover:number;samples:number;dates:string[];availableAt:string;version:string;timingBasis:'RECEIPT_TIME'|'SOURCE_TIME'};
 };
 export type Benchmark = Omit<Quote, 'name' | 'market' | 'instrumentType'>;
 export type Membership = { symbols: string[]; effectiveDate: string; knownAt: string; version: string };
