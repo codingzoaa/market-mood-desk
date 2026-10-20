@@ -4,10 +4,28 @@ export const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes)));
 export const unb64=value=>Uint8Array.from(atob(value),x=>x.charCodeAt(0));
 const urlBytes=s=>unb64(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'='));
 let jwksCache;
+// Some Worker routes deliver the application JWT as a cookie. It must undergo
+// exactly the same cryptographic validation as the preferred assertion header.
+export function accessToken(request){
+ const header=request.headers.get('Cf-Access-Jwt-Assertion');
+ if(header)return header;
+ const matches=(request.headers.get('Cookie')||'').split(';').map(x=>x.trim()).filter(x=>x.startsWith('CF_Authorization='));
+ return matches.length===1?matches[0].slice('CF_Authorization='.length):null;
+}
+export function browserLogin(request,env){
+ const url=new URL(request.url),origin=env.PRIVATE_APP_ORIGIN;
+ if(request.method!=='GET'||!['/','/index.html'].includes(url.pathname)||!request.headers.get('Accept')?.includes('text/html')||accessToken(request))return null;
+ if(!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(env.ACCESS_ISSUER||'')||!env.ACCESS_AUD||origin!==url.origin||url.protocol!=='https:')return null;
+ const login=new URL('/cdn-cgi/access/login/'+url.hostname,env.ACCESS_ISSUER);
+ login.searchParams.set('kid',env.ACCESS_AUD);
+ // Fixed return path: never carry user-controlled query strings to the login service.
+ login.searchParams.set('redirect_url',origin+'/');
+ return new Response(null,{status:302,headers:{...privateHeaders,Location:login.href}});
+}
 export async function authenticate(request,env,fetcher=fetch,now=Date.now()){
  const issuer=env.ACCESS_ISSUER,aud=env.ACCESS_AUD,email=env.OWNER_EMAIL;
  check(/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(issuer||'')&&typeof aud==='string'&&aud.length>0&&typeof email==='string'&&email.includes('@'),'AUTH_NOT_CONFIGURED');
- const token=request.headers.get('Cf-Access-Jwt-Assertion');check(token&&token.length<16384,'UNAUTHORIZED');
+ const token=accessToken(request);check(token&&token.length<16384,'UNAUTHORIZED');
  const parts=token.split('.');check(parts.length===3,'UNAUTHORIZED');
  let header,claims;try{header=JSON.parse(decoder.decode(urlBytes(parts[0])));claims=JSON.parse(decoder.decode(urlBytes(parts[1])));}catch{throw Error('UNAUTHORIZED');}
  const seconds=now/1000;

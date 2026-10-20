@@ -1,6 +1,6 @@
 import {loadLedger} from './ledger-store.mjs';
 import {readLedgerRules,ledgerToTrade} from './cdpcq04700.mjs';
-import {authenticate,check,privateHeaders} from './security.mjs';
+import {authenticate,browserLogin,check,privateHeaders} from './security.mjs';
 import {loadTrades,readState} from './store.mjs';
 import {reviewedContract} from './provider.mjs';
 import {syncAccount} from './sync.mjs';
@@ -8,7 +8,7 @@ import {analyzeAccount} from '../../src/account/analysis.ts';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...privateHeaders,'Content-Type':'application/json; charset=utf-8'}});
 export function accountWorker({sessionFactory,verify=authenticate}={}){return {
  async fetch(request,env,ctx){
-  try{await verify(request,env);}catch{return json({error:'AUTHENTICATION_REQUIRED'},401);}
+  try{await verify(request,env);}catch{return browserLogin(request,env)||json({error:'AUTHENTICATION_REQUIRED'},401);}
   const url=new URL(request.url);
   if(request.method==='POST'){
    if(url.pathname!=='/api/sync')return json({error:'NOT_FOUND'},404);

@@ -7,7 +7,7 @@
   "workers_dev": true,
   "preview_urls": false,
   "assets": {"directory":"../../work/account-assets","binding":"ASSETS","run_worker_first":true},
-  "vars": {"ENABLE_ACCOUNT_SYNC":"false"},
+  "vars": {"ENABLE_ACCOUNT_SYNC":"false","PRIVATE_APP_ORIGIN":"https://market-note-private-account.kby0991.workers.dev"},
   "d1_databases": [{"binding":"PRIVATE_DB","database_name":"market-note-private-account","database_id":"REPLACE_WITH_NEW_PRIVATE_D1_ID"}],
   "observability": {"enabled":false},
   // Same KRX cutoff as the quote collector. One bounded page per five-minute run.

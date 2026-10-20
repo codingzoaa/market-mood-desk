@@ -1,6 +1,6 @@
 # 본인 전용 LS 계좌 분석 — 운영 미적용
 
-PR #4, 브랜치 `feature/private-account-dashboard`. 기존 PR #2 위에 개인 전용 Worker/D1/모바일 앱을 추가한다. 기존 공개 Worker·DB·시세 수집·4개 WORKSPACE는 유지하고, 공개 화면의 방패 아이콘은 별도 보호된 계좌 앱으로 이동한다. 검토 대상 URL은 `https://market-note-private-account.kby0991.workers.dev/`이며 아직 배포하지 않았다.
+PR #4, 브랜치 `feature/private-account-dashboard`. 기존 PR #2 위에 개인 전용 Worker/D1/모바일 앱을 추가한다. 기존 공개 Worker·DB·시세 수집·4개 WORKSPACE는 유지하고, 공개 화면의 방패 아이콘은 별도 보호된 계좌 앱으로 이동한다. 검토 대상 URL은 `https://market-note-private-account.kby0991.workers.dev/`이다. 사용자 승인으로 개인 Worker와 별도 D1을 배포했고, Access 로그인 정책을 연결했다. 실제 로그인과 LS 수집 검증은 진행 중이며 자동 수집은 off다.
 
 ## 첨부 명세 반영
 
@@ -56,11 +56,17 @@ maxRangeDays=1, 수신100행/1.5MB, 실행당1페이지, 최대1,000개의 연�
 
 1. 새 private D1을 만들고 이 디렉터리 schema.sql을 그 DB에만 적용한다. 기존 market-note-ls DB 재사용 금지.
 2. example config를 gitignored wrangler.local.jsonc로 복사하고 새 database_id를 넣는다. `node scripts/build-account.mjs`로 로컬 빌드한다.
-3. Access에서 새 앱 전체 hostname을 본인 이메일1개만 허용한다. Everyone/Bypass/서비스 토큰 정책 금지, preview URLs off·run_worker_first=true, 짧은 세션(예15분). 현재 연결된 Cloudflare token의 Access organization 조회는403이어서 관리자 설정/적절한 권한이 필요하다.
+3. Access에서 새 앱 전체 hostname을 본인 이메일1개만 허용한다. Everyone/Bypass/서비스 토큰 정책 금지, preview URLs off·run_worker_first=true, 짧은 세션(예15분). Access 관리 권한과 조직·본인 이메일 단일 허용 정책을 설정했다.
 4. Secrets: ACCESS_ISSUER, ACCESS_AUD, OWNER_EMAIL, 독립32byte random base64의 ACCOUNT_ENCRYPTION_KEY/ACCOUNT_INDEX_KEY, LS_ACCOUNT_APP_KEY/LS_ACCOUNT_APP_SECRET, LS_ACCOUNT_NO(반환 계좌 일치 검사), ACCOUNT_START_DATE. **기본 CDPCQ04700에 계좌 비밀번호를 등록할 필요는 없다.** 실제 키/계좌번호/비밀번호를 채팅·GitHub·HTML에 넣지 않는다.
 5. 수신 구조 검증을 마친 뒤 수집 플래그 ENABLE_ACCOUNT_SYNC=true 활성화 대상으로 검토한다. 분류 규칙 검증 전에는 원장만 보관하고 손익은 보류한다. 실제 코드/세금/순서 확인 후 LS_LEDGER_RULES를 검토해 설정한다.
 6. 미인증/다른 이메일/다른AUD/만료·위조 토큰/교차 Origin 거절과 소량 계좌 조회·원장 정확성·CPU/과금을 staging에서 확인한 뒤 배포 승인한다. 개인 앱이 보호된 후 공개 사이트 링크를 배포한다.
 
-실제 계좌 조회·D1 생성/적용·Access 정책/Secret·Worker/Pages 배포는 이번 작업에서 실행하지 않았다. 롤백은 계좌 수집 off/새 Worker 비활성으로 하고 DB/키를 삭제하거나 앱을 공개로 바꾸지 않는다.
+사용자 승인 후 개인 D1 생성/스키마 적용·Access 정책·Secret·개인 Worker 배포를 실행했다. 공개 Worker·DB·Pages는 변경하지 않았다. 실제 계좌 조회는 아직 실행하지 않았고 자동 수집은 off다. 롤백은 계좌 수집 off/새 Worker 비활성으로 하고 DB/키를 삭제하거나 앱을 공개로 바꾸지 않는다.
 
 근거: [사용자가 제공한 상세 명세](https://openapi.ls-sec.co.kr/api/apis/public/assistant/tr?product=openapi&code=CDPCQ04700&documentId=819f29badcdddce05dd9fa26e6a03302e15b98a52cfbc4a7e84c4659fed71d32), [Cloudflare Access JWT 검증](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/). [검증 결과](VALIDATION.md).
+
+### 로그인 진입 복구
+
+미인증 브라우저의 HTML 탐색은 고정 PRIVATE_APP_ORIGIN과 Access issuer/AUD로 구성한 로그인 주소로 이동한다. API·정적 자산 요청은401을 유지한다. 헤더가 없을 때만 CF_Authorization 쿠키를 사용하며 서명·issuer·AUD·본인 이메일·만료 검증은 동일하다. 중복 쿠키, 위조 쿠키, 잘못된 헤더는 거절한다. 로그인 반환 주소에 사용자 입력 쿼리를 전달하지 않는다. 토큰이 있으나 검증에 실패하면 자동 재이동하지 않아 루프를 막는다.
+
+직접 API 업로드용 `node scripts/build-account-inline.mjs`는 HTML/JS/CSS를 인증 처리 뒤 제공하는 번들을 생성한다. 생성 파일에는 Secret이나 실제 계좌 자료가 없으며 work 경로는 커밋하지 않는다.
