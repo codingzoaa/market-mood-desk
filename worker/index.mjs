@@ -1,3 +1,4 @@
+import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {collectDetails} from './details.mjs';
 import {createSession} from './tls.mjs';
@@ -88,7 +89,7 @@ export function closingPoints(rows,now=new Date()){
   if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;
   const t=kst(new Date(value));return t.date===p.date&&t.time>='1530'&&(t.time<='1610'||recovered(p)&&Date.parse(value)<=Date.parse(p.recoveryAt));
  };
- return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
+ return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(validOHLC(p.ohlc,p.kospi)?{ohlc:validOHLC(p.ohlc,p.kospi),ohlcSource:'LS증권 t1511 · KRX',ohlcAsOf:p.indexAt}:{}),...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 export default {
  async fetch(request,env,ctx){
@@ -110,6 +111,7 @@ export default {
     const rows=await env.DB.prepare(`SELECT substr(id,9) AS date,
      json_extract(payload,'$.indices.KOSPI.value') AS kospi,
      json_extract(payload,'$.indices.KOSPI.changePct') AS changePct,
+     json_extract(payload,'$.indices.KOSPI.ohlc') AS ohlcJSON,
      json_extract(payload,'$.indices.KOSPI.asOf') AS indexAt,
      json_extract(payload,'$.flows.segments.KOSPI.individual') AS individual,
      json_extract(payload,'$.flows.asOf') AS flowAt,
@@ -119,7 +121,12 @@ export default {
      FROM state WHERE id LIKE 'details:%' AND substr(id,9)>=date('now','-365 day') ORDER BY id DESC LIMIT 365`).all();
     const history=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'correlation-history:%:KOSPI:%' ORDER BY id DESC LIMIT 365").all();
     const records=history.results.flatMap(row=>{try{return [JSON.parse(row.payload)];}catch{return [];}});
-    return reply({points:mergeCorrelationHistory(closingPoints(rows.results),records),unit:'억원',market:'KOSPI'});
+    let candles=[];
+    try{const archives=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'correlation-backfill-probe:LS:%' ORDER BY id DESC LIMIT 12").all();
+     candles=archives.results.flatMap(r=>{try{return archivedIndexCandles(JSON.parse(r.payload));}catch{return [];}});
+    }catch{/* Archive enrichment is optional; existing close/flow points remain available. */}
+    const observed=rows.results.map(r=>{try{return {...r,ohlc:JSON.parse(r.ohlcJSON||'null')};}catch{return r;}});
+    return reply({points:attachIndexCandles(mergeCorrelationHistory(closingPoints(observed),records),candles),unit:'억원',market:'KOSPI'});
    }
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);

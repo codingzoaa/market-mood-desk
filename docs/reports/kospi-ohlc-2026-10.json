@@ -1,0 +1,159 @@
+{
+  "testedAt": "2026-10-20T11:34:09.412Z",
+  "source": "Previously saved LS t8429 response (read-only D1 SELECT)",
+  "providerCalls": 0,
+  "databaseWrites": 0,
+  "capturedAt": "2026-10-20T11:09:57.532Z",
+  "candleCount": 12,
+  "candles": [
+    {
+      "date": "2026-10-01",
+      "ohlc": {
+        "open": 6814.49,
+        "high": 6971.36,
+        "low": 6765.06,
+        "close": 6971.35
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-02",
+      "ohlc": {
+        "open": 6938.27,
+        "high": 7011.04,
+        "low": 6927.88,
+        "close": 7003.74
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-06",
+      "ohlc": {
+        "open": 7044.67,
+        "high": 7044.67,
+        "low": 6897.38,
+        "close": 6941.39
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-07",
+      "ohlc": {
+        "open": 6864.25,
+        "high": 6977.77,
+        "low": 6803.81,
+        "close": 6803.9
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-08",
+      "ohlc": {
+        "open": 6808.68,
+        "high": 6810.83,
+        "low": 6625.93,
+        "close": 6625.93
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-12",
+      "ohlc": {
+        "open": 6578.17,
+        "high": 6589.69,
+        "low": 6368.49,
+        "close": 6384.24
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-13",
+      "ohlc": {
+        "open": 6186.08,
+        "high": 6198.46,
+        "low": 5911.11,
+        "close": 6035.35
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-14",
+      "ohlc": {
+        "open": 6062.08,
+        "high": 6190.65,
+        "low": 5944.65,
+        "close": 6008.81
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-15",
+      "ohlc": {
+        "open": 5673.01,
+        "high": 5751.45,
+        "low": 5450.81,
+        "close": 5554.22
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-16",
+      "ohlc": {
+        "open": 5653.99,
+        "high": 5809.94,
+        "low": 5590.33,
+        "close": 5668.05
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-19",
+      "ohlc": {
+        "open": 5488.41,
+        "high": 5768.01,
+        "low": 5488.41,
+        "close": 5768.01
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    },
+    {
+      "date": "2026-10-20",
+      "ohlc": {
+        "open": 5733.57,
+        "high": 5733.57,
+        "low": 5493.24,
+        "close": 5552.74
+      },
+      "ohlcSource": "LS증권 t8429 · KRX 일봉",
+      "ohlcAsOf": "2026-10-20T11:09:57.532Z",
+      "ohlcHash": "sha256:2111189cdf9b25a4d3e153aa14f0deb2a825b602f17c2e2c39fdb07afc198ae3"
+    }
+  ],
+  "joinedValidation": {
+    "correlationDays": 12,
+    "candleDays": 12,
+    "closeOnly": []
+  }
+}

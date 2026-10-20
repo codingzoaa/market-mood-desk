@@ -1,3 +1,4 @@
+import {validOHLC} from './index-ohlc.mjs';
 const methods=new Set(['NAVER_KOSPI_DAILY_V1','LS_KOSPI_DAILY_V1']);
 const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 const sourceURL=value=>{try{const u=new URL(value);return u.protocol==='https:'&&['finance.naver.com','m.stock.naver.com','stock.naver.com','api.stock.naver.com','openapi.ls-sec.co.kr'].includes(u.hostname)&&!u.username&&!u.password&&!u.hash;}catch{return false;}};
@@ -13,12 +14,12 @@ export function validateHistoricalCloseRecord(record,{from,to,now=new Date()}={}
 export function mergeCorrelationHistory(lsPoints,records,options={}){
  const seen=new Map();
  for(const record of records){let r;try{r=validateHistoricalCloseRecord(record,options);}catch{continue;}
-  const point={date:r.date,kospi:r.kospi,changePct:r.changePct,individual:r.individual,source:r.method==='LS_KOSPI_DAILY_V1'?'LS_HISTORY':'NAVER'};
+  const point={date:r.date,kospi:r.kospi,changePct:r.changePct,individual:r.individual,...(validOHLC(r.ohlc,r.kospi)?{ohlc:validOHLC(r.ohlc,r.kospi),ohlcSource:r.indexSource,ohlcAsOf:r.fetchedAt,ohlcHash:r.indexHash}:{}),source:r.method==='LS_KOSPI_DAILY_V1'?'LS_HISTORY':'NAVER'};
   if(seen.has(r.date)&&JSON.stringify(seen.get(r.date))!==JSON.stringify(point))throw Error('CONFLICTING_HISTORY_DATE');
   seen.set(r.date,point);
  }
  // LS observations retain priority, including verified late recoveries.
- for(const point of lsPoints)seen.set(point.date,point);
+ for(const point of lsPoints){const old=seen.get(point.date);seen.set(point.date,!point.ohlc&&validOHLC(old?.ohlc,point.kospi)?{...point,ohlc:old.ohlc,ohlcSource:old.ohlcSource,ohlcAsOf:old.ohlcAsOf,ohlcHash:old.ohlcHash}:point);}
  return [...seen.values()].sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 
