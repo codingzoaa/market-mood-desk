@@ -3,7 +3,7 @@ import {readLedgerRules,ledgerToTrade} from './cdpcq04700.mjs';
 import {authenticate,browserLogin,check,privateHeaders} from './security.mjs';
 import {loadTrades,readState} from './store.mjs';
 import {reviewedContract} from './provider.mjs';
-import {syncAccount} from './sync.mjs';
+import {runScheduledAccountSync,accountSyncWindow} from './sync.mjs';
 import {checkAccountConnection} from './connection.mjs';
 import {analyzeAccount} from '../../src/account/analysis.ts';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...privateHeaders,'Content-Type':'application/json; charset=utf-8'}});
@@ -21,8 +21,9 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
     try{const result=await checkAccountConnection(env,sessionFactory);return json(result,result.ok?200:409);}catch{return json({ok:false,error:'ACCOUNT_CONNECTION_UNAVAILABLE'},503);}
    }
    if(env.ENABLE_ACCOUNT_SYNC!=='true')return json({error:'SYNC_DISABLED'},409);
+   if(!accountSyncWindow(env))return json({error:'ACCOUNT_SYNC_WINDOW_CLOSED'},409);
    try{reviewedContract(env);}catch{return json({error:'LS_CONTRACT_REQUIRED'},409);}
-   ctx.waitUntil(syncAccount(env,sessionFactory).catch(()=>{}));return json({accepted:true},202);
+   ctx.waitUntil(runScheduledAccountSync(env,sessionFactory).catch(()=>{}));return json({accepted:true},202);
   }
   if(request.method!=='GET')return json({error:'METHOD_NOT_ALLOWED'},405);
   try{
@@ -47,5 +48,5 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
    const asset=await env.ASSETS.fetch(request),headers=new Headers(asset.headers);for(const [k,v] of Object.entries(privateHeaders))headers.set(k,v);return new Response(asset.body,{status:asset.status,headers});
   }catch{return json({error:'ACCOUNT_DATA_UNAVAILABLE'},503);}
  },
- async scheduled(event,env,ctx){ctx.waitUntil(syncAccount(env,sessionFactory,event.scheduledTime).catch(()=>{}));}
+ async scheduled(event,env,ctx){ctx.waitUntil(runScheduledAccountSync(env,sessionFactory).catch(()=>{}));}
 };}
