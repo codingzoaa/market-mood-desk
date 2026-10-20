@@ -1,10 +1,12 @@
+import {lsIndexOHLC} from './index-ohlc.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,number,signed,kst,collectWindow,collectionFetch,LSFailure} from './ls.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
 const put=(env,id,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();
 export function indexQuote(row){
  if(!row)throw new Error('INDEX_SHAPE');
- return {value:number(row.pricejisu,0,1e7),changePct:signed(row.diffjisu,row.sign),change:signed(row.change,row.sign),advances:number(row.highjo,0,10000),unchanged:number(row.unchgjo,0,10000),declines:number(row.lowjo,0,10000)};
+ const ohlc=lsIndexOHLC(row);
+ return {...(ohlc?{ohlc}:{}),value:number(row.pricejisu,0,1e7),changePct:signed(row.diffjisu,row.sign),change:signed(row.change,row.sign),advances:number(row.highjo,0,10000),unchanged:number(row.unchgjo,0,10000),declines:number(row.lowjo,0,10000)};
 }
 export function indexSeries(rows,date){
  if(!Array.isArray(rows))throw new Error('CHART_SHAPE');

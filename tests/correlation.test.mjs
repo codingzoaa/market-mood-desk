@@ -41,3 +41,20 @@ test('toggle loads only on opening; scatter selection highlights the same day in
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}
 });
 test('verified post-close recovery creates a point with its real timestamp; late intraday/future/mismatched records remain excluded',()=>{const now=new Date('2026-10-20T20:00:00+09:00'),at='2026-10-20T19:34:55+09:00',row={...rows[2],indexAt:at,flowAt:at,recoveryMethod:'LS_KRX_CLOSING_RECOVERY_V1',recoveryDate:'2026-10-20',recoveryAt:at};assert.deepEqual(closingPoints([row],now),[{...rows[2],recoveredAt:at}]);for(const bad of [{recoveryMethod:null},{recoveryDate:'2026-10-19'},{recoveryAt:'2026-10-20T21:00:00+09:00'},{indexAt:'2026-10-20T15:20:00+09:00'},{flowAt:'2026-10-21T19:00:00+09:00'},{recoveryAt:'2026-10-20T18:00:00+09:00'}])assert.deepEqual(closingPoints([{...row,...bad}],now),[]);assert.equal(validateClosePoints([{...rows[2],recoveredAt:at}])[0].recoveredAt,at);});
+test('real OHLC candles and close-only days share scatter selection and keyboard selection',async()=>{
+ const previous=globalThis.fetch;const mixed=rows.map((p,i)=>i===0?{...p,ohlc:{open:2690,high:2720,low:2680,close:p.kospi},ohlcSource:'LS증권 t8429'}:p);
+ globalThis.fetch=async()=>Response.json({points:mixed});const root=createRoot(document.getElementById('root'));
+ try{
+  await act(async()=>root.render(React.createElement(Correlation)));
+  await act(async()=>document.querySelector('.correlation-toggle').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+  assert.equal(document.querySelectorAll('.candle-body').length,1);assert.equal(document.querySelectorAll('[data-candle=false]').length,2);
+  await act(async()=>document.querySelector('.correlation-svg [role=button]').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+  assert.equal(document.querySelector('.kospi-history [aria-pressed=true]').dataset.date,'2026-10-16');
+  assert.match(document.querySelector('.correlation-selection').textContent,/시가 2,690/);
+  assert.match(document.querySelector('.kospi-history [aria-pressed=true]').getAttribute('aria-label'),/고가 2720/);
+  const last=[...document.querySelectorAll('.kospi-history [role=button]')].at(-1);
+  await act(async()=>last.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true})));
+  assert.match(document.querySelector('.correlation-selection').textContent,/시가·고가·저가 미확보/);
+  assert.equal(validateClosePoints([{...mixed[0],ohlc:{...mixed[0].ohlc,high:2600}}])[0].ohlc,undefined);
+ }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}
+});

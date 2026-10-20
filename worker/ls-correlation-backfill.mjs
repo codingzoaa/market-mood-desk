@@ -1,3 +1,4 @@
+import {validOHLC} from './index-ohlc.mjs';
 import {validateHistoricalCloseRecord} from './correlation-history.mjs';
 const fail=code=>{throw Error(code);};
 const num=value=>{if(!['number','string'].includes(typeof value)||!/^[-+]?\d+(?:\.\d+)?$/.test(String(value).trim()))fail('INVALID_BACKFILL_NUMBER');const n=Number(value);if(!Number.isFinite(n)||Math.abs(n)>1e12)fail('INVALID_BACKFILL_NUMBER');return n;};
@@ -21,7 +22,8 @@ export function normalizeLSCorrelationBackfill(probe,{now=new Date(),from='2026-
   const d=days[i];if(d<from||d>to)continue;
   const row=flows.get(d);if(!row||i===0)fail('HISTORY_PAIR_MISSING');
   const close=num(prices.get(d).close),previous=num(prices.get(days[i-1]).close);if(close<=0||previous<=0)fail('INVALID_INDEX_CLOSE');
-  const record={date:d,method:'LS_KOSPI_DAILY_V1',market:'KOSPI',unit:'억원',final:true,kospi:close,changePct:Math.round((close/previous-1)*10000)/100,individual:num(row.sa_08)*factor,indexSource:'https://openapi.ls-sec.co.kr:8080/indtp/chart',flowSource:'https://openapi.ls-sec.co.kr:8080/stock/chart',indexHash:chart.sourceHash,flowHash:flow.sourceHash,fetchedAt:probe.capturedAt,unitVerification:{method:'T1665_VS_T1601_3_GROUPS',date:referenceDate,factorToEok:factor,referenceHash:reference.sourceHash},indexVerification:'T1665_VS_T8429'};
+  const priceRow=prices.get(d);const ohlc=validOHLC({open:Number(priceRow.open),high:Number(priceRow.high),low:Number(priceRow.low),close},close);
+  const record={...(ohlc?{ohlc}:{}),date:d,method:'LS_KOSPI_DAILY_V1',market:'KOSPI',unit:'억원',final:true,kospi:close,changePct:Math.round((close/previous-1)*10000)/100,individual:num(row.sa_08)*factor,indexSource:'https://openapi.ls-sec.co.kr:8080/indtp/chart',flowSource:'https://openapi.ls-sec.co.kr:8080/stock/chart',indexHash:chart.sourceHash,flowHash:flow.sourceHash,fetchedAt:probe.capturedAt,unitVerification:{method:'T1665_VS_T1601_3_GROUPS',date:referenceDate,factorToEok:factor,referenceHash:reference.sourceHash},indexVerification:'T1665_VS_T8429'};
   records.push(validateHistoricalCloseRecord(record,{from,to,now}));
  }
  if(!records.length)fail('NO_BACKFILL_RECORDS');return {records,validation:{dates:records.map(r=>r.date),amountFactorToEok:factor,indexDivisor:indexScales[0],referenceGroups:3,sourceTRs:['t8429','t1665','t1601']}};
