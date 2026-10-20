@@ -44,7 +44,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
  const filtered=(stockMode==='strong'?stocks:turnoverPool).filter(s=>(theme==='ALL'||s.themes.includes(theme))&&(!watchOnly||stars.includes(s.symbol))&&[s.name,s.symbol,...s.themes].join(' ').toLowerCase().includes(search.toLowerCase())).sort((a,b)=>sort==='change'?b.changePct-a.changePct:sort==='name'?a.name.localeCompare(b.name):b.turnoverKRW-a.turnoverKRW);
  const asOf=snap?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(snap.asOf)):'';
  const lastDate=dates.at(-1);
- const Empty=({title='저장된 시세를 기다립니다.',description='평일 09:00–15:30에 5분마다 자동 수집합니다. 수집이 완료되면 자동으로 표시됩니다.'}:{title?:string;description?:string})=><div className="empty-state"><Database size={30}/><h3>{title}</h3><p>{description}</p></div>;
+ const Empty=({title='저장된 시세를 기다립니다.',description='평일 09:00–16:10에 5분마다 자동 수집합니다. 수집이 완료되면 자동으로 표시됩니다.'}:{title?:string;description?:string})=><div className="empty-state"><Database size={30}/><h3>{title}</h3><p>{description}</p></div>;
  function metricsRow(){return <MarketCards snap={panelSnap} onHeatmap={board=>{setHeatBoard(board);setExpanded('heatmap');}} onFlows={()=>setExpanded('flows')}/>;}
  function etfPanels(){
   const pool=kodexEtfs(snap?.etfs);
@@ -97,7 +97,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <section className="panel note-panel"><div className="section-title"><h2>이날의 관찰 메모</h2><span className="muted">{demo?'예시 공간 · 저장 안 됨':'날짜별 브라우저 저장'}</span></div><textarea aria-label="날짜별 관찰 메모" placeholder="강세가 확산했는지, 대금이 이어졌는지 기록하세요." value={note} maxLength={3000} onChange={e=>setNote(e.target.value)}/><div className="note-actions"><span>{note.length} / 3,000</span><button className="btn primary" disabled={demo||!snap||busy} onClick={saveNote}><Check size={15}/>메모 저장</button></div></section>
     </>}
     {view==='data'&&dataPage()}
-    {view!=='overview'&&<footer><span>MARKETNOTE</span><span>KRX · 15:30까지 수집 · KST</span></footer>}
+    {view!=='overview'&&<footer><span>MARKETNOTE</span><span>KRX · 16:10까지 수집 · KST</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}

@@ -65,7 +65,7 @@ export async function collect(env){
   const asOf=new Date(now).toISOString();
   const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강',stocks,etfs,metrics,note:''};
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
-  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · KRX 15:30까지 · 시장별 최대100개'});
+  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
  }catch(error){
   if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
@@ -75,11 +75,11 @@ export async function collect(env){
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
  }finally{if(session)await session.close();}
 }
-// Accept only the closing-minute observations from both independent LS series.
+// Accept post-close observations through the final16:10 refresh from both LS series.
 // A later enrichment timestamp must never turn intraday flows into a closing point.
 export function closingPoints(rows,now=new Date()){
  const current=kst(now),seen=new Set();
- const closing=(value,date)=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;const t=kst(new Date(value));return t.date===date&&t.time==='1530';};
+ const closing=(value,date)=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;const t=kst(new Date(value));return t.date===date&&t.time>='1530'&&t.time<='1610';};
  return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p.date)||!closing(p.flowAt,p.date)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(({date,kospi,changePct,individual})=>({date,kospi,changePct,individual})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 export default {
