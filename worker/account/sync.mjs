@@ -1,5 +1,6 @@
+import {saveLedger} from './ledger-store.mjs';
 import {collectWindow} from '../ls.mjs';
-import {check} from './security.mjs';
+import {check,opaqueID} from './security.mjs';
 import {readState,writeState,saveTrades} from './store.mjs';
 import {reviewedContract,tokenForAccount,accountPage} from './provider.mjs';
 const day=now=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(now));
@@ -21,10 +22,12 @@ export async function syncAccount(env,sessionFactory,now=Date.now()){
   // No account OAuth token is persisted to D1 or shared with the public collector.
   const oauth=await tokenForAccount(env,session.fetch);
   const page=await accountPage(env,{job,token:oauth.token,fetcher:session.fetch});
+  let digests=job.pageDigests||[];
+  if(page.ledgerRows&&!page.done){check(page.ledgerRows.length>0&&digests.length<1000,'LEDGER_CURSOR_LIMIT');const fingerprint=await opaqueID(env,'ledger-page:'+JSON.stringify(page.ledgerRows));check(!digests.includes(fingerprint),'LEDGER_CURSOR_REPEATED_PAGE');digests=[...digests,fingerprint];}
   const clock=now+Math.floor(performance.now()-started);
   const renewed=await env.PRIVATE_DB.prepare("UPDATE account_lease SET expires=? WHERE id='sync' AND owner=? AND expires>? RETURNING id").bind(clock+120000,owner,clock).first();check(renewed,'SYNC_LEASE_EXPIRED');
-  const result=await saveTrades(env,page.trades);
-  const next=page.done?(job.to<today?{from:shift(job.to,1),to:null,continuation:{flag:'N',key:''}}:null):{...job,continuation:page.continuation};
+  const result=page.ledgerRows?await saveLedger(env,page.ledgerRows):await saveTrades(env,page.trades);
+  const next=page.done?(job.to<today?{from:shift(job.to,1),to:null,continuation:{flag:'N',key:''}}:null):{...job,continuation:page.continuation,...(page.ledgerRows?{pageDigests:digests}:{})};
   await writeState(env,'sync',{job:next,through:page.done?job.to:saved?.through||null,lastSuccessAt:new Date(now).toISOString(),lastPage:result,contractVersion:page.contractVersion,error:null});
   await writeState(env,'lastError',{code:null});
   return {ok:true,more:!!next};

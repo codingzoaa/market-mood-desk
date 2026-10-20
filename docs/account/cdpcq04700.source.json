@@ -1,0 +1,1152 @@
+{
+  "product": "openapi",
+  "version": "8d1dbe291a94e08661c5cd30d19a6267416be7bf4b8787e7c3c2224bd7bb78d8",
+  "catalogVersion": "20261012053652748",
+  "sourceUrl": "https://openapi.ls-sec.co.kr/api/apis/public/tr-guides.json",
+  "documentId": "819f29badcdddce05dd9fa26e6a03302e15b98a52cfbc4a7e84c4659fed71d32",
+  "code": "CDPCQ04700",
+  "name": "계좌 거래내역",
+  "protocol": "REST",
+  "category": "[\"주식\"]",
+  "description": "",
+  "documentUrl": "https://openapi.ls-sec.co.kr/api/apis/public/assistant/tr?product=openapi&code=CDPCQ04700&documentId=819f29badcdddce05dd9fa26e6a03302e15b98a52cfbc4a7e84c4659fed71d32",
+  "section": "all",
+  "part": 0,
+  "totalParts": 1,
+  "nextPart": null,
+  "complete": true,
+  "format": "structured",
+  "document": {
+    "code": "CDPCQ04700",
+    "name": "계좌 거래내역",
+    "transactionPerSec": "1",
+    "request": {
+      "headers": [
+        {
+          "element": "content-type",
+          "name": "컨텐츠타입",
+          "type": "String",
+          "length": "100",
+          "description": "LS증권 제공 API를 호출하기 위한 Request Body 데이터 포맷으로 \"application/json; charset=utf-8 설정\"",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "authorization",
+          "name": "접근토큰",
+          "type": "String",
+          "length": "1000",
+          "description": "OAuth 토큰이 필요한 API 경우 발급한 Access Token을 설정하기 위한 Request Heaeder Parameter",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cd",
+          "name": "거래 CD",
+          "type": "String",
+          "length": "10",
+          "description": "LS증권 거래코드",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cont",
+          "name": "연속 거래 여부",
+          "type": "String",
+          "length": "1",
+          "description": "연속거래 여부\nY:연속○\nN:연속×",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cont_key",
+          "name": "연속 거래 Key",
+          "type": "String",
+          "length": "18",
+          "description": "연속일 경우 그전에 내려온 연속키 값 올림",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "mac_address",
+          "name": "MAC 주소",
+          "type": "String",
+          "length": "12",
+          "description": "법인인 경우 필수 세팅",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        }
+      ],
+      "body": [
+        {
+          "element": "CDPCQ04700InBlock1",
+          "name": "CDPCQ04700InBlock1",
+          "type": "Object",
+          "fields": [
+            {
+              "element": "RecCnt",
+              "name": "레코드갯수",
+              "type": "Number",
+              "length": "5",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QryTp",
+              "name": "조회구분",
+              "type": "String",
+              "length": "1",
+              "description": "0@전체, 1@입출금, 2@입출고, 3@매매, 4@환전, 9@기타",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QrySrtDt",
+              "name": "조회시작일",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QryEndDt",
+              "name": "조회종료일",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SrtNo",
+              "name": "시작번호",
+              "type": "Number",
+              "length": "10",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "PdptnCode",
+              "name": "상품유형코드",
+              "type": "String",
+              "length": "2",
+              "description": "01",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuLgclssCode",
+              "name": "종목대분류코드",
+              "type": "String",
+              "length": "2",
+              "description": "00@전체, 01@주식, 02@채권, 04@펀드, 03@선물, 05@해외주식, 06@해외파생",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuNo",
+              "name": "종목번호",
+              "type": "String",
+              "length": "12",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        }
+      ]
+    },
+    "response": {
+      "headers": [
+        {
+          "element": "content-type",
+          "name": "컨텐츠타입",
+          "type": "String",
+          "length": "100",
+          "description": "LS증권 제공 API를 호출하기 위한 Request Body 데이터 포맷으로 \"application/json; charset=utf-8 설정\"",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cd",
+          "name": "거래 CD",
+          "type": "String",
+          "length": "10",
+          "description": "LS증권 거래코드",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cont",
+          "name": "연속 거래 여부",
+          "type": "String",
+          "length": "1",
+          "description": "연속거래 여부\nY:연속○\nN:연속×",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "tr_cont_key",
+          "name": "연속 거래 Key",
+          "type": "String",
+          "length": "18",
+          "description": "연속일 경우 그전에 내려온 연속키 값 올림",
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        }
+      ],
+      "body": [
+        {
+          "element": "CDPCQ04700OutBlock1",
+          "name": "CDPCQ04700OutBlock1",
+          "type": "Object",
+          "fields": [
+            {
+              "element": "RecCnt",
+              "name": "레코드갯수",
+              "type": "Number",
+              "length": "5",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QryTp",
+              "name": "조회구분",
+              "type": "String",
+              "length": "1",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AcntNo",
+              "name": "계좌번호",
+              "type": "String",
+              "length": "20",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "Pwd",
+              "name": "비밀번호",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QrySrtDt",
+              "name": "조회시작일",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "QryEndDt",
+              "name": "조회종료일",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SrtNo",
+              "name": "시작번호",
+              "type": "Number",
+              "length": "10",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "PdptnCode",
+              "name": "상품유형코드",
+              "type": "String",
+              "length": "2",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuLgclssCode",
+              "name": "종목대분류코드",
+              "type": "String",
+              "length": "2",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuNo",
+              "name": "종목번호",
+              "type": "String",
+              "length": "12",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "CDPCQ04700OutBlock2",
+          "name": "CDPCQ04700OutBlock2",
+          "type": "Object",
+          "fields": [
+            {
+              "element": "RecCnt",
+              "name": "레코드갯수",
+              "type": "Number",
+              "length": "5",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AcntNm",
+              "name": "계좌명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "CDPCQ04700OutBlock3",
+          "name": "CDPCQ04700OutBlock3",
+          "type": "Object Array",
+          "fields": [
+            {
+              "element": "AcntNo",
+              "name": "계좌번호",
+              "type": "String",
+              "length": "20",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdDt",
+              "name": "거래일자",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdNo",
+              "name": "거래번호",
+              "type": "Number",
+              "length": "10",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TpCodeNm",
+              "name": "구분코드명",
+              "type": "String",
+              "length": "50",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SmryNo",
+              "name": "적요번호",
+              "type": "String",
+              "length": "4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SmryNm",
+              "name": "적요명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CancTpNm",
+              "name": "취소구분",
+              "type": "String",
+              "length": "20",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdQty",
+              "name": "거래수량",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "Trtax",
+              "name": "거래세",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrAdjstAmt",
+              "name": "외화정산금액",
+              "type": "Number",
+              "length": "25.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AdjstAmt",
+              "name": "정산금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "OvdSum",
+              "name": "연체합",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpsBfbalAmt",
+              "name": "예수금전잔금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SellPldgRfundAmt",
+              "name": "매도담보상환금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpspdgLoanBfbalAmt",
+              "name": "예탁담보대출전잔금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdmdaNm",
+              "name": "거래매체명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "OrgTrdNo",
+              "name": "원거래번호",
+              "type": "Number",
+              "length": "10",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuNm",
+              "name": "종목명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdUprc",
+              "name": "거래단가",
+              "type": "Number",
+              "length": "13.2",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CmsnAmt",
+              "name": "수수료",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrCmsnAmt",
+              "name": "외화수수료금액",
+              "type": "Number",
+              "length": "15.2",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "RfundDiffAmt",
+              "name": "상환차이금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "RepayAmtSum",
+              "name": "변제금합계",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SecCrbalQty",
+              "name": "유가증권금잔수량",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CslLoanRfundIntrstAmt",
+              "name": "매도대금담보대출상환이자금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpspdgLoanCrbalAmt",
+              "name": "예탁담보대출금잔금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrxTime",
+              "name": "처리시각",
+              "type": "String",
+              "length": "9",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "Inouno",
+              "name": "출납번호",
+              "type": "Number",
+              "length": "10",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IsuNo",
+              "name": "종목번호",
+              "type": "String",
+              "length": "12",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdAmt",
+              "name": "거래금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "ChckAmt",
+              "name": "수표금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TaxSumAmt",
+              "name": "세금합계금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrTaxSumAmt",
+              "name": "외화세금합계금액",
+              "type": "Number",
+              "length": "26.6",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "IntrstUtlfee",
+              "name": "이자이용료",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "MnyDvdAmt",
+              "name": "배당금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "RcvblOcrAmt",
+              "name": "미수발생금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrxBrnNo",
+              "name": "처리지점번호",
+              "type": "String",
+              "length": "3",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrxBrnNm",
+              "name": "처리지점명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpspdgLoanAmt",
+              "name": "예탁담보대출금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpspdgLoanRfundAmt",
+              "name": "예탁담보대출상환금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BasePrc",
+              "name": "기준가",
+              "type": "Number",
+              "length": "13.2",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DpsCrbalAmt",
+              "name": "예수금금잔금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BoaAmt",
+              "name": "과표",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "MnyoutAbleAmt",
+              "name": "출금가능금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BcrLoanOcrAmt",
+              "name": "수익증권담보대출발생금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BcrLoanBfbalAmt",
+              "name": "수익증권담보대출전잔금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BnsBasePrc",
+              "name": "매매기준가",
+              "type": "Number",
+              "length": "20.1",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TaxchrBasePrc",
+              "name": "과세기준가",
+              "type": "Number",
+              "length": "20.1",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdUnit",
+              "name": "거래좌수",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BalUnit",
+              "name": "잔고좌수",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "EvrTax",
+              "name": "제세금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "EvalAmt",
+              "name": "평가금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BcrLoanRfundAmt",
+              "name": "수익증권담보대출상환금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BcrLoanCrbalAmt",
+              "name": "수익증권담보대출금잔금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AddMgnOcrTotamt",
+              "name": "추가증거금발생총액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AddMnyMgnOcrAmt",
+              "name": "추가현금증거금발생금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AddMgnDfryTotamt",
+              "name": "추가증거금납부총액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AddMnyMgnDfryAmt",
+              "name": "추가현금증거금납부금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BnsplAmt",
+              "name": "매매손익금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "Ictax",
+              "name": "소득세",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "Ihtax",
+              "name": "주민세",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "LoanDt",
+              "name": "대출일",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CrcyCode",
+              "name": "통화코드",
+              "type": "String",
+              "length": "3",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrAmt",
+              "name": "외화금액",
+              "type": "Number",
+              "length": "24.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrTrdAmt",
+              "name": "외화거래금액",
+              "type": "Number",
+              "length": "24.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrDps",
+              "name": "외화예수금",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrDpsBfbalAmt",
+              "name": "외화예수금전잔금액",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "OppAcntNm",
+              "name": "상대계좌명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "OppAcntNo",
+              "name": "상대계좌번호",
+              "type": "String",
+              "length": "20",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "LoanRfundAmt",
+              "name": "대출상환금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "LoanIntrstAmt",
+              "name": "대출이자금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "AskpsnNm",
+              "name": "의뢰인명",
+              "type": "String",
+              "length": "40",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "OrdDt",
+              "name": "주문일자",
+              "type": "String",
+              "length": "8",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "TrdXchrat",
+              "name": "거래환율",
+              "type": "Number",
+              "length": "15.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "RdctCmsn",
+              "name": "감면수수료",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrStmpTx",
+              "name": "외화인지세",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrElecfnTrtax",
+              "name": "외화전자금융거래세",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcstckTrtax",
+              "name": "외화증권거래세",
+              "type": "Number",
+              "length": "21.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "CDPCQ04700OutBlock4",
+          "name": "CDPCQ04700OutBlock4",
+          "type": "Object",
+          "fields": [
+            {
+              "element": "RecCnt",
+              "name": "레코드갯수",
+              "type": "Number",
+              "length": "5",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "PnlSumAmt",
+              "name": "손익합계금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CtrctAsm",
+              "name": "약정누계",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "CmsnAmtSumAmt",
+              "name": "수수료합계금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        },
+        {
+          "element": "CDPCQ04700OutBlock5",
+          "name": "CDPCQ04700OutBlock5",
+          "type": "Object",
+          "fields": [
+            {
+              "element": "RecCnt",
+              "name": "레코드갯수",
+              "type": "Number",
+              "length": "5",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "MnyinAmt",
+              "name": "입금금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SecinAmt",
+              "name": "입고금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "MnyoutAmt",
+              "name": "출금금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SecoutAmt",
+              "name": "출고금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DiffAmt",
+              "name": "차이금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "DiffAmt0",
+              "name": "차이금액0",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SellQty",
+              "name": "매도수량",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SellAmt",
+              "name": "매도금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "SellCmsn",
+              "name": "매도수수료",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "EvrTax",
+              "name": "제세금",
+              "type": "Number",
+              "length": "19",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrSellAdjstAmt",
+              "name": "외화매도정산금액",
+              "type": "Number",
+              "length": "25.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BuyQty",
+              "name": "매수수량",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BuyAmt",
+              "name": "매수금액",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "BuyCmsn",
+              "name": "매수수수료",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "ExecTax",
+              "name": "체결세금",
+              "type": "Number",
+              "length": "16",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            },
+            {
+              "element": "FcurrBuyAdjstAmt",
+              "name": "외화매수정산금액",
+              "type": "Number",
+              "length": "25.4",
+              "required": true,
+              "requiredOrigin": "catalog-default"
+            }
+          ],
+          "required": true,
+          "requiredOrigin": "catalog-default"
+        }
+      ]
+    },
+    "api": {
+      "name": "[주식] 계좌",
+      "description": "계좌별 거래내역 및 잔고 등 계좌에 관련된 서비스를 확인할 수 있습니다.",
+      "categories": [
+        "주식"
+      ],
+      "protocol": "REST",
+      "path": "/stock/accno",
+      "method": "POST",
+      "server": "https://openapi.ls-sec.co.kr:8080",
+      "contentType": "application/json; charset=UTF-8"
+    },
+    "fieldRequiredSemantics": {
+      "default": true,
+      "note": "requiredOrigin=catalog-default means the public catalog default was applied. The export does not distinguish an omitted database value from a required field. Do not describe an inherited value as individually verified in the source database."
+    },
+    "product": "openapi"
+  }
+}
