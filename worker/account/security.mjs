@@ -22,9 +22,18 @@ export function browserLogin(request,env){
  login.searchParams.set('redirect_url',origin+'/');
  return new Response(null,{status:302,headers:{...privateHeaders,Location:login.href}});
 }
-export async function authenticate(request,env,fetcher=fetch,now=Date.now()){
+export async function authenticate(request,env,fetcher=fetch,now=Date.now(),ctx){
  const issuer=env.ACCESS_ISSUER,aud=env.ACCESS_AUD,email=env.OWNER_EMAIL;
  check(/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(issuer||'')&&typeof aud==='string'&&aud.length>0&&typeof email==='string'&&email.includes('@'),'AUTH_NOT_CONFIGURED');
+ // Worker-level Access exposes a platform-authenticated invocation context.
+ // This is never read from a user header or request JSON. Fail closed if its
+ // application or identity differs, even when another token is also supplied.
+ if(ctx?.access){
+  check(ctx.access.aud===aud,'AUTH_APPLICATION_MISMATCH');
+  const identity=await ctx.access.getIdentity();
+  check(typeof identity?.email==='string'&&identity.email.toLowerCase()===email.toLowerCase(),'AUTH_OWNER_MISMATCH');
+  return {authenticated:true};
+ }
  const token=accessToken(request);check(token&&token.length<16384,'UNAUTHORIZED');
  const parts=token.split('.');check(parts.length===3,'UNAUTHORIZED');
  let header,claims;try{header=JSON.parse(decoder.decode(urlBytes(parts[0])));claims=JSON.parse(decoder.decode(urlBytes(parts[1])));}catch{throw Error('UNAUTHORIZED');}

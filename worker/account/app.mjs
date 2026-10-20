@@ -8,7 +8,10 @@ import {analyzeAccount} from '../../src/account/analysis.ts';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...privateHeaders,'Content-Type':'application/json; charset=utf-8'}});
 export function accountWorker({sessionFactory,verify=authenticate}={}){return {
  async fetch(request,env,ctx){
-  try{await verify(request,env);}catch{return browserLogin(request,env)||json({error:'AUTHENTICATION_REQUIRED'},401);}
+  try{await verify(request,env,fetch,Date.now(),ctx);}catch(error){
+   const reason=['AUTH_NOT_CONFIGURED','AUTH_APPLICATION_MISMATCH','AUTH_OWNER_MISMATCH','AUTH_UNAVAILABLE'].includes(error?.message)?error.message:'AUTH_TOKEN_REJECTED';
+   return browserLogin(request,env)||json({error:'AUTHENTICATION_REQUIRED',reason},401);
+  }
   const url=new URL(request.url);
   if(request.method==='POST'){
    if(url.pathname!=='/api/sync')return json({error:'NOT_FOUND'},404);
