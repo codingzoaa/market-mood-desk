@@ -14,6 +14,11 @@ export function reviewedContract(env){
  check(typeof c.buyValue==='string'&&typeof c.sellValue==='string'&&c.buyValue!==c.sellValue,'LS_CONTRACT_REQUIRED');return c;
 }
 const base='https://openapi.ls-sec.co.kr:8080';
+export function ledgerResponseOK(data){
+ // Account TRs may report query completion separately from market-data TRs.
+ // Require the exact completion notice and expected block for this extra code.
+ return typeof data.rsp_cd==='string'&&(/^0{1,6}$/.test(data.rsp_cd)||data.rsp_cd==='00136'&&typeof data.rsp_msg==='string'&&/^조회가\s*완료되었습니다[.!]?$/.test(data.rsp_msg.trim())&&Array.isArray(data.CDPCQ04700OutBlock3));
+}
 async function json(response,lossless=false){check(response.ok,'LS_ACCOUNT_UNAVAILABLE');const text=await response.text();check(text.length<1500000,'LS_ACCOUNT_RESPONSE_LIMIT');try{return lossless?JSON.parse(text,(_key,value,context)=>{if(typeof value!=='number')return value;check(typeof context?.source==='string','LS_ACCOUNT_LOSSLESS_JSON_REQUIRED');return context.source;}):JSON.parse(text);}catch{throw Error('LS_ACCOUNT_RESPONSE_INVALID');}}
 export async function tokenForAccount(env,fetcher){
  check(env.LS_ACCOUNT_APP_KEY&&env.LS_ACCOUNT_APP_SECRET&&env.LS_ACCOUNT_NO,'LS_ACCOUNT_NOT_CONFIGURED');
@@ -26,7 +31,14 @@ export async function accountPage(env,{job,token,fetcher}){
  const ledger=c.mode==='CDPCQ04700_LEDGER_V1';
  const body=ledger?null:{...(c.staticInput||{}),[c.inputFields.account]:env.LS_ACCOUNT_NO,[c.inputFields.password]:env.LS_ACCOUNT_PASSWORD,[c.inputFields.from]:job.from.replaceAll('-',''),[c.inputFields.to]:job.to.replaceAll('-','')};
  const response=await fetcher(base+'/stock/accno',{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:c.tr,tr_cont:job.continuation?.flag||'N',tr_cont_key:job.continuation?.key||''},body:JSON.stringify(ledger?ledgerRequest(job):{[c.tr+'InBlock1']:body})});
- const data=await json(response,ledger);check(ledger?typeof data.rsp_cd==='string'&&/^0{1,6}$/.test(data.rsp_cd):c.successCodes.includes(data.rsp_cd),'LS_ACCOUNT_TR_FAILED');const rows=data[c.rowsBlock];check(Array.isArray(rows)&&rows.length<=c.pageLimit,'LS_ACCOUNT_RESPONSE_INVALID');
+ const data=await json(response,ledger);
+ if(!(ledger?ledgerResponseOK(data):c.successCodes.includes(data.rsp_cd))){
+  const error=Error('LS_ACCOUNT_TR_FAILED');
+  // Never forward rsp_msg: it can contain account details. Codes only.
+  if(typeof data.rsp_cd==='string'&&/^(?:[0-9]{4,6}|[A-Z]{2,8}[0-9]{3,8})$/.test(data.rsp_cd))error.providerCode=data.rsp_cd;
+  throw error;
+ }
+ const rows=data[c.rowsBlock];check(Array.isArray(rows)&&rows.length<=c.pageLimit,'LS_ACCOUNT_RESPONSE_INVALID');
  let trades=[],ledgerRows;
  if(ledger){ledgerRows=rows.map(row=>normalizeLedgerRow(row,env));check(ledgerRows.every(r=>r.date>=job.from&&r.date<=job.to),'LS_ACCOUNT_RANGE_MISMATCH');}
  else{
