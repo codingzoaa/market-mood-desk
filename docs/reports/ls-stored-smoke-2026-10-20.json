@@ -1,0 +1,9 @@
+{
+  "testedAt": "2026-10-20T11:18:59.341Z",
+  "testDateKST": "2026-10-20",
+  "endpoint": "https://market-note-ls-api.kby0991.workers.dev/api/dashboard",
+  "upstreamLSCalls": 0,
+  "results": [],
+  "status": "FETCH_FAILED",
+  "reason": "NETWORK_OR_ACCESS_FAILURE"
+}

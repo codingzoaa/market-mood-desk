@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:ls-stored": "node scripts/ls-stored-smoke.mjs"
   },
   "dependencies": {
     "react": "19.2.6",
