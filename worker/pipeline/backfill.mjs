@@ -1,4 +1,5 @@
 import {canonical,hash,ensure,iso,validDate,slots as validSlots} from './util.mjs';
+import {reserveHistoryWrites} from './write-budget.mjs';
 import {insertHistory} from './history.mjs';
 export const PROVIDER_REVIEW={t8412:{verified:false},t8452:{verified:false}};
 export async function planBackfill(db,{symbols,dates,slots,contractHash,tr}){
@@ -27,6 +28,7 @@ export async function backfillStep(db,{jobId,approval,contract,adapter,now=new D
  if(job.status==='PARTIAL')return {done:false,reused:true,error:'GAPS_REMAIN'};
  ensure(Number.isInteger(approval.maxPages)&&job.pages<approval.maxPages,'BACKFILL_PAGE_BUDGET');
  if(job.next_attempt_at&&job.next_attempt_at>iso(now))return {waiting:true};
+ const guard=await reserveHistoryWrites(db,{rows:1000});if(!guard.allowed){db.meter.count('historyWriteLimitWarnings');return {done:false,error:'HISTORY_WRITE_LIMIT'};}
  // Claim one page per invocation; persisted lease throttles retries and concurrent runners.
  const claimed=await db.query(`UPDATE backfill_jobs SET status='RUNNING',attempts=attempts+1,next_attempt_at=? WHERE id=? AND (next_attempt_at IS NULL OR next_attempt_at<=?) AND status!='DONE' RETURNING id`,[new Date(Date.parse(now)+60000).toISOString(),jobId,iso(now)]);if(!claimed.length)return {waiting:true};
  try{

@@ -10,7 +10,7 @@ const date='2026-10-20',previous=[];for(let d=new Date('2026-06-01T00:00:00Z');d
 const past20=previous.slice(-20),history=previous.slice(-80).map((date,i)=>({date,availableAt:date+'T15:31:00+09:00',source:'LS-shaped synthetic fixture',final:true,adjusted:true,close:100+i,open:100+i-.1,high:100+i+.5,low:100+i-.5,turnoverKRW:100,cumulative:{'1000':50}}));
 const dbFor=store=>new PipelineDB(store,new Meter(),24);
 const reports=[];
-for(const n of [200,500,1000]){
+for(const n of [100]){
  const store=new SQLiteD1(),meter=new Meter();const empty=store.bytes(),symbols=Array.from({length:n},(_,i)=>String(i+1).padStart(6,'0'));
  const raw=(d,s,slot)=>({date:d,symbol:s,slot,observed_at:`${d}T${slot.slice(0,2)}:${slot.slice(2)}:01.000+09:00`,available_at:`${d}T${slot.slice(0,2)}:${slot.slice(2)}:30.000+09:00`,source_quote_at:null,price:100+Number(s)%100,turnover_krw:1000+Number(s)*Number(slot),market:'KOSPI',name:'분석종목 '+s,source:'LS:t1463:KRX',timing_basis:'RECEIPT_TIME'});
  const start=performance.now();for(const slot of slots){const d=dbFor(store);await insertHistory(d,symbols.map(s=>raw(past20.at(-1),s,slot)));meter.rowsWritten+=d.meter.rowsWritten;}

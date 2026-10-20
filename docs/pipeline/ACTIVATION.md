@@ -7,7 +7,7 @@
 3. 기본 플래그는 미설정(off). 승인 후 `ENABLE_HISTORY_PIPELINE=true`를 스테이징에서만 켠다. 기존 LS 응답을 재활용하고 최신 snapshot 보존, append 실패, daily quota 영향, 숫자/단위/시각을 확인한다. 쿼리·CPU·storage를 Cloudflare meta와 플랫폼 지표에서 실측한다.
 4. 장전 cache를 위해 별도08:50 KST Cron `50 23 * * SUN-THU`를 제안한다. 기존2개 정규장 Cron은 유지한다. 이 추가 Cron은 D1만 읽고 LS를 호출하지 않는다. 실제 스케줄/Trigger 개수 한도 검토·승인 전 Wrangler에 추가하지 않았다. 캘린더 부족 또는 기준값 미생성 시 장중에 재집계/LS 재호출하지 않고 null을 반환한다.
 5. 선택적으로 private R2 bucket을 `HISTORY_ARCHIVE`로 binding하고 `ENABLE_R2_ARCHIVE=true`를 승인 후 설정한다. 아카이브/정리 runner는 내부관리 작업으로만 연결한다. 현재 공개 GET이나 정규장 core가 R2 쓰기/백필/삭제를 실행하지 않는다. 테스트 runner의 MemoryR2는 실제 R2가 아니다.
-6. raw archive는 한 페이지/호출씩 재개하고, 전체 manifest 검증 전에는 삭제하지 않는다. replay도 별도 압축 frame/context를 읽어 검증한다. R2 미사용은30완료 거래일+당일 보존, 사용시20완료 거래일+당일 hot set +30일 분석 cache를 보존한다.
+6. raw archive는 한 페이지/호출씩 재개하고, 전체 manifest 검증 전에는 삭제하지 않는다. replay도 별도 압축 frame/context를 읽어 검증한다. R2 유무와 관계없이20완료 거래일+당일 raw hot set, 별도30일 분석 cache, 독립 daily_bars의90완료 거래일+당일을 보존한다. 일봉 입력/정리 runner와70k 쓰기 예산을 검증한다.
 7. 실제 백필은 PROVIDER-REVIEW.md의 미검증 항목을 해결하고, 대상 종목·기간·페이지 수·rate·시장·총 예상 호출량·실패 정책을 별도 승인받는다. `t8412/t8452` 공식 세부 계약이 확인되지 않아 이번 PR만으로 실행할 수 없다.
 8. 성능이 필요한 점수 batch는 분할 스케줄러/유료 Cron에서 관리하고 버전별 context/frame 보존을 검증한다. 기존15:30 종료 정책 변경이나 확정 OHLC 확보를 위한 추가 호출은 별도 승인 대상이다.
 

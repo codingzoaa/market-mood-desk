@@ -10,7 +10,7 @@
 | 기존 수집 재사용 | core LS 응답의 수신 시각을 기록하고 기존 snapshot UPSERT 성공 이후 optional hook 실행 | `ENABLE_HISTORY_PIPELINE=true`, 별도 스키마 승인 |
 | 5분 이력 | `(date,symbol,slot)` WITHOUT ROWID PK, JSON 한 바인딩으로 batch INSERT OR IGNORE | 초기 과거 이력은 없음, 미래 수집부터 축적 |
 | 장전 RVOL | 검증된 직전20거래일의 동일 슬롯 SUM/COUNT를 날짜·버전별 동결 | 실제 캘린더와 추가08:50 유지보수 Cron 승인 |
-| 신규 상위 종목 | 표본 수19이하/분모0/슬롯·버전 불일치는 null | 전일 최종 대금이나0으로 채우지 않음 |
+| 신규 상위 종목 | API의 BACKFILL_REQUIRED 상태 + 표본 수19이하/분모0/슬롯·버전 불일치는 null | 전일 최종 대금이나0으로 채우지 않음 |
 | 엔진 입력 | 누락 필드 보고, 캐시 RVOL, 별도 확정 OHLC/벤치마크 주입, 분리된 INTRADAY/EOD 호출 가능 | 이전 PR의 실제 필수 데이터 확보는 여전히 필요 |
 | 백필 | gaps-only 계획, 검토·승인 잠금, 1페이지/실행, rate lease, 응답 checkpoint, 진행/안전 오류/해시 | t8412/t8452의 실제 스키마·한도·제공 범위 미검증, 실제 adapter 없음 |
 | R2 | 날짜별 gz JSON 분할, 원본 건수/해시/가용 시각, read-back 검증 및 재개 | 선택 binding/플래그/비용 검토 승인 |
@@ -33,7 +33,7 @@ core/details 계측은 기존 D1 호출의 meta를 수집한다. 공급자 호�
 
 - history PK `(date,symbol,slot)`는 거래일별 아카이브/삭제/특정 종목 조회를 지원한다. `history_symbol_slot_date(symbol,slot,date)`만 추가해 동일 시각 조회를 줄인다. 인덱스에는 추가 쓰기 비용이 있다.
 - 한5분 슬롯에서 같은 종목은 첫 관측만 저장한다. 동일 키 재시도는 INSERT OR IGNORE, 수정 값으로 과거 관측을 덮어쓰지 않는다. 임의 revision을 기존 키에 끼워 넣지 않는다.
-- capture 최대1,000행/JSON1.5MB, JSON 바인딩1개, 트랜잭션 batch. 원래 core 수집은 현재 시장별100개 범위다. 500/1,000은 저장 계층의 용량 시나리오이며 기존 LS 수집 범위를 변경하지 않았다.
+- 최신 시세의 core 수집은 시장별 최대100개를 유지한다. 이력만 각 응답에서 거래대금 내림차순·동률 symbol 순으로 KOSPI50 + KOSDAQ50개를 선택한다. snapshot 객체는 변경하지 않는다. live history는 최대100행이며 백필 bulk는 최대1,000행/JSON1.5MB, JSON 바인딩1개·트랜잭션 batch다.
 - `PipelineDB`는 invocation별 SQL 예산(기본24개, 수집 hook12개, read8개, preopen12개)을 강제한다. 기존 수집의 쿼리도 합산해 플랜 한도와 비교해야 한다. SQL batch도 statement별로 예산 차감한다.
 - R2 원시 archive는 실행당 최대1,000행(기본500) 한 페이지만 처리하고 cursor/part/lease를 저장한다. 모든 원본을 메모리에 올리거나 한 번의 Cron에서 전체 날짜를 반복하지 않는다.
 - 백필 계획은 실행당 최대20종목×20일×79슬롯. 실제 페이지는 최대1,000행·3거래일·1.5MB. 더 큰 범위는 외부 작업 스케줄러가 분할해야 한다.
@@ -49,15 +49,20 @@ core/details 계측은 기존 D1 호출의 meta를 수집한다. 공급자 호�
 
 현재 live의 RECEIPT_TIME 표본과 향후 SOURCE_TIME 백필은 동일하다고 추정하지 않는다. 한 캐시 기간에 두 basis가 섞이면 계산을 막는다. source-time 제공원으로 전환하려면 독립 버전과 원천 계약 검증이 필요하다. cached Baseline과 기존20일 원시 계산은 같은 산식이며 캐시 증거가 잘못되면 원시 경로로 우회하지 않고 null이다.
 
-## 4. 20일 원시 vs R2 없이30일 분석
+## 4. 원시20거래일 + 당일, 독립 일봉 저장소
 
-두 요구를 안전하게 함께 만족하려면 모드를 구분해야 한다.
+- R2 유무와 관계없이 raw hot set은 **당일을 제외한 이전20완료 거래일 + 당일**이다. 당일은20일 중 하나가 아니다. 실제 검증 캘린더로21번째 과거 거래일만 삭제 대상으로 고른다.
+- 성공한 live history hook은 검증된 캘린더로 오래된 날짜 하나에서 최대1,000행을 정리한다. 초기 backlog는 후속 회차에서 나눠 지운다. 캘린더 부족은 retentionDeferred로 남기며 임의 평일 계산으로 삭제하지 않는다.
+- R2 사용 시 오래된 날짜의 sealed/manifest 검증과 삭제 직전 read-back/hash 확인이 필요하다. 장애 시 삭제를 중단하므로 예외적으로 backlog가20일을 넘을 수 있다. 이 경우 스토리지 경고와 복구가 우선이다.
+- RVOL cache·압축 score frame/context는 별도로30완료 거래일을 보관한다. INTRADAY/EOD는 같은 날짜·시각·버전에서도 독립 키다. R2 없이도 이미 저장한30일 score를 재현할 수 있지만30일 전 원시 분봉 재조회까지 보장하지는 않는다.
+- `daily_bars`는 raw5m와 별개 테이블이다. `storeDailyBars`는 이미 확보한 확정·수정 여부가 명시된 OHLC/거래대금만 받는다. `loadDailyBars`는 target 이전, asOf 당시 알려진 버전만 최대90일 반환하며 그대로 `engineInput({history:{symbol:bars}})`에 주입한다. 신규 공급자 호출이나5분 폴링으로 OHLC를 합성하지 않는다.
+- 일봉 정리는 별도 `pruneDailyBars`로 과거90검증 거래일 + 당일을 유지한다.60일 RS/이동평균 입력과30일 재현 창의 lookback을 분봉 삭제와 독립적으로 보존한다. 일봉 ingestion/정리 runner 연결은 운영 승인 대상이며 실제 원천 확보는 여전히 필요하다.
 
-- R2 사용: 직전20완료 거래일 + 당일을 D1 원시 hot set으로 유지. 그보다 오래된 날짜는 sealed 상태이고 R2 manifest 검증 기록이 있어야 정리한다. 삭제 직전 manifest 접근/해시를 다시 확인하며 R2 장애면 삭제하지 않는다.
-- R2 미사용: 직전30완료 거래일 + 당일을 D1에 유지한다. R2 없이20일을 강제로 지우면서30일 원시 조회를 보장할 수는 없기 때문이다. 이 차이는 명시적인 안전 보관 정책이다.
-- frozen RVOL·압축 점수 frame/context는 별도로30완료 거래일 보관 가능. 오래된 R2-backed frame은 R2 원본/context를 다시 검증한 뒤에만 삭제하며, R2 미사용 모드의 명시된30일 분석 창 밖은 제한된 batch로 정리한다.
-- 원시/점수/context 삭제 모두 한 번에 제한된 행만 처리한다. 지워지지 않는 R2 장애에서는 용량이 증가할 수 있으므로 경고·업무 중단/스토리지 확보가 필요하다. 공간을 맞추려고 검증되지 않은 데이터를 삭제하지 않는다.
-- 확정 daily OHLC/60일 RS 자료는 이 원시5분 hot set과 다르다. 기존 LS 데이터만으로 이를 새로 만들어 넣지 않는다.
+### 일일 쓰기 보호
+
+`history_write_budget`은 UTC 일자별 원자적 UPSERT 예약으로 동시에 실행되는 hook/백필의 추가 쓰기를 조정한다.100종목×79슬롯의 raw/index 생성·만료 쓰기, cache/삭제/일봉/계측 비용과 core 여유4,000행을 미리 반영하고, 실제 non-capture 누적 쓰기가 여유보다 커지면 그 값으로 대체한다. 예측이70,000행을 넘으면 live history/백필/추가 raw 정리를 건너뛰고 HISTORY_WRITE_LIMIT·경고 카운터를 반환한다. 최신 snapshot은 이 검사 전에 이미 저장된다. 테이블/계측 조회 실패 시 추가 저장은 fail-closed다.
+
+예약은 보수적으로 중복 재시도도 비용으로 잡고 실패 예약도 돌려주지 않는다. 알려지지 않은 다른 Worker/계정 쓰기와 실제 인덱스 과금 차이를 완벽하게 감지하는 Cloudflare quota API는 아니다. 계정 전체 지표를 별도로 모니터링해야 하며, archive/maintenance job에도 별도 예산·플랫폼 한도 확인이 필요하다. 기존 시세를 우선 보호하기 위한 애플리케이션 정책 한도70k는 Free의100k보다 낮다.
 
 ## 5. 압축 점수 재현
 

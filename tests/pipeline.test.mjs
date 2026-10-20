@@ -36,10 +36,10 @@ test('cache does not count unavailable backfill or treat missing trading dates a
  base.samples=20;base.sumTurnover=2000;const valid=engineInput({date,asOf:date+'T10:00:59+09:00',rows:[row()],calendar:input.calendar,entity:input.entity,baselines:[base]}).input;assert.equal(relativeVolume(valid,'INTRADAY'),1);base.availableAt=date+'T11:00:00+09:00';assert.equal(relativeVolume(valid,'INTRADAY'),null);
  }finally{db.close();}
 });
-test('R2 verification failure blocks retention, retries resume sealed immutable pages, no R2 keeps thirty days',async()=>{
+test('R2 verification failure blocks retention, retries resume sealed immutable pages, no R2 keeps twenty previous days',async()=>{
  const db=new SQLiteD1(),bucket=new MemoryR2();try{const previous=days(40);for(const d of previous)await insertHistory(pd(db),[row(d)]);const oldest=previous[0];bucket.corrupt=true;await assert.rejects(archiveDay(pd(db),bucket,{date:oldest,now:date+'T10:00:00+09:00',pageSize:1}));let deleted=await pruneHistory(pd(db),{target:date,verifiedDays:previous,r2Enabled:true,bucket});assert.equal(deleted.deleted,0);
  bucket.corrupt=false;let result;for(let i=0;i<4;i++){result=await archiveDay(pd(db),bucket,{date:oldest,now:date+`T10:0${i+2}:00+09:00`,pageSize:1});if(result.done)break;}assert.equal(result.done,true);assert.equal(result.manifest.count,1);await assert.rejects(insertHistory(pd(db),[row(oldest)]),/SEALED/);deleted=await pruneHistory(pd(db),{target:date,verifiedDays:previous,r2Enabled:true,bucket});assert.equal(deleted.deleted,1);
- for(let i=0;i<20;i++)await pruneHistory(pd(db),{target:date,verifiedDays:previous,r2Enabled:false});const retained=await db.prepare('SELECT COUNT(DISTINCT date) AS n FROM history_5m').first();assert.equal(retained.n,30);
+ for(let i=0;i<20;i++)await pruneHistory(pd(db),{target:date,verifiedDays:previous,r2Enabled:false});const retained=await db.prepare('SELECT COUNT(DISTINCT date) AS n FROM history_5m').first();assert.equal(retained.n,20);
  }finally{db.close();}
 });
 test('replay frame restores canonical engine inputs and scores after raw observations are removed',async()=>{

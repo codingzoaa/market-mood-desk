@@ -1,7 +1,14 @@
 import {validDate,stamp,iso,kstDate,minute,slotOf,slots,ensure} from './util.mjs';
+/** History membership only; never mutate or narrow the dashboard snapshot. */
+export function historyUniverse(stocks){
+ const seen=new Set();
+ return ['KOSPI','KOSDAQ'].flatMap(market=>stocks.filter(s=>s.market===market&&Number.isSafeInteger(s.turnoverKRW)&&s.turnoverKRW>=0)
+  .sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol))
+  .filter(s=>{if(seen.has(s.symbol))return false;seen.add(s.symbol);return true;}).slice(0,50));
+}
 export function captureRows(snapshot,observedAt={},availableAt=new Date().toISOString()){
  ensure(validDate(snapshot.date)&&stamp(availableAt),'INVALID_CAPTURE');
- const seen=new Set();return snapshot.stocks.map(s=>{
+ const seen=new Set();return historyUniverse(snapshot.stocks).map(s=>{
   const at=observedAt[s.symbol]||snapshot.asOf;
   ensure(/^\d{6}$/.test(s.symbol)&&!seen.has(s.symbol)&&['KOSPI','KOSDAQ'].includes(s.market),'INVALID_SYMBOL');seen.add(s.symbol);
   ensure(stamp(at)&&kstDate(at)===snapshot.date&&minute(at)>='0900'&&minute(at)<='1530'&&Date.parse(at)<=Date.parse(availableAt),'INVALID_CAPTURE_TIME');

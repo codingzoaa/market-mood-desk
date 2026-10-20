@@ -20,6 +20,6 @@ export async function prepareRvolDay(db,{target,cutoff,version=VERSION}){
 export async function readBaselines(db,{target,symbols,slot,cutoff,version=VERSION}){
  ensure(validDate(target)&&symbols.length<=1000&&symbols.every(s=>/^\d{6}$/.test(s)),'INVALID_BASELINE_QUERY');
  const day=await db.query('SELECT * FROM rvol_days WHERE target_date=? AND version=? AND ready=1 AND cutoff<=?',[target,version,iso(cutoff)]);
- if(!day.length)return {day:null,rows:[]};
- const rows=await db.query(`SELECT * FROM rvol_baselines WHERE target_date=? AND version=? AND slot=? AND symbol IN(SELECT value FROM json_each(?))`,[target,version,slot,JSON.stringify([...new Set(symbols)])]);return {day:day[0],rows};
+ if(!day.length)return {day:null,rows:[],historyStatus:symbols.map(symbol=>({symbol,status:'BACKFILL_REQUIRED',validSamples:0,requiredSamples:20}))};
+ const rows=await db.query(`SELECT * FROM rvol_baselines WHERE target_date=? AND version=? AND slot=? AND symbol IN(SELECT value FROM json_each(?))`,[target,version,slot,JSON.stringify([...new Set(symbols)])]);return {day:day[0],rows,historyStatus:[...new Set(symbols)].map(symbol=>{const samples=rows.find(r=>r.symbol===symbol)?.samples||0;return {symbol,status:samples===20?'READY':'BACKFILL_REQUIRED',validSamples:samples,requiredSamples:20};})};
 }

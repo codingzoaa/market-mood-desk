@@ -4,91 +4,31 @@
   "notes": "RVOL aggregation measures20 sessions only for10:00;19 of them contain just that slot. Scores are a complete synthetic fixture. CPU is Node process CPU, not Workers CPU. SQLite rows_written excludes index billing. No production calls.",
   "reports": [
     {
-      "stocks": 200,
-      "rawFullSessionRows": 15800,
-      "rawFullSessionInsertionMs": 2490,
-      "sqliteFileGrowthBytes": 3145728,
-      "sqliteBytesPerRawRow": 199.1,
-      "rvolBenchmarkRows": 19600,
-      "rvolAggregationMs": 22.17,
-      "scoreBatchWallMs": 1294.58,
-      "scoreBatchProcessCpuMs": 1328.78,
+      "stocks": 100,
+      "rawFullSessionRows": 7900,
+      "rawFullSessionInsertionMs": 1332.87,
+      "sqliteFileGrowthBytes": 1544192,
+      "sqliteBytesPerRawRow": 195.5,
+      "rvolBenchmarkRows": 9800,
+      "rvolAggregationMs": 12.46,
+      "scoreBatchWallMs": 521.73,
+      "scoreBatchProcessCpuMs": 558.55,
       "scoreStatusCounts": {
-        "PROVISIONAL": 200
+        "PROVISIONAL": 100
       },
-      "replayCompressedBytes": 7339,
-      "replayContextBytes": 34627,
+      "replayCompressedBytes": 4391,
+      "replayContextBytes": 19199,
       "rawArchive": {
         "done": true,
-        "invocations": 32,
-        "wallMs": 284.36,
-        "objects": 33,
+        "invocations": 16,
+        "wallMs": 145.21,
+        "objects": 17,
         "requests": {
-          "put": 33,
-          "get": 33,
-          "head": 33
+          "put": 17,
+          "get": 17,
+          "head": 17
         },
-        "compressedBytes": 250169
-      },
-      "cloudflareBilledRowsRead": null,
-      "cloudflareBilledRowsWritten": null
-    },
-    {
-      "stocks": 500,
-      "rawFullSessionRows": 39500,
-      "rawFullSessionInsertionMs": 4800.2,
-      "sqliteFileGrowthBytes": 7950336,
-      "sqliteBytesPerRawRow": 201.3,
-      "rvolBenchmarkRows": 49000,
-      "rvolAggregationMs": 61.9,
-      "scoreBatchWallMs": 3482.78,
-      "scoreBatchProcessCpuMs": 3577.67,
-      "scoreStatusCounts": {
-        "PROVISIONAL": 500
-      },
-      "replayCompressedBytes": 16032,
-      "replayContextBytes": 80459,
-      "rawArchive": {
-        "done": true,
-        "invocations": 80,
-        "wallMs": 637.21,
-        "objects": 80,
-        "requests": {
-          "put": 80,
-          "get": 80,
-          "head": 80
-        },
-        "compressedBytes": 633401
-      },
-      "cloudflareBilledRowsRead": null,
-      "cloudflareBilledRowsWritten": null
-    },
-    {
-      "stocks": 1000,
-      "rawFullSessionRows": 79000,
-      "rawFullSessionInsertionMs": 8660.59,
-      "sqliteFileGrowthBytes": 15900672,
-      "sqliteBytesPerRawRow": 201.3,
-      "rvolBenchmarkRows": 98000,
-      "rvolAggregationMs": 112.19,
-      "scoreBatchWallMs": 6759.65,
-      "scoreBatchProcessCpuMs": 6872.4,
-      "scoreStatusCounts": {
-        "PROVISIONAL": 1000
-      },
-      "replayCompressedBytes": 30396,
-      "replayContextBytes": 156884,
-      "rawArchive": {
-        "done": true,
-        "invocations": 159,
-        "wallMs": 1338.5,
-        "objects": 159,
-        "requests": {
-          "put": 159,
-          "get": 159,
-          "head": 159
-        },
-        "compressedBytes": 1281694
+        "compressedBytes": 123335
       },
       "cloudflareBilledRowsRead": null,
       "cloudflareBilledRowsWritten": null

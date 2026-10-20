@@ -68,3 +68,14 @@ CREATE TABLE IF NOT EXISTS replay_archives (
  context_hash TEXT NOT NULL, verified_at TEXT NOT NULL,
  PRIMARY KEY(date,as_of,mode,version)
 ) WITHOUT ROWID;
+
+-- Optional-history write reservations use UTC billing days, not KRX trading dates.
+CREATE TABLE IF NOT EXISTS history_write_budget (
+ utc_date TEXT PRIMARY KEY, reserved INTEGER NOT NULL
+) WITHOUT ROWID;
+-- Separate, versioned daily bars: never pruned by five-minute retention.
+CREATE TABLE IF NOT EXISTS daily_bars (
+ symbol TEXT NOT NULL, date TEXT NOT NULL, available_at TEXT NOT NULL,
+ source TEXT NOT NULL, version TEXT NOT NULL, payload TEXT NOT NULL,
+ PRIMARY KEY(symbol,date,available_at,version)
+) WITHOUT ROWID;
