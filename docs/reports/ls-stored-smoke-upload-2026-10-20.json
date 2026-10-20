@@ -1,0 +1,398 @@
+{
+  "testedAt": "2026-10-20T11:25:21.907Z",
+  "testDateKST": "2026-10-20",
+  "endpoint": "https://market-note-ls-api.kby0991.workers.dev/api/dashboard",
+  "upstreamLSCalls": 0,
+  "status": "READ_OK",
+  "results": [
+    {
+      "symbol": "000660",
+      "name": "SK하이닉스",
+      "quoteReadSuccess": true,
+      "price": 1196000,
+      "changePct": -6.34,
+      "turnoverKRW": 4170300000000,
+      "asOf": "2026-10-20T10:34:44.805Z",
+      "source": "LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강",
+      "sourceQuoteAt": null,
+      "score": null,
+      "status": "INSUFFICIENT_DATA",
+      "missingFields": [
+        "sourceQuoteAt",
+        "previousClose",
+        "open",
+        "high",
+        "low",
+        "finality",
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector",
+        "verifiedTradingCalendar",
+        "history.adjustedDailyBars",
+        "rvolBaseline.previous20TradingDaysSameSlot",
+        "bars",
+        "sectorId",
+        "sectorScore"
+      ],
+      "engineStatus": "INVALIDATED",
+      "engineIssues": [
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector"
+      ],
+      "methodologyVersion": "leadership-v2.0-experimental-1",
+      "engineInput": {
+        "date": "2026-10-20",
+        "asOf": "2026-10-20T10:34:44.805Z",
+        "source": "LS stored observations",
+        "universe": "SAMPLED_UNIVERSE",
+        "isTradingDay": null,
+        "calendar": {
+          "verified": false,
+          "tradingDays": []
+        },
+        "quotes": [
+          {
+            "symbol": "000660",
+            "name": "SK하이닉스",
+            "market": "KOSPI",
+            "asOf": "2026-10-20T10:34:44.805Z",
+            "availableAt": "2026-10-20T10:34:44.805Z",
+            "price": 1196000,
+            "turnoverKRW": 4170300000000,
+            "history": []
+          }
+        ],
+        "benchmarks": {},
+        "entity": {
+          "type": "STOCK",
+          "id": "000660"
+        }
+      }
+    },
+    {
+      "symbol": "005930",
+      "name": "삼성전자",
+      "quoteReadSuccess": true,
+      "price": 209500,
+      "changePct": -3.9,
+      "turnoverKRW": 3315619000000,
+      "asOf": "2026-10-20T10:34:44.805Z",
+      "source": "LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강",
+      "sourceQuoteAt": null,
+      "score": null,
+      "status": "INSUFFICIENT_DATA",
+      "missingFields": [
+        "sourceQuoteAt",
+        "previousClose",
+        "open",
+        "high",
+        "low",
+        "finality",
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector",
+        "verifiedTradingCalendar",
+        "history.adjustedDailyBars",
+        "rvolBaseline.previous20TradingDaysSameSlot",
+        "bars",
+        "sectorId",
+        "sectorScore"
+      ],
+      "engineStatus": "INVALIDATED",
+      "engineIssues": [
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector"
+      ],
+      "methodologyVersion": "leadership-v2.0-experimental-1",
+      "engineInput": {
+        "date": "2026-10-20",
+        "asOf": "2026-10-20T10:34:44.805Z",
+        "source": "LS stored observations",
+        "universe": "SAMPLED_UNIVERSE",
+        "isTradingDay": null,
+        "calendar": {
+          "verified": false,
+          "tradingDays": []
+        },
+        "quotes": [
+          {
+            "symbol": "005930",
+            "name": "삼성전자",
+            "market": "KOSPI",
+            "asOf": "2026-10-20T10:34:44.805Z",
+            "availableAt": "2026-10-20T10:34:44.805Z",
+            "price": 209500,
+            "turnoverKRW": 3315619000000,
+            "history": []
+          }
+        ],
+        "benchmarks": {},
+        "entity": {
+          "type": "STOCK",
+          "id": "005930"
+        }
+      }
+    },
+    {
+      "symbol": "009150",
+      "name": "삼성전기",
+      "quoteReadSuccess": true,
+      "price": 1128000,
+      "changePct": -3.59,
+      "turnoverKRW": 828114000000,
+      "asOf": "2026-10-20T10:34:44.805Z",
+      "source": "LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강",
+      "sourceQuoteAt": null,
+      "score": null,
+      "status": "INSUFFICIENT_DATA",
+      "missingFields": [
+        "sourceQuoteAt",
+        "previousClose",
+        "open",
+        "high",
+        "low",
+        "finality",
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector",
+        "verifiedTradingCalendar",
+        "history.adjustedDailyBars",
+        "rvolBaseline.previous20TradingDaysSameSlot",
+        "bars",
+        "sectorId",
+        "sectorScore"
+      ],
+      "engineStatus": "INVALIDATED",
+      "engineIssues": [
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector"
+      ],
+      "methodologyVersion": "leadership-v2.0-experimental-1",
+      "engineInput": {
+        "date": "2026-10-20",
+        "asOf": "2026-10-20T10:34:44.805Z",
+        "source": "LS stored observations",
+        "universe": "SAMPLED_UNIVERSE",
+        "isTradingDay": null,
+        "calendar": {
+          "verified": false,
+          "tradingDays": []
+        },
+        "quotes": [
+          {
+            "symbol": "009150",
+            "name": "삼성전기",
+            "market": "KOSPI",
+            "asOf": "2026-10-20T10:34:44.805Z",
+            "availableAt": "2026-10-20T10:34:44.805Z",
+            "price": 1128000,
+            "turnoverKRW": 828114000000,
+            "history": []
+          }
+        ],
+        "benchmarks": {},
+        "entity": {
+          "type": "STOCK",
+          "id": "009150"
+        }
+      }
+    },
+    {
+      "symbol": "005935",
+      "name": "삼성전자우",
+      "quoteReadSuccess": true,
+      "price": 163200,
+      "changePct": -4.51,
+      "turnoverKRW": 503852000000,
+      "asOf": "2026-10-20T10:34:44.805Z",
+      "source": "LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강",
+      "sourceQuoteAt": null,
+      "score": null,
+      "status": "INSUFFICIENT_DATA",
+      "missingFields": [
+        "sourceQuoteAt",
+        "previousClose",
+        "open",
+        "high",
+        "low",
+        "finality",
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector",
+        "verifiedTradingCalendar",
+        "history.adjustedDailyBars",
+        "rvolBaseline.previous20TradingDaysSameSlot",
+        "bars",
+        "sectorId",
+        "sectorScore"
+      ],
+      "engineStatus": "INVALIDATED",
+      "engineIssues": [
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector"
+      ],
+      "methodologyVersion": "leadership-v2.0-experimental-1",
+      "engineInput": {
+        "date": "2026-10-20",
+        "asOf": "2026-10-20T10:34:44.805Z",
+        "source": "LS stored observations",
+        "universe": "SAMPLED_UNIVERSE",
+        "isTradingDay": null,
+        "calendar": {
+          "verified": false,
+          "tradingDays": []
+        },
+        "quotes": [
+          {
+            "symbol": "005935",
+            "name": "삼성전자우",
+            "market": "KOSPI",
+            "asOf": "2026-10-20T10:34:44.805Z",
+            "availableAt": "2026-10-20T10:34:44.805Z",
+            "price": 163200,
+            "turnoverKRW": 503852000000,
+            "history": []
+          }
+        ],
+        "benchmarks": {},
+        "entity": {
+          "type": "STOCK",
+          "id": "005935"
+        }
+      }
+    },
+    {
+      "symbol": "006400",
+      "name": "삼성SDI",
+      "quoteReadSuccess": true,
+      "price": 550000,
+      "changePct": -7.09,
+      "turnoverKRW": 399793000000,
+      "asOf": "2026-10-20T10:34:44.805Z",
+      "source": "LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강",
+      "sourceQuoteAt": null,
+      "score": null,
+      "status": "INSUFFICIENT_DATA",
+      "missingFields": [
+        "sourceQuoteAt",
+        "previousClose",
+        "open",
+        "high",
+        "low",
+        "finality",
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector",
+        "verifiedTradingCalendar",
+        "history.adjustedDailyBars",
+        "rvolBaseline.previous20TradingDaysSameSlot",
+        "bars",
+        "sectorId",
+        "sectorScore"
+      ],
+      "engineStatus": "INVALIDATED",
+      "engineIssues": [
+        "OUTSIDE_SESSION",
+        "VERIFIED_TRADING_CALENDAR",
+        "ALIGNED_CURRENT_QUOTES",
+        "BENCHMARK_KOSPI",
+        "rs",
+        "rvol",
+        "structure",
+        "persistence",
+        "sector"
+      ],
+      "methodologyVersion": "leadership-v2.0-experimental-1",
+      "engineInput": {
+        "date": "2026-10-20",
+        "asOf": "2026-10-20T10:34:44.805Z",
+        "source": "LS stored observations",
+        "universe": "SAMPLED_UNIVERSE",
+        "isTradingDay": null,
+        "calendar": {
+          "verified": false,
+          "tradingDays": []
+        },
+        "quotes": [
+          {
+            "symbol": "006400",
+            "name": "삼성SDI",
+            "market": "KOSPI",
+            "asOf": "2026-10-20T10:34:44.805Z",
+            "availableAt": "2026-10-20T10:34:44.805Z",
+            "price": 550000,
+            "turnoverKRW": 399793000000,
+            "history": []
+          }
+        ],
+        "benchmarks": {},
+        "entity": {
+          "type": "STOCK",
+          "id": "006400"
+        }
+      }
+    }
+  ],
+  "feedFailed": false,
+  "inputMethod": "USER_UPLOADED_API_RESPONSE",
+  "liveFetchPerformed": false,
+  "inputSHA256": "e5306ca9e4a99d0bffd2e0c54008754620549f11b9dab130643e549a39e06b31"
+}

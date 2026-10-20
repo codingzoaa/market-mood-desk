@@ -1,4 +1,6 @@
 import {pathToFileURL} from 'node:url';
+import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {engineInput} from '../src/pipeline/input.ts';
 import {calculateLeadership} from '../src/analytics/index.ts';
 import {eligibleStocks} from '../src/market.ts';
@@ -49,7 +51,16 @@ export async function run({fetcher=fetch,now=new Date(),limit=5}={}){
   return analyze(JSON.parse(text),{now,limit});
  }catch{return {...base,status:'INVALID_RESPONSE',reason:'BODY_OR_JSON_ERROR'};}
 }
+export async function readInput(path){
+ try{const bytes=await readFile(path);if(bytes.length>6000000)throw Error();return {...analyze(JSON.parse(bytes.toString('utf8'))),inputMethod:'USER_UPLOADED_API_RESPONSE',liveFetchPerformed:false,inputSHA256:createHash('sha256').update(bytes).digest('hex')};}
+ catch{return {testedAt:new Date().toISOString(),status:'INPUT_FILE_FAILED',results:[]};}
+}
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
- const report=await run();console.log(JSON.stringify(report,null,2));
+ let report;
+ if(process.argv[2]==='--input'&&process.argv.length===4){
+  report=await readInput(process.argv[3]);
+ }else if(process.argv.length===2){report=await run();}
+ else{report={status:'INVALID_ARGUMENTS',usage:'npm run test:ls-stored -- --input response.json',results:[]};}
+ console.log(JSON.stringify(report,null,2));
  if(!['READ_OK'].includes(report.status))process.exitCode=1;
 }

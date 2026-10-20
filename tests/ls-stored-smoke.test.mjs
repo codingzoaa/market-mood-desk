@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {analyze,run,ENDPOINT} from '../scripts/ls-stored-smoke.mjs';
+import {analyze,run,ENDPOINT,readInput} from '../scripts/ls-stored-smoke.mjs';
 const now=new Date('2026-10-20T06:00:00Z');
 // Synthetic fixtures are unit tests only, never used by the live CLI.
 const fixture=()=>({schemaVersion:2,snapshots:[{date:'2026-10-20',asOf:now.toISOString(),source:'LS증권 KRX',stocks:Array.from({length:8},(_,i)=>({symbol:String(i+1).padStart(6,'0'),name:'단위 테스트 '+i,market:'KOSPI',price:100,changePct:1,turnoverKRW:100000,themes:[]}))}]});
@@ -25,4 +25,14 @@ test('stale, wrong source, future receipts and malformed prices never score',()=
 });
 test('outside session engine invalidation remains visible and receipt time is not clamped',()=>{
  const f=fixture();f.snapshots[0].asOf='2026-10-20T10:00:00Z';const r=analyze(f,{now:new Date('2026-10-20T11:00:00Z')}).results[0];assert.equal(r.engineStatus,'INVALIDATED');assert.ok(r.engineIssues.includes('OUTSIDE_SESSION'));assert.equal(r.score,null);assert.equal(r.asOf,f.snapshots[0].asOf);
+});
+test('offline CLI reads supplied response, hashes provenance, and never falls back on bad file',async()=>{
+ const {mkdtemp,writeFile,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const dir=await mkdtemp(join(tmpdir(),'stored-ls-test-'));
+ try{
+  const file=join(dir,'response.json');await writeFile(file,JSON.stringify(fixture()));
+  const result=await readInput(file);assert.equal(result.inputMethod,'USER_UPLOADED_API_RESPONSE');assert.equal(result.liveFetchPerformed,false);assert.match(result.inputSHA256,/^[a-f0-9]{64}$/);assert.equal(result.upstreamLSCalls,0);
+  const failed=await readInput(join(dir,'missing.json'));assert.equal(failed.status,'INPUT_FILE_FAILED');
+ }finally{await rm(dir,{recursive:true,force:true});}
 });
