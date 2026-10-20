@@ -81,8 +81,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='overview'&&<>
      {metricsRow()}
      <Correlation/>
-     <div className="summary-bar"><div><span>주도섹터</span><strong>{sectors[0]?.name||'—'}</strong></div><div><span>+4% 강세</span><strong>{snap?stocks.length:'—'}<small>종목</small></strong></div><div><span>강세 대금</span><strong>{snap?money(stocks.reduce((n,s)=>n+s.turnoverKRW,0)):'—'}</strong></div></div>
-     <div className="main-grid">{sectorPanel()}{stockTable(true)}</div>
+
     </>}
     {view==='sectors'&&<>
      <section className="sector-map-launch"><div><strong>업종 전체의 온도</strong><p>코스피·코스닥 업종 히트맵</p></div><button className="btn" onClick={()=>{setHeatBoard('KOSPI');setExpanded('heatmap');}}>코스피<ArrowUpRight size={14}/></button><button className="btn" onClick={()=>{setHeatBoard('KOSDAQ');setExpanded('heatmap');}}>코스닥<ArrowUpRight size={14}/></button></section>
@@ -98,7 +97,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <section className="panel note-panel"><div className="section-title"><h2>이날의 관찰 메모</h2><span className="muted">{demo?'예시 공간 · 저장 안 됨':'날짜별 브라우저 저장'}</span></div><textarea aria-label="날짜별 관찰 메모" placeholder="강세가 확산했는지, 대금이 이어졌는지 기록하세요." value={note} maxLength={3000} onChange={e=>setNote(e.target.value)}/><div className="note-actions"><span>{note.length} / 3,000</span><button className="btn primary" disabled={demo||!snap||busy} onClick={saveNote}><Check size={15}/>메모 저장</button></div></section>
     </>}
     {view==='data'&&dataPage()}
-    <footer><span>MARKETNOTE</span><span>KRX · 15:30까지 수집 · KST</span></footer>
+    {view!=='overview'&&<footer><span>MARKETNOTE</span><span>KRX · 15:30까지 수집 · KST</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}
