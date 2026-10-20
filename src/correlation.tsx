@@ -29,6 +29,7 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  {[0,1,2,3,4].map(i=>{const x=-xr+i*xr/2,y=-yr+i*yr/2;return <g key={i}><line x1={sx(x)} x2={sx(x)} y1={T} y2={H-B} stroke="#e6ebef"/><line x1={L} x2={W-R} y1={sy(y)} y2={sy(y)} stroke="#e6ebef"/><text x={sx(x)} y={H-B+19} textAnchor="middle">{signed(x,1)}</text><text x={L-8} y={sy(y)+4} textAnchor="end">{signed(y,2)}</text></g>;})}
  <line x1={sx(0)} x2={sx(0)} y1={T} y2={H-B} stroke="#919da9"/><line x1={L} x2={W-R} y1={sy(0)} y2={sy(0)} stroke="#919da9"/>
  <text x={L} y={14}>개인 순매수 (조원)</text><text x={W-R} y={H-7} textAnchor="end">코스피 일간 등락률 (%)</text>
+ {stats&&<line clipPath="url(#correlation-plot)" x1={sx(-xr)} x2={sx(xr)} y1={sy(stats.intercept-stats.slope*xr)} y2={sy(stats.intercept+stats.slope*xr)} stroke="#3977e8" strokeWidth="2" strokeDasharray="3 4"/>}
  {points.map(p=><g key={p.date} role="button" tabIndex={0} aria-label={`${p.date} 코스피 ${signed(p.changePct)}%, 개인 ${signed(p.individual,0)}억원`} aria-pressed={p.date===selected.date} onClick={()=>choose(p)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(p);}}}><title>{p.date} · {signed(p.changePct)}% · {signed(p.individual,0)}억원</title><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r="12" fill="transparent"/><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r={p.date===selected.date?6:4} fill={color(p)} stroke={p.date===selected.date?'#172f46':'#62798e'} strokeWidth={p.date===selected.date?2:1}/></g>)}
  <text x={Math.max(L+22,Math.min(W-R-22,sx(selected.changePct)))} y={Math.max(T+12,sy(selected.individual/10000)-12)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>
  </svg>
@@ -46,7 +47,7 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  </g>;})}
  {[0,Math.floor((points.length-1)/2),points.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=><text key={i} x={tx(i)} y={H-B+20} textAnchor="middle">{short(points[i].date)}</text>)}
  <text x={tx(selectedIndex)} y={Math.max(T+12,ty(selected.kospi)-13)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>
- </svg><p className="correlation-help">일봉 {candleCount}일 · 종가만 {points.length-candleCount}일. 빨강은 시가 대비 상승, 파랑은 하락, 회색은 보합입니다. OHLC가 없는 날은 종가 점으로 표시합니다.</p><div className="correlation-legend"><span><i style={{background:'#e7863a'}}/>상승 · 개인 순매수</span><span><i style={{background:'#e8b518'}}/>하락 · 개인 순매도</span><span><i style={{background:'#899db7'}}/>그 외</span></div><p className="footnote">KRX 정규장 마감 기록과 검증된 과거 일봉을 표시합니다. 점 하나는 한 거래일이며 개인 수급은 코스피 현물 기준입니다. 상관관계는 인과관계를 뜻하지 않습니다.</p></>;
+ </svg><p className="correlation-help">일봉 {candleCount}일 · 종가만 {points.length-candleCount}일. 빨강은 시가 대비 상승, 파랑은 하락, 회색은 보합입니다. OHLC가 없는 날은 종가 점으로 표시합니다.</p><div className="correlation-legend"><span><i style={{background:'#e7863a'}}/>상승 · 개인 순매수</span><span><i style={{background:'#e8b518'}}/>하락 · 개인 순매도</span><span><i style={{background:'#899db7'}}/>그 외</span></div><p className="footnote">KRX 정규장 마감 기록과 검증된 과거 일봉을 표시합니다. 점 하나는 한 거래일이며 개인 수급은 코스피 현물 기준입니다. 점선은 선형 추세선입니다. 상관관계는 인과관계를 뜻하지 않습니다.</p></>;
 }
 export default function Correlation(){
  const [open,setOpen]=useState(false),[points,setPoints]=useState<ClosePoint[]>([]),[status,setStatus]=useState(''),[retry,setRetry]=useState(0);
