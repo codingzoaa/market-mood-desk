@@ -27,7 +27,7 @@ export async function checkAccountConnection(env,sessionFactory,now=Date.now()){
   const result={ok:true,received:page.ledgerRows.length,accountVerified:page.ledgerRows.length>0,more:!page.done,checkedAt:new Date(now).toISOString()};
   await writeState(env,'connectionCheck',result);return result;
  }catch(error){
-  const allowed=['LS_ACCOUNT_NOT_CONFIGURED','LS_ACCOUNT_AUTH_FAILED','LS_ACCOUNT_TR_FAILED','LS_ACCOUNT_UNAVAILABLE','LS_ACCOUNT_RESPONSE_INVALID','LS_ACCOUNT_CURSOR_MISSING','LS_ACCOUNT_CURSOR_INVALID','LS_ACCOUNT_RANGE_MISMATCH','LS_ACCOUNT_LOSSLESS_JSON_REQUIRED','SYNC_LEASE_EXPIRED'];
+  const allowed=['LS_ACCOUNT_NOT_CONFIGURED','LS_ACCOUNT_AUTH_FAILED','LS_ACCOUNT_TR_FAILED','LS_ACCOUNT_UNAVAILABLE','LS_ACCOUNT_RESPONSE_INVALID','LS_ACCOUNT_CURSOR_MISSING','LS_ACCOUNT_CURSOR_INVALID','LS_ACCOUNT_RANGE_MISMATCH','LS_ACCOUNT_LOSSLESS_JSON_REQUIRED','SYNC_LEASE_EXPIRED','LEDGER_ACCOUNT_MISMATCH','INVALID_LEDGER_ROW','INVALID_LEDGER_TEXT','INVALID_LEDGER_NUMBER','LEDGER_ID_MISSING','INVALID_LEDGER_DATE'];
   const result={ok:false,error:allowed.includes(error?.message)?error.message:'LS_ACCOUNT_'+phase+'_FAILED',phase,...(typeof error?.providerCode==='string'&&/^(?:[0-9]{4,6}|[A-Z]{2,8}[0-9]{3,8})$/.test(error.providerCode)?{providerCode:error.providerCode}:{}),checkedAt:new Date(now).toISOString()};
   await writeState(env,'connectionCheck',result);return result;
  }finally{

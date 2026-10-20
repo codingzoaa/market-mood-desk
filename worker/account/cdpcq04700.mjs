@@ -17,7 +17,10 @@ export function decimal(value){
 }
 export function normalizeLedgerRow(row,env){
  check(row&&typeof row==='object'&&!Array.isArray(row),'INVALID_LEDGER_ROW');
- check(typeof env.LS_ACCOUNT_NO==='string'&&env.LS_ACCOUNT_NO.length>0&&row.AcntNo===env.LS_ACCOUNT_NO,'LEDGER_ACCOUNT_MISMATCH');
+ const account=value=>{if(typeof value!=='string')return null;const clean=value.trim();return /^[0-9-]{8,24}$/.test(clean)?clean.replaceAll('-',''):clean;};
+ // Formatting only: retain every digit and leading zero; never infer a suffix
+ // or a different account. The returned identifier is still stored encrypted.
+ check(typeof env.LS_ACCOUNT_NO==='string'&&env.LS_ACCOUNT_NO.trim().length>0&&account(row.AcntNo)===account(env.LS_ACCOUNT_NO),'LEDGER_ACCOUNT_MISMATCH');
  const fields={};
  for(const [name,max] of Object.entries(textFields))if(row[name]!==undefined){check(row[name]===null||typeof row[name]==='string'&&row[name].length<=max,'INVALID_LEDGER_TEXT');fields[name]=row[name];}
  for(const name of numberFields)if(row[name]!==undefined)fields[name]=row[name]===null||row[name]===''?row[name]:decimal(row[name]);
