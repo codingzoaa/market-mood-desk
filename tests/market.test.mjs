@@ -28,3 +28,20 @@ test('잘못된 새 지표·ETF 중복·거래대금 단위값을 저장 전에 
  assert.throws(()=>validateSnapshot({...snap,metrics:{usdKrw:'1350'}}));assert.throws(()=>validateSnapshot({...snap,metrics:{nasdaqFutures:NaN}}));
  assert.throws(()=>validateSnapshot({...snap,etfs:[etf,etf]}));assert.throws(()=>validateSnapshot({...snap,etfs:[{...etf,turnoverKRW:-1}]}));assert.throws(()=>validateSnapshot({...snap,etfs:null}));
 });
+
+test('ETF and leveraged/inverse products are removed before turnover limits and never affect sector weights or calendar rotation',async()=>{
+ const {eligibleStocks,turnoverLeaders}=await import('../src/market.ts');
+ const ordinary=[stock('000660',100,5,['반도체']),stock('005930',90,2,['반도체']),stock('010120',80,6,['전력'])];
+ const names=['1Q 미국나스닥100','KTOP 30','KODEX 200','TIGER 반도체','ACE 미국S&P500','RISE 코스닥150','PLUS 고배당주','SOL 조선','HANARO 원자력','KIWOOM 200','KOACT 바이오','TIMEFOLIO AI','WON 배당','BNK 금융','삼성 레버리지 원유 ETN','신한 인버스 2X','상품 LEVERAGED','상품 INVERSE','신규 ETF'];
+ const funds=names.map((name,i)=>({...stock(String(100000+i),1e6,20,['상품']),name}));
+ funds.push({...stock('200001',1e6,20,['상품']),name:'새로운 상품',instrumentType:'ETF'},{...stock('200002',1e6,20,['상품']),name:'분류된 상품',instrumentType:'ETN'});
+ const identified={...stock('200003',1e6,20,['상품']),name:'목록 기반 상품'};const etfs=[{...identified}];const all=[...funds,identified,...ordinary];
+ assert.deepEqual(eligibleStocks(all,etfs).map(s=>s.symbol),ordinary.map(s=>s.symbol));
+ assert.deepEqual(turnoverLeaders(all,2,'ALL',etfs).map(s=>s.symbol),['000660','005930']);
+ assert.deepEqual(gainers(all,2,'ALL',etfs).map(s=>s.symbol),['000660']);
+ const sectors=rankSectors(all,etfs);assert.equal(sectors.some(s=>s.name==='상품'),false);assert.equal(sectors.reduce((v,s)=>v+s.turnoverKRW,0),270);
+ const rotation=rotations([{...snap,stocks:all,etfs}],snap.date,2);assert.deepEqual(rotation.rows.map(s=>s.name),['반도체']);
+ assert.equal(all.length,funds.length+4);assert.equal(all[0].turnoverKRW,1e6);
+ const parsed=validateSnapshot({...snap,stocks:[funds.at(-2)]});assert.equal(parsed.stocks[0].instrumentType,'ETF');
+ assert.throws(()=>validateSnapshot({...snap,stocks:[{...ordinary[0],instrumentType:'unknown'}]}));
+});

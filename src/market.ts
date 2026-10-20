@@ -1,5 +1,5 @@
 import {validateDetails,type MarketDetails} from './market-details.ts';
-export type Stock = { symbol: string; name: string; market: 'KOSPI' | 'KOSDAQ'; themes: string[]; price: number; changePct: number; turnoverKRW: number };
+export type Stock = { symbol: string; name: string; market: 'KOSPI' | 'KOSDAQ'; themes: string[]; price: number; changePct: number; turnoverKRW: number; instrumentType?: 'STOCK' | 'ETF' | 'ETN' };
 export type Etf = { symbol: string; name: string; price: number; changePct: number; turnoverKRW: number };
 export type Metrics = { kospi?: number; kospiChangePct?: number; kosdaq?: number; kosdaqChangePct?: number; nasdaqFutures?: number; nasdaqFuturesChangePct?: number; usdKrw?: number; usdKrwChangePct?: number; sox?: number; soxChangePct?: number; soxRs20d?: number; yield2y?: number; yield10y?: number; yield2yChangeBp?: number; yield10yChangeBp?: number; breadthAbove50?: number; advances?: number; declines?: number; vix?: number; creditSpreadBp?: number; riskFactors?: { breadth: number; vix: number; credit: number; sox: number; treasury: number } };
 export type Snapshot = { date: string; asOf: string; source: string; stocks: Stock[]; etfs?: Etf[]; metrics: Metrics; note: string; details?:MarketDetails; stockAsOf?:string; marketUpdate?:{collectedAt:string;source:string;quoteTimes:{kospi:string;kosdaq:string;nasdaqFutures:string;usdKrw:string}} };
@@ -10,21 +10,28 @@ export function shiftDay(date: string, offset: number) { const d=new Date(date+'
 export function fourWeeks(end: string) { return Array.from({length:28},(_,i)=>shiftDay(end,i-27)); }
 export function riskScore(metrics?: Metrics) { const f=metrics?.riskFactors; return f && FACTORS.every(x=>Number.isFinite(f[x.key])) ? Math.round(FACTORS.reduce((sum,x)=>sum+f[x.key]*x.weight/100,0)*10)/10 : null; }
 export function regime(score: number|null) { return score===null ? {name:'판단 대기',tone:'muted',description:'구성 위험점수 5개가 필요합니다.'} : score>=75 ? {name:'위험 높음',tone:'red',description:'75 이상 · 포지션과 진입 조건을 점검'} : score>=50 ? {name:'경계',tone:'amber',description:'50–75 · 선별적인 관찰'} : {name:'위험 낮음',tone:'green',description:'50 미만 · 주도섹터의 확산 확인'}; }
-export function gainers(stocks: Stock[], topN=50, market='ALL') { return stocks.filter(s=>market==='ALL'||s.market===market).slice().sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol)).slice(0,topN).filter(s=>s.changePct>=4); }
+// Product identifiers take precedence; name rules also cover legacy snapshots/CSV.
+const FUND_BRANDS=/^(?:1Q|KTOP|WOORI|KODEX|TIGER|ACE|KINDEX|RISE|KBSTAR|PLUS|ARIRANG|SOL|HANARO|KIWOOM|KOSEF|KOACT|TIMEFOLIO|TIME|WON|BNK|FOCUS|VITA|TREX|POWER|HK|ITF|MASTER|UNICORN|TRUSTON|마이티|에셋플러스|히어로즈|파워|마이다스)(?=\s|[0-9가-힣])/i;
+export function eligibleStocks(stocks:Stock[],etfs:Etf[]=[]){
+ const fundIds=new Set(etfs.map(s=>s.symbol));
+ return stocks.filter(s=>s.instrumentType!=='ETF'&&s.instrumentType!=='ETN'&&!fundIds.has(s.symbol)&&!FUND_BRANDS.test(s.name.trim())&&!/(?:ETF|ETN|레버리지|인버스|LEVERAGE(?:D)?|INVERSE)/i.test(s.name));
+}
+export function turnoverLeaders(stocks:Stock[],topN=50,market='ALL',etfs:Etf[]=[]){return eligibleStocks(stocks,etfs).filter(s=>market==='ALL'||s.market===market).sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol)).slice(0,topN);}
+export function gainers(stocks: Stock[], topN=50, market='ALL',etfs:Etf[]=[]) { return turnoverLeaders(stocks,topN,market,etfs).filter(s=>s.changePct>=4); }
 export function kodexEtfs(etfs: Etf[] = []) { return etfs.filter(etf=>/^KODEX/i.test(etf.name.trim())); }
 export function rankKodex(etfs: Etf[] = [], by:'turnover'|'change'='turnover') {
  return kodexEtfs(etfs).slice().sort((a,b)=>(by==='change'?b.changePct-a.changePct:b.turnoverKRW-a.turnoverKRW)||a.symbol.localeCompare(b.symbol)).slice(0,5);
 }
-export function rankSectors(stocks: Stock[]) {
+export function rankSectors(stocks: Stock[],etfs:Etf[]=[]) {
  const map=new Map<string,{name:string;turnoverKRW:number;weighted:number;count:number;leaders:Stock[]}>();
- for(const s of stocks) for(const theme of (s.themes.length?s.themes:['미분류'])) { const group=map.get(theme)||{name:theme,turnoverKRW:0,weighted:0,count:0,leaders:[]}; const amount=s.turnoverKRW/(s.themes.length||1);group.turnoverKRW+=amount;group.weighted+=s.changePct*amount;group.count++;group.leaders.push(s);map.set(theme,group); }
+ for(const s of eligibleStocks(stocks,etfs)) for(const theme of (s.themes.length?s.themes:['미분류'])) { const group=map.get(theme)||{name:theme,turnoverKRW:0,weighted:0,count:0,leaders:[]}; const amount=s.turnoverKRW/(s.themes.length||1);group.turnoverKRW+=amount;group.weighted+=s.changePct*amount;group.count++;group.leaders.push(s);map.set(theme,group); }
  const total=[...map.values()].reduce((a,b)=>a+b.turnoverKRW,0);
  return [...map.values()].map(s=>({...s,changePct:s.turnoverKRW?s.weighted/s.turnoverKRW:0,share:total?s.turnoverKRW/total*100:0,leaders:s.leaders.sort((a,b)=>b.turnoverKRW-a.turnoverKRW)})).sort((a,b)=>b.turnoverKRW-a.turnoverKRW);
 }
 export function rotations(snapshots: Snapshot[], end:string, topN=50, market='ALL') {
  const start=shiftDay(end,-27), recent=snapshots.filter(s=>s.date>=start&&s.date<=end).sort((a,b)=>a.date.localeCompare(b.date));
  const map=new Map<string,{name:string;values:(number|null)[];appearances:number;total:number}>();
- recent.forEach((snap,i)=>{ for(const sector of rankSectors(gainers(snap.stocks,topN,market))) { const row=map.get(sector.name)||{name:sector.name,values:Array(recent.length).fill(null),appearances:0,total:0};row.values[i]=sector.share;row.appearances++;row.total+=sector.turnoverKRW;map.set(row.name,row); } });
+ recent.forEach((snap,i)=>{ for(const sector of rankSectors(gainers(snap.stocks,topN,market,snap.etfs))) { const row=map.get(sector.name)||{name:sector.name,values:Array(recent.length).fill(null),appearances:0,total:0};row.values[i]=sector.share;row.appearances++;row.total+=sector.turnoverKRW;map.set(row.name,row); } });
  return {dates:recent.map(s=>s.date),rows:[...map.values()].sort((a,b)=>b.total-a.total).slice(0,8)};
 }
 const text = (v:unknown,label:string,max=100) => { if(typeof v!=='string'||!v.trim()||v.length>max) throw new Error(label+' 형식을 확인하세요.');return v.trim(); };
@@ -33,7 +40,7 @@ export function validateSnapshot(raw: any, today=dayKey()): Snapshot {
  if(!raw||!validDate(raw.date)||raw.date>today) throw new Error('날짜는 오늘까지의 YYYY-MM-DD 형식이어야 합니다.');
  const asOf=text(raw.asOf,'시세 기준 시각',80); if(!/(Z|[+-]\d{2}:\d{2})$/.test(asOf)||!Number.isFinite(Date.parse(asOf))||dayKey(new Date(asOf))!==raw.date) throw new Error('asOf에 시간대와 해당 날짜의 기준 시각을 넣으세요.');
  if(!Array.isArray(raw.stocks)||raw.stocks.length>3000) throw new Error('종목은 날짜당 3,000개 이하로 입력하세요.');
- const ids=new Set<string>();const stocks=raw.stocks.map((s:any)=>{const symbol=text(s.symbol,'종목코드',6);if(!/^\d{6}$/.test(symbol)||ids.has(symbol)) throw new Error('종목코드는 중복 없는 6자리 숫자여야 합니다.');ids.add(symbol);if(!['KOSPI','KOSDAQ'].includes(s.market))throw new Error('시장은 KOSPI 또는 KOSDAQ입니다.');if(!Array.isArray(s.themes)||s.themes.length>5)throw new Error('테마는 5개 이하 배열로 입력하세요.');return {symbol,name:text(s.name,'종목명',80),market:s.market,themes:[...new Set<string>(s.themes.map((t:any)=>text(t,'테마',40)))],price:num(s.price,'가격',0,1e9),changePct:num(s.changePct,'등락률',-100,10000),turnoverKRW:num(s.turnoverKRW,'거래대금(원)',0,1e15)};});
+ const ids=new Set<string>();const stocks=raw.stocks.map((s:any)=>{const symbol=text(s.symbol,'종목코드',6);if(!/^\d{6}$/.test(symbol)||ids.has(symbol)) throw new Error('종목코드는 중복 없는 6자리 숫자여야 합니다.');ids.add(symbol);if(!['KOSPI','KOSDAQ'].includes(s.market))throw new Error('시장은 KOSPI 또는 KOSDAQ입니다.');if(!Array.isArray(s.themes)||s.themes.length>5)throw new Error('테마는 5개 이하 배열로 입력하세요.');if(s.instrumentType!==undefined&&!['STOCK','ETF','ETN'].includes(s.instrumentType))throw Error('종목 유형을 확인하세요.');return {symbol,...(s.instrumentType?{instrumentType:s.instrumentType}:{}),name:text(s.name,'종목명',80),market:s.market,themes:[...new Set<string>(s.themes.map((t:any)=>text(t,'테마',40)))],price:num(s.price,'가격',0,1e9),changePct:num(s.changePct,'등락률',-100,10000),turnoverKRW:num(s.turnoverKRW,'거래대금(원)',0,1e15)};});
  const etfIds=new Set<string>();
  if(raw.etfs!==undefined&&(!Array.isArray(raw.etfs)||raw.etfs.length>2000))throw new Error('ETF는 날짜당 2,000개 이하 배열로 입력하세요.');
  const etfs:Etf[]=(raw.etfs||[]).map((item:any)=>{const symbol=text(item.symbol,'ETF 종목코드',6).toUpperCase();if(!/^[0-9A-Z]{6}$/.test(symbol)||etfIds.has(symbol))throw new Error('ETF 코드는 중복 없는 6자리 영문·숫자여야 합니다.');etfIds.add(symbol);return {symbol,name:text(item.name,'ETF명',100),price:num(item.price,'ETF 가격',0,1e9),changePct:num(item.changePct,'ETF 등락률',-100,10000),turnoverKRW:num(item.turnoverKRW,'ETF 거래대금(원)',0,1e15)};});
