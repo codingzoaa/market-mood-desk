@@ -75,12 +75,19 @@ export async function collect(env){
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
  }finally{if(session)await session.close();}
 }
-// Accept post-close observations through the final16:10 refresh from both LS series.
-// A later enrichment timestamp must never turn intraday flows into a closing point.
+// Normal observations must be post-close and no later than16:10. A verified
+// one-off recovery may be later; preserve its real observation timestamp.
 export function closingPoints(rows,now=new Date()){
  const current=kst(now),seen=new Set();
- const closing=(value,date)=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;const t=kst(new Date(value));return t.date===date&&t.time>='1530'&&t.time<='1610';};
- return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p.date)||!closing(p.flowAt,p.date)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(({date,kospi,changePct,individual})=>({date,kospi,changePct,individual})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
+ const recovered=p=>{
+  if(p.recoveryMethod!=='LS_KRX_CLOSING_RECOVERY_V1'||p.recoveryDate!==p.date||typeof p.recoveryAt!=='string'||!Number.isFinite(Date.parse(p.recoveryAt))||Date.parse(p.recoveryAt)>now.getTime())return false;
+  const at=kst(new Date(p.recoveryAt));return at.date===p.date&&at.time>'1610';
+ };
+ const closing=(value,p)=>{
+  if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;
+  const t=kst(new Date(value));return t.date===p.date&&t.time>='1530'&&(t.time<='1610'||recovered(p)&&Date.parse(value)<=Date.parse(p.recoveryAt));
+ };
+ return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 export default {
  async fetch(request,env,ctx){
@@ -104,7 +111,10 @@ export default {
      json_extract(payload,'$.indices.KOSPI.changePct') AS changePct,
      json_extract(payload,'$.indices.KOSPI.asOf') AS indexAt,
      json_extract(payload,'$.flows.segments.KOSPI.individual') AS individual,
-     json_extract(payload,'$.flows.asOf') AS flowAt
+     json_extract(payload,'$.flows.asOf') AS flowAt,
+     json_extract(payload,'$.closingRecovery.method') AS recoveryMethod,
+     json_extract(payload,'$.closingRecovery.tradeDate') AS recoveryDate,
+     json_extract(payload,'$.closingRecovery.observedAt') AS recoveryAt
      FROM state WHERE id LIKE 'details:%' AND substr(id,9)>=date('now','-365 day') ORDER BY id DESC LIMIT 365`).all();
     return reply({points:closingPoints(rows.results),unit:'억원',market:'KOSPI'});
    }
