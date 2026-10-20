@@ -37,7 +37,6 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  <svg viewBox={`0 0 ${W} ${H}`} className="correlation-svg kospi-history" role="group" aria-label="선택 날짜가 표시된 코스피 일봉·종가 차트">
  <text x={L} y={14}>코스피 일봉 · 종가</text>
  {[0,1,2,3,4].map(i=>{const v=low+(high-low)*i/4;return <g key={i}><line x1={L} x2={W-R} y1={ty(v)} y2={ty(v)} stroke="#e6ebef"/><text x={L-8} y={ty(v)+4} textAnchor="end">{Math.round(v).toLocaleString('ko-KR')}</text></g>;})}
- <path d={points.map((p,i)=>(i?'L':'M')+tx(i)+','+ty(p.kospi)).join(' ')} fill="none" stroke="#8998a6" strokeWidth="1.5" strokeDasharray={candleCount?"3 3":undefined}/>
  <line x1={tx(selectedIndex)} x2={tx(selectedIndex)} y1={T} y2={H-B} stroke="#26876d" strokeDasharray="4 4"/>
  {points.map((p,i)=>{const c=p.ohlc,active=p.date===selected.date,tone=c?(c.close>c.open?'#eb4052':c.close<c.open?'#326fe4':'#64748b'):'#8998a6';return <g key={p.date} data-date={p.date} data-candle={c?'true':'false'} role="button" tabIndex={0} aria-label={`${p.date} 코스피 종가 ${p.kospi}${c?`, 시가 ${c.open}, 고가 ${c.high}, 저가 ${c.low}`:', OHLC 미확보'}`} aria-pressed={active} onClick={()=>choose(p)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(p);}}}>
  <title>{p.date} · 종가 {p.kospi}{c?` · 시가 ${c.open} · 고가 ${c.high} · 저가 ${c.low}`:' · 종가만 확보'}</title>
