@@ -1,0 +1,15 @@
+{
+  // Review template only. No existing production Worker or D1 binding is reused.
+  "name": "market-note-private-account",
+  "main": "index.mjs",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["allow_custom_ports"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {"directory":"../../work/account-assets","binding":"ASSETS","run_worker_first":true},
+  "vars": {"ENABLE_ACCOUNT_SYNC":"false"},
+  "d1_databases": [{"binding":"PRIVATE_DB","database_name":"market-note-private-account","database_id":"REPLACE_WITH_NEW_PRIVATE_D1_ID"}],
+  "observability": {"enabled":false},
+  // Same KRX cutoff as the quote collector. One bounded page per five-minute run.
+  "triggers":{"crons":["*/5 0-5 * * MON-FRI","0-30/5 6 * * MON-FRI"]}
+}

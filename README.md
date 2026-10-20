@@ -52,3 +52,7 @@ GitHub Actions는 main 변경 시 의존성 설치 → 테스트 → TypeScript 
 ## 5분 이력·RVOL 저장 파이프라인
 
 PR #1 위에 쌓는 `feature/history-rvol-pipeline`의 [구현 설명](docs/pipeline/README.md), [비용·로컬 측정](docs/pipeline/COSTS.md), [LS 백필 검토 상태](docs/pipeline/PROVIDER-REVIEW.md), [활성화·롤백 계획](docs/pipeline/ACTIVATION.md)을 참고하세요. 운영 DB/Worker/R2/스케줄은 미변경이며 기본 플래그는 off입니다.
+
+## 개인 계좌 분석 (검토용)
+
+별도 인증·암호화 저장·LS 조회 전용 자동 연동 구조는 [개인 계좌 문서](docs/account/README.md)를 참고하세요. 실제 계좌 연동과 운영 배포는 아직 비활성입니다.

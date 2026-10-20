@@ -1,0 +1,35 @@
+{
+  "reviewed": false,
+  "identity": "UNIQUE_TRADE_LEDGER_ROW",
+  "version": "REPLACE_WITH_REVIEWED_OFFICIAL_CONTRACT_VERSION",
+  "documentationURL": "https://openapi.ls-sec.co.kr/apiservice",
+  "tr": "CDPCQ04700",
+  "rowsBlock": "CDPCQ04700OutBlock_REPLACE_FROM_OFFICIAL_SPEC",
+  "pageLimit": 20,
+  "maxRangeDays": 1,
+  "successCodes": [],
+  "inputFields": {
+    "account": "REPLACE_ACCOUNT_FIELD",
+    "password": "REPLACE_PASSWORD_FIELD",
+    "from": "REPLACE_START_DATE_FIELD",
+    "to": "REPLACE_END_DATE_FIELD"
+  },
+  "staticInput": {},
+  "fields": {
+    "id": "REPLACE_UNIQUE_FILL_OR_LEDGER_ID",
+    "date": "REPLACE_TRADE_DATE_FIELD",
+    "time": "REPLACE_TRADE_TIME_FIELD",
+    "sequence": "REPLACE_SOURCE_EXECUTION_SEQUENCE",
+    "symbol": "REPLACE_SYMBOL_FIELD",
+    "name": "REPLACE_NAME_FIELD",
+    "side": "REPLACE_SIDE_FIELD",
+    "quantity": "REPLACE_EXECUTED_QUANTITY_FIELD",
+    "price": "REPLACE_EXECUTED_PRICE_FIELD",
+    "grossKRW": "REPLACE_GROSS_KRW_FIELD",
+    "feeKRW": "REPLACE_COMMISSION_KRW_FIELD",
+    "taxKRW": "REPLACE_TAX_KRW_FIELD"
+  },
+  "buyValue": "REPLACE_BUY_CODE",
+  "sellValue": "REPLACE_SELL_CODE",
+  "stripStockPrefix": false
+}

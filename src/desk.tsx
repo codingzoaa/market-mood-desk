@@ -65,7 +65,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
    <header className="site-header">
     <div className="topbar">
      <a className="brand mobile-desk-brand" href="#overview" onClick={()=>go('overview')}><span className="brand-symbol">m</span><span>market<span className="brand-light">note</span></span></a>
-     <div className="top-actions"><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
+     <div className="top-actions"><a className="icon-btn" href="https://market-note-private-account.kby0991.workers.dev/" aria-label="개인 계좌 분석" title="본인 전용 계좌 분석"><ShieldCheck size={17}/></a><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
     </div>
     <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}><v.icon size={19}/><span>{v.name}</span></a>)}</nav>
    </header>
