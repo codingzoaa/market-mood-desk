@@ -1,3 +1,5 @@
+import {Meter,meteredD1} from './pipeline/db.mjs';
+import {persistCollectorMetrics} from './pipeline/hook.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,number,signed,kst,collectWindow,collectionFetch,LSFailure} from './ls.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
@@ -20,6 +22,9 @@ export function rawFlows(data){
 const numeric=v=>{if(!['string','number'].includes(typeof v))throw new Error('NAVER_NUMBER');if(typeof v==='string')v=v.replaceAll(',','').trim();if(v===''||v===null||v===undefined||!Number.isFinite(Number(v)))throw new Error('NAVER_NUMBER');return Number(v);};
 export async function collectDetails(env){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
+ const originalEnv=env,collectionMeter=new Meter(),trCounts={};
+ if(env.ENABLE_HISTORY_PIPELINE==='true')env={...env,DB:meteredD1(env.DB,collectionMeter)};
+ try{
  const latest=await env.DB.prepare('SELECT date FROM snapshots ORDER BY date DESC LIMIT 1').first();if(!latest||Date.parse(kst().date)-Date.parse(latest.date)>7*86400000)return;
  const current=kst();if(latest.date!==current.date&&current.time>='0900'&&!['Sat','Sun'].includes(current.weekday))return;
  const date=latest.date,now=Date.now(),oldRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();
@@ -32,7 +37,7 @@ export async function collectDetails(env){
  const details={collectorRevision:'krx-close-1530-v3',date,asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:old.indices||{},...(old.flows?{flows:old.flows}:{}),errors:{}};
  let session;
  try{
-  session=await createSession();const fetcher=collectionFetch(session.fetch);const token=await accessToken(env,fetcher,Date.now(),false);const request=(code,body)=>tr(token,code,body,undefined,fetcher);
+  session=await createSession();const fetcher=collectionFetch(session.fetch);const token=await accessToken(env,fetcher,Date.now(),false);const request=(code,body)=>{trCounts[code]=(trCounts[code]||0)+1;return tr(token,code,body,undefined,fetcher);};
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
   await put(env,'details-diagnostic',{date,chartDates:daily.t8410OutBlock1?.map(r=>r.date)||[],checkedAt:new Date().toISOString()});
   if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-',''))throw new Error('TRADE_DATE');
@@ -57,6 +62,7 @@ export async function collectDetails(env){
  await env.DB.prepare("DELETE FROM state WHERE id LIKE 'details:%' AND id < 'details:' || date('now','-365 day')").run();
  await env.DB.prepare("UPDATE state SET payload='0' WHERE id='details-lease' AND payload=?").bind(String(now+300000)).run();
  return collectWindow()&&details.errors.heatmap==='CLASSIFICATION_LOADING';
+ }finally{await persistCollectorMetrics(originalEnv,collectionMeter,'details',trCounts);}
 }
 
 export async function naverMarket(path,fetcher=fetch){

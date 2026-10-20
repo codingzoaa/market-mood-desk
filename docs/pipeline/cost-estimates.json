@@ -1,0 +1,259 @@
+{
+  "asOf": "2026-10-20",
+  "kind": "ASSUMPTION_BASED_ESTIMATE_NOT_CLOUDFLARE_BILL",
+  "limits": {
+    "d1ReadsPerDay": 5000000,
+    "d1WritesPerDay": 100000,
+    "d1DatabaseBytes": 500000000,
+    "d1AccountBytes": 5000000000,
+    "d1QueriesPerInvocation": 50,
+    "workersCpuMs": 10,
+    "r2GBMonth": 10,
+    "r2ClassA": 1000000,
+    "r2ClassB": 10000000
+  },
+  "scenarios": [
+    {
+      "stocks": 200,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 30,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": false,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 389200,
+        "rowsWritten": 99432,
+        "rawRows": 15800
+      },
+      "retainedEstimatedBytes": 222518000,
+      "monthly": {
+        "reads": 8562400,
+        "writes": 2187504,
+        "rawNewRows": 347600,
+        "rawLogicalBytes": 79948000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 0,
+        "r2ClassA": 0,
+        "r2ClassB": 0,
+        "r2FirstMonthStoredBytes": 0
+      },
+      "warnings": [
+        "D1_FREE_WRITES_HEADROOM_LOW",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 200,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 20,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": true,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 389200,
+        "rowsWritten": 99432,
+        "rawRows": 15800
+      },
+      "retainedEstimatedBytes": 186178000,
+      "monthly": {
+        "reads": 8562400,
+        "writes": 2187504,
+        "rawNewRows": 347600,
+        "rawLogicalBytes": 79948000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 2486,
+        "r2ClassA": 2486,
+        "r2ClassB": 12232,
+        "r2FirstMonthStoredBytes": 70147000
+      },
+      "warnings": [
+        "D1_FREE_WRITES_HEADROOM_LOW",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 500,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 30,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": false,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 958000,
+        "rowsWritten": 241632,
+        "rawRows": 39500
+      },
+      "retainedEstimatedBytes": 556295000,
+      "monthly": {
+        "reads": 21076000,
+        "writes": 5315904,
+        "rawNewRows": 869000,
+        "rawLogicalBytes": 199870000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 0,
+        "r2ClassA": 0,
+        "r2ClassB": 0,
+        "r2FirstMonthStoredBytes": 0
+      },
+      "warnings": [
+        "D1_FREE_WRITES_EXCEEDED",
+        "D1_FREE_DATABASE_SIZE_RISK",
+        "CAPACITY_SCENARIO_REQUIRES_EXISTING_FEED_EXPANSION",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 500,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 20,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": true,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 958000,
+        "rowsWritten": 241632,
+        "rawRows": 39500
+      },
+      "retainedEstimatedBytes": 465445000,
+      "monthly": {
+        "reads": 21076000,
+        "writes": 5315904,
+        "rawNewRows": 869000,
+        "rawLogicalBytes": 199870000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 3520,
+        "r2ClassA": 3520,
+        "r2ClassB": 14828,
+        "r2FirstMonthStoredBytes": 175367500
+      },
+      "warnings": [
+        "D1_FREE_WRITES_EXCEEDED",
+        "D1_FREE_DATABASE_SIZE_HEADROOM_LOW",
+        "CAPACITY_SCENARIO_REQUIRES_EXISTING_FEED_EXPANSION",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 1000,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 30,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": false,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 1906000,
+        "rowsWritten": 478632,
+        "rawRows": 79000
+      },
+      "retainedEstimatedBytes": 1112590000,
+      "monthly": {
+        "reads": 41932000,
+        "writes": 10529904,
+        "rawNewRows": 1738000,
+        "rawLogicalBytes": 399740000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 0,
+        "r2ClassA": 0,
+        "r2ClassB": 0,
+        "r2FirstMonthStoredBytes": 0
+      },
+      "warnings": [
+        "D1_FREE_WRITES_EXCEEDED",
+        "D1_FREE_DATABASE_SIZE_RISK",
+        "CAPACITY_SCENARIO_REQUIRES_EXISTING_FEED_EXPANSION",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    },
+    {
+      "stocks": 1000,
+      "assumptions": {
+        "tradingDays": 22,
+        "slots": 79,
+        "rawDays": 20,
+        "bytesPerRawRow": 230,
+        "contextBytesPerStock": 3500,
+        "frameBytesPerStock": 100,
+        "r2": true,
+        "baseReadsPerDay": 10000,
+        "baseWritesPerDay": 4000,
+        "baseTRsPerDay": 2449,
+        "backfillPagesPerStock": null
+      },
+      "daily": {
+        "rowsRead": 1906000,
+        "rowsWritten": 478632,
+        "rawRows": 79000
+      },
+      "retainedEstimatedBytes": 930890000,
+      "monthly": {
+        "reads": 41932000,
+        "writes": 10529904,
+        "rawNewRows": 1738000,
+        "rawLogicalBytes": 399740000,
+        "lsTRs": 53878,
+        "extraLiveTRs": 0,
+        "backfillTRs": null,
+        "r2Objects": 5258,
+        "r2ClassA": 5258,
+        "r2ClassB": 19162,
+        "r2FirstMonthStoredBytes": 350735000
+      },
+      "warnings": [
+        "D1_FREE_WRITES_EXCEEDED",
+        "D1_FREE_DATABASE_SIZE_RISK",
+        "CAPACITY_SCENARIO_REQUIRES_EXISTING_FEED_EXPANSION",
+        "WORKERS_FREE_10MS_REQUIRES_CLOUD_PROFILING"
+      ]
+    }
+  ]
+}
