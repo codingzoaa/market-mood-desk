@@ -27,12 +27,15 @@ test('automatic live data, compact heading date, workspace separation and fullsc
  try{
   await act(async()=>root.render(React.createElement(Desk)));
   assert.equal(document.querySelector('.mode-banner'),null);
-  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','주도주 캘린더','계좌 분석']);
+  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','주도주 캘린더','시장 신호','계좌 분석']);
   const accountLink=document.querySelector('a[aria-label="계좌 분석 · 본인 로그인 필요"]');assert.equal(accountLink.href,'https://market-note-private-account.kby0991.workers.dev/');assert.ok(accountLink.querySelector('svg'));assert.equal(document.querySelector('iframe'),null);
   assert.ok(document.querySelector('.page-heading [aria-label="조회 기준일"]'));
   assert.equal(document.querySelector('.shared-toolbar'),null);
   assert.doesNotMatch(document.body.textContent,/접속 코드|실시간 시세 연결 없음|투자 관제실/);
   assert.equal(document.querySelector('.error-banner')?.textContent,undefined);assert.notEqual(document.querySelector('.index-value').textContent,'—');
+  assert.ok(document.querySelector('.calendar-day-detail'));assert.equal(document.querySelector('.correlation-panel'),null);
+  const overviewLeaders=document.querySelector('.calendar-day-detail').textContent;
+  assert.ok(document.querySelector('.market-summary').compareDocumentPosition(document.querySelector('.calendar-day-detail')) & window.Node.DOCUMENT_POSITION_FOLLOWING);
   const card=document.querySelector('[aria-label="코스피 섹터 히트맵 열기"]');card.focus();await click(card);
   assert.ok(document.querySelector('[role="dialog"].fullscreen-panel'));assert.equal(document.body.style.overflow,'hidden');
   const canvas=document.querySelector('.heatmap-scroll');canvas.getBoundingClientRect=()=>({width:360,height:520});await act(async()=>window.dispatchEvent(new Event('resize')));
@@ -41,6 +44,8 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   await click(document.querySelector('nav a[href="#sectors"]'));assert.ok(document.querySelector('.rotation-panel'));assert.equal(document.querySelector('.market-summary'),null);
   await click(document.querySelector('nav a[href="#stocks"]'));assert.equal(document.querySelectorAll('.etf-panel').length,2);
   await click(document.querySelector('nav a[href="#calendar"]'));assert.equal(document.querySelectorAll('.calendar-grid .day').length,28);
+  assert.equal(document.querySelector('.calendar-day-detail').textContent,overviewLeaders);assert.equal(document.querySelector('.correlation-panel'),null);
+  await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
   await click(document.querySelector('[aria-label="데이터 관리"]'));assert.match(document.body.textContent,/5分|5분/);assert.equal(document.querySelector('input[type=password]'),null);
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}
  // Keep file import validation independent of the automatic quote feed.
