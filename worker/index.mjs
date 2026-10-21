@@ -1,4 +1,4 @@
-import {safeCollectSectorEtfs,sectorEtfPayload} from './sector-etfs.mjs';
+import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {collectDetails} from './details.mjs';
@@ -103,7 +103,7 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
@@ -129,6 +129,7 @@ export default {
     const observed=rows.results.map(r=>{try{return {...r,ohlc:JSON.parse(r.ohlcJSON||'null')};}catch{return r;}});
     return reply({points:attachIndexCandles(mergeCorrelationHistory(closingPoints(observed),records),candles),unit:'억원',market:'KOSPI'});
    }
+   if(path==='/api/etf-holdings'){const symbol=new URL(request.url).searchParams.get('symbol');const data=await etfHoldingsPayload(env,symbol);return data?reply(data):reply({error:'INVALID_ETF_SYMBOL'},400);}
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
    if(path==='/api/sector-etfs')return reply(await sectorEtfPayload(env,to));

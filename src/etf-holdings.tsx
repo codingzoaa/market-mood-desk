@@ -1,0 +1,22 @@
+import {useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import {API_URL} from './live';
+export function validateHoldingsPayload(raw:any,symbol:string){
+ if(raw?.symbol!==symbol||!['READY','PENDING'].includes(raw.status)||!Array.isArray(raw.holdings)||raw.holdings.length>1000)throw Error('INVALID_HOLDINGS');
+ if(raw.status==='READY'&&(!/^\d{4}-\d{2}-\d{2}$/.test(raw.date)||!Number.isFinite(Date.parse(raw.asOf))))throw Error('INVALID_HOLDINGS_DATE');
+ const ids=new Set();const holdings=raw.holdings.map((r:any)=>{if(typeof r.name!=='string'||!r.name.trim()||r.name.length>100||typeof r.symbol!=='string'||r.symbol.length>20||typeof r.weight!=='number'||!Number.isFinite(r.weight)||r.weight< -100||r.weight>100||ids.has(r.symbol||r.name))throw Error('INVALID_HOLDING');ids.add(r.symbol||r.name);return {name:r.name,symbol:r.symbol,weight:r.weight};}).sort((a:any,b:any)=>b.weight-a.weight||a.name.localeCompare(b.name,'ko'));
+ return {...raw,holdings};
+}
+export default function EtfHoldingsDialog({etf,onClose}:{etf:{symbol:string;name:string;sector:string};onClose:()=>void}){
+ const [data,setData]=useState<any>(null),[error,setError]=useState(false),[retry,setRetry]=useState(0);const dialog=useRef<HTMLElement>(null);
+ useEffect(()=>{const prev=document.activeElement as HTMLElement|null,overflow=document.body.style.overflow;document.body.style.overflow='hidden';dialog.current?.querySelector<HTMLButtonElement>('button')?.focus();
+ const handler=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();onClose();}if(e.key==='Tab'){const nodes=[...(dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],[tabindex="0"]')||[])];if(!nodes.length)return;const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};
+ document.addEventListener('keydown',handler);return()=>{document.body.style.overflow=overflow;document.removeEventListener('keydown',handler);prev?.focus();};},[]);
+ useEffect(()=>{const abort=new AbortController();setData(null);setError(false);const load=async()=>{try{const response=await fetch(API_URL+'/api/etf-holdings?symbol='+encodeURIComponent(etf.symbol),{credentials:'omit',redirect:'error',signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)])});if(!response.ok)throw Error();const text=await response.text();if(text.length>300000)throw Error();const checked=validateHoldingsPayload(JSON.parse(text),etf.symbol);if(!abort.signal.aborted){setData(checked);setError(false);}}catch{if(!abort.signal.aborted)setError(true);}};load();const timer=setInterval(load,30000);return()=>{abort.abort();clearInterval(timer);};},[etf.symbol,retry]);
+ return createPortal(<div className="modal-backdrop etf-holdings-backdrop" onClick={onClose}><section ref={dialog} className="modal etf-holdings-modal" role="dialog" aria-modal="true" aria-labelledby="etf-holdings-title" onClick={e=>e.stopPropagation()}><div className="modal-top"><span className="eyebrow">ETF HOLDINGS</span><button className="icon-btn" aria-label="ETF 구성종목 닫기" onClick={onClose}>✕</button></div><h2 id="etf-holdings-title">{etf.name}</h2><p className="muted">{etf.sector} · {etf.symbol} · 편입 비중 높은 순</p>
+ {error&&<p className="footnote" role="status">구성종목을 불러오지 못했습니다. <button className="text-link" onClick={()=>setRetry(n=>n+1)}>다시 시도</button></p>}
+ {!data&&!error&&<p role="status">구성종목을 불러오는 중…</p>}
+ {data?.status==='PENDING'&&<p role="status">아직 저장된 구성종목이 없습니다. 정기 수집이 완료되면 표시됩니다.</p>}
+ {data?.status==='READY'&&<><p className="etf-holdings-meta">구성 기준일 {data.date} · {data.holdings.length}개 항목</p>{data.error&&<p className="footnote">수집 지연 · 마지막 정상 기록입니다.</p>}{data.complete===false&&<p className="footnote">일부 구성종목만 확인된 목록입니다.</p>}<ol className="etf-holdings-list">{data.holdings.map((r:any,i:number)=><li key={r.symbol||r.name}><span className="holding-rank">{i+1}</span><div className="holding-name"><strong>{r.name}</strong><small>{r.symbol||'현금·기타 자산'}</small><span className="holding-bar" aria-hidden="true"><i style={{width:Math.max(0,Math.min(100,r.weight))+'%'}}/></span></div><b>{r.weight.toLocaleString('ko-KR',{maximumFractionDigits:2})}%</b></li>)}</ol><p className="footnote">{data.source} · 조회 {new Date(data.asOf).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} KST<br/>ETF PDF 구성내역 기준이며 현금·기타 자산이 포함될 수 있습니다. 현재 조회 가능한 최신 구성이므로 과거 선택일의 구성을 뜻하지 않습니다.</p></>}
+ </section></div>,document.body);
+}
