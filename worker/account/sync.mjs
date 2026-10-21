@@ -1,3 +1,4 @@
+import {migrateJournalHistory} from './journal-history.mjs';
 import {collectJournal} from './t0150.mjs';
 import {saveLedger} from './ledger-store.mjs';
 import {collectWindow,kst} from '../ls.mjs';
@@ -20,6 +21,7 @@ export async function syncAccount(env,sessionFactory,now=Date.now()){
  const claimed=await env.PRIVATE_DB.prepare("UPDATE account_lease SET expires=?,owner=? WHERE id='sync' AND expires<=? RETURNING id").bind(now+120000,owner,now).first();if(!claimed)return {busy:true};
  let session;
  try{
+  await migrateJournalHistory(env);
   const saved=await readState(env,'sync'),today=day(now),initial=env.ACCOUNT_START_DATE;
   check(typeof initial==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(initial)&&Number.isFinite(Date.parse(initial+'T00:00:00Z'))&&new Date(initial+'T00:00:00Z').toISOString().slice(0,10)===initial&&initial<=today,'ACCOUNT_START_DATE_REQUIRED');
   const daily=env.ACCOUNT_SYNC_MODE==='DAILY_1630';
