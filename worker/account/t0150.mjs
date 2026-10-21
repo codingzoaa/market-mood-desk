@@ -1,3 +1,4 @@
+import {saveJournalDay} from './journal-history.mjs';
 import {check} from './security.mjs';
 import {readState,writeState} from './store.mjs';
 export const JOURNAL_VERSION='LS_T0150_V1';
@@ -42,7 +43,7 @@ export async function collectJournal(env,{fetcher,token,date,now=Date.now(),paus
  check(['t0150','t0151'].includes(tr),'JOURNAL_TR_INVALID');
  const anchor=day(),stateKey=tr==='t0151'?'journalPrevious':'journal',errorKey=tr==='t0151'?'journalPreviousError':'journalError';
  check(/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date&&(tr==='t0150'?date===anchor:date<anchor),'JOURNAL_DATE_CHANGED');
- const previous=await readState(env,stateKey);if(previous?.date===date&&previous.complete)return {alreadyComplete:true};
+ const previous=await readState(env,stateKey);if(previous?.date===date&&previous.complete){await saveJournalDay(env,previous);return {alreadyComplete:true};}
  try{
   const started=performance.now();
   let cursor=Object.fromEntries(cursors.map(k=>[k,''])),continuation={flag:'N',key:''},rows=[],summary,seen=new Set();
@@ -59,7 +60,7 @@ export async function collectJournal(env,{fetcher,token,date,now=Date.now(),paus
    if(next.done){
     if(next.fallback)reconcileRows(rows,summary);
     const saved={version:tr==='t0151'?'LS_T0151_V1':JOURNAL_VERSION,date,asOf:new Date(now).toISOString(),complete:true,summary,rows,pages:page+1,source:'LS/'+tr,pnlAvailable:false};
-    await writeState(env,stateKey,saved);await writeState(env,errorKey,{code:null});return {ok:true};
+    await saveJournalDay(env,saved);await writeState(env,stateKey,saved);await writeState(env,errorKey,{code:null});return {ok:true};
    }
    check(parsed.rows.length>0,'JOURNAL_CURSOR_INVALID');const signature=JSON.stringify([next.key,parsed.cursor]);check(!seen.has(signature),'JOURNAL_CURSOR_REPEATED');seen.add(signature);cursor=parsed.cursor;continuation={flag:next.flag,key:next.key};
   }
