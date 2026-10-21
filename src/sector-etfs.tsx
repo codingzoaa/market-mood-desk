@@ -15,7 +15,7 @@ export function validateSectorPayload(raw:any){
 export function SectorEtfPanels({date,demo=false}:{date:string;demo?:boolean}){
  const chartRef=useRef<SVGSVGElement>(null);const [sort,setSort]=useState<{key:string;direction:'asc'|'desc'}>({key:'sector',direction:'asc'});
  const selectSector=(symbol:string)=>{setPicked(symbol);chartRef.current?.scrollIntoView?.({behavior:'smooth',block:'nearest'});};
- const toggleSort=(key:string)=>setSort(old=>({key,direction:old.key===key&&old.direction==='asc'?'desc':'asc'}));
+ const toggleSort=(key:string)=>setSort(old=>({key,direction:old.key===key?(old.direction==='asc'?'desc':'asc'):(key==='sector'?'asc':'desc')}));
  const [data,setData]=useState<any>(null),[failed,setFailed]=useState(false),[picked,setPicked]=useState<string|null>(null);
  useEffect(()=>{setData(null);setFailed(false);if(demo)return;const abort=new AbortController();const load=async()=>{try{const r=await fetch(API_URL+'/api/sector-etfs?date='+encodeURIComponent(date),{credentials:'omit',redirect:'error',signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)])});if(!r.ok)throw Error();const text=await r.text();if(text.length>100000)throw Error();const checked=validateSectorPayload(JSON.parse(text));if(!abort.signal.aborted){setData(checked);setFailed(false);}}catch{if(!abort.signal.aborted)setFailed(true);}};load();const timer=setInterval(load,300000);return()=>{abort.abort();clearInterval(timer);};},[date,demo]);
  const rows=data?.rows||SECTOR_ETFS.map(e=>({...e,status:'INSUFFICIENT_DATA',todayChangePct:null,return5:null,return20:null,return60:null,rs5:null,rs20:null,rs60:null,rsComposite:null,avgTurnover20:null})),ready=rows.filter((r:any)=>r.status==='READY'),selected=ready.find((r:any)=>r.symbol===picked)||ready[0];
