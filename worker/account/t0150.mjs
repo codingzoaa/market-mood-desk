@@ -18,6 +18,25 @@ export function journalPage(data,tr='t0150'){
  const cursor=Object.fromEntries(cursors.map(k=>{check(typeof block[k]==='string'&&block[k].length<=24,'JOURNAL_CURSOR_INVALID');return [k,block[k].trim()];}));
  return {summary,rows:normalized,cursor};
 }
+export function journalContinuation(headers,cursor){
+ const raw=headers.get('tr_cont'),key=headers.get('tr_cont_key')||'',bodyMore=Object.values(cursor).some(Boolean);
+ check(raw===null||raw.trim()===''||['N','Y'].includes(raw.trim()),'JOURNAL_CURSOR_INVALID');
+ const flag=raw?.trim()||null;
+ if(flag==='Y'){check(key.length>0,'JOURNAL_CURSOR_INVALID');return {done:false,flag:'Y',key,fallback:false};}
+ // This TR also uses four explicit body CTS fields; absent headers alone do not mean completion.
+ return {done:!bodyMore,flag:'N',key:'',fallback:flag===null};
+}
+function reconcileRows(rows,summary){
+ const sum={BUY:{qty:0,amt:0},SELL:{qty:0,amt:0}};
+ for(const row of rows){
+  const side=row.medosu==='매수'?'BUY':row.medosu==='매도'?'SELL':null;
+  if(!side){check(!row.expcode,'JOURNAL_SIDE_UNVERIFIED');continue;}
+  check(/^(?:A)?[0-9A-Z]{6}$/.test(row.expcode),'JOURNAL_SYMBOL_UNVERIFIED');
+  sum[side].qty+=row.qty;sum[side].amt+=row.amt;
+  check(Number.isSafeInteger(sum[side].qty)&&Number.isSafeInteger(sum[side].amt),'JOURNAL_AMOUNT_INVALID');
+ }
+ check(sum.BUY.qty===summary.msqty&&sum.BUY.amt===summary.msamt&&sum.SELL.qty===summary.mdqty&&sum.SELL.amt===summary.mdamt,'JOURNAL_INCOMPLETE_ROWS');
+}
 /** Daily aggregates are not fills. Keep subtotal rows for display, never feed to the cost-basis engine. */
 export async function collectJournal(env,{fetcher,token,date,now=Date.now(),pause=ms=>new Promise(r=>setTimeout(r,ms)),tr='t0150'}){
  check(['t0150','t0151'].includes(tr),'JOURNAL_TR_INVALID');
@@ -33,16 +52,16 @@ export async function collectJournal(env,{fetcher,token,date,now=Date.now(),paus
    const response=await fetcher('https://openapi.ls-sec.co.kr:8080/stock/accno',{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json; charset=utf-8',authorization:'Bearer '+token,tr_cd:tr,tr_cont:continuation.flag,tr_cont_key:continuation.key},body:JSON.stringify({[tr+'InBlock']:{...(tr==='t0151'?{date:date.replaceAll('-','')}:{}),...cursor}})});
    check(response.ok,'JOURNAL_UNAVAILABLE');const text=await response.text();check(text.length<1500000,'JOURNAL_RESPONSE_LIMIT');
    // Reject unsafe monetary integers rather than round 18-digit fields.
-   const parsed=journalPage(JSON.parse(text),tr),flag=response.headers.get('tr_cont'),key=response.headers.get('tr_cont_key');
-   check(['N','Y'].includes(flag),'JOURNAL_CURSOR_MISSING');
+   const parsed=journalPage(JSON.parse(text),tr),next=journalContinuation(response.headers,parsed.cursor);
    if(!summary)summary=parsed.summary;else check(JSON.stringify(summary)===JSON.stringify(parsed.summary),'JOURNAL_CHANGED_DURING_QUERY');
    rows.push(...parsed.rows);check(rows.length<=10000,'JOURNAL_ROW_LIMIT');
    check(anchor===day(),'JOURNAL_DATE_CHANGED');
-   if(flag==='N'){
+   if(next.done){
+    if(next.fallback)reconcileRows(rows,summary);
     const saved={version:tr==='t0151'?'LS_T0151_V1':JOURNAL_VERSION,date,asOf:new Date(now).toISOString(),complete:true,summary,rows,pages:page+1,source:'LS/'+tr,pnlAvailable:false};
     await writeState(env,stateKey,saved);await writeState(env,errorKey,{code:null});return {ok:true};
    }
-   check(key&&parsed.rows.length>0,'JOURNAL_CURSOR_INVALID');const signature=JSON.stringify([key,parsed.cursor]);check(!seen.has(signature),'JOURNAL_CURSOR_REPEATED');seen.add(signature);cursor=parsed.cursor;continuation={flag,key};
+   check(parsed.rows.length>0,'JOURNAL_CURSOR_INVALID');const signature=JSON.stringify([next.key,parsed.cursor]);check(!seen.has(signature),'JOURNAL_CURSOR_REPEATED');seen.add(signature);cursor=parsed.cursor;continuation={flag:next.flag,key:next.key};
   }
   throw Error('JOURNAL_PAGE_LIMIT');
  }catch(error){const code=/^JOURNAL_[A-Z_]+$/.test(error?.message)?error.message:'JOURNAL_SYNC_FAILED';await writeState(env,errorKey,{code,at:new Date(now).toISOString(),date});return {ok:false,error:code};}

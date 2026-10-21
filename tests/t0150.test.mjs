@@ -33,3 +33,17 @@ test('one-off historical job expires, refuses today and honors existing sync lea
  const {priorJournalOnce}=await import('../worker/account/prior-once.mjs'),env=envFor(),now=Date.now(),date=today();let calls=0;const factory=async()=>{calls++;throw Error('must not call');};
  try{assert.equal((await priorJournalOnce(env,factory,now)).skipped,true);const one={...env,ACCOUNT_PRIOR_ONCE_DATE:'2026-10-20',ACCOUNT_PRIOR_ONCE_EXPIRES:new Date(now-1).toISOString()};assert.equal((await priorJournalOnce(one,factory,now)).skipped,true);one.ACCOUNT_PRIOR_ONCE_EXPIRES=new Date(now+60000).toISOString();one.ACCOUNT_PRIOR_ONCE_DATE=date;assert.equal((await priorJournalOnce(one,factory,now)).skipped,true);one.ACCOUNT_PRIOR_ONCE_DATE=new Date(Date.parse(date+'T00:00:00Z')-86400000).toISOString().slice(0,10);env.db.prepare("UPDATE account_lease SET expires=? WHERE id='sync'").run(now+120000);assert.equal((await priorJournalOnce(one,factory,now)).busy,true);assert.equal(calls,0);}finally{env.db.close();}
 });
+test('missing continuation headers accept only empty body cursor plus reconciled detail quantities/amounts',async()=>{
+ const env=envFor(),date=today();let calls=0;
+ const full=()=>{const f=fixture();f.t0150OutBlock1.push({...row,medosu:'매도',qty:10,price:200,amt:2000,fee:2,tax:3,argtax:1,adjamt:1994});return f;};
+ try{const bad=await collectJournal(env,{date,token:'x',fetcher:async()=>Response.json(fixture())});assert.equal(bad.error,'JOURNAL_INCOMPLETE_ROWS');assert.equal(await readState(env,'journal'),null);
+ const result=await collectJournal(env,{date,token:'x',fetcher:async()=>{calls++;return Response.json(full());}});assert.equal(result.ok,true);assert.equal(calls,1);assert.equal((await readState(env,'journal')).rows.length,3);assert.equal((await readState(env,'journalError')).code,null);
+ }finally{env.db.close();}
+});
+test('body-only cursor requests another page and cannot silently truncate even when header says N',async()=>{
+ const env=envFor();let calls=0;
+ try{const result=await collectJournal(env,{date:today(),token:'x',pause:async()=>{},fetcher:async(_url,options)=>{calls++;const f=fixture();if(calls===1){f.t0150OutBlock.cts_expcode='005930';return Response.json(f,{headers:{tr_cont:'N'}});}assert.equal(JSON.parse(options.body).t0150InBlock.cts_expcode,'005930');f.t0150OutBlock1=[{...row,medosu:'매도',qty:10,price:200,amt:2000,fee:2,tax:3,argtax:1,adjamt:1994}];return Response.json(f);}});assert.equal(result.ok,true);assert.equal(calls,2);assert.equal((await readState(env,'journal')).pages,2);}finally{env.db.close();}
+});
+test('body cursor cycles and explicit Y without a key fail without publishing',async()=>{
+ const env=envFor();try{let result=await collectJournal(env,{date:today(),token:'x',pause:async()=>{},fetcher:async()=>{const f=fixture();f.t0150OutBlock.cts_expcode='005930';return Response.json(f);}});assert.equal(result.error,'JOURNAL_CURSOR_REPEATED');assert.equal(await readState(env,'journal'),null);result=await collectJournal(env,{date:today(),token:'x',fetcher:async()=>Response.json(fixture(),{headers:{tr_cont:'Y'}})});assert.equal(result.error,'JOURNAL_CURSOR_INVALID');}finally{env.db.close();}
+});
