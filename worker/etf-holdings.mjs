@@ -18,8 +18,8 @@ export function normalizeHoldings(data,symbol,asOf){
 export async function fetchHoldings(request,symbol,date,pause=()=>new Promise(r=>setTimeout(r,1100))){
  const rows=[];let header=null,continuation={flag:'N',key:''};const cursors=new Set();
  for(let page=0;page<10;page++){
-  await pause();const response=await request('t1904',{shcode:symbol,date:'',sgb:'1',exchgubun:'K'},continuation);
-  if(!response.data?.t1904OutBlock||!Array.isArray(response.data?.t1904OutBlock1))throw Error('HOLDINGS_SHAPE');
+  await pause();const response=await request('t1904',{shcode:symbol,date:date.replaceAll('-',''),sgb:'1',exchgubun:'K'},continuation);
+  if(!response.data?.t1904OutBlock||!Array.isArray(response.data?.t1904OutBlock1)){const error=Error('HOLDINGS_SHAPE');error.diagnostic={keys:Object.keys(response.data||{}).slice(0,20),headerType:typeof response.data?.t1904OutBlock,rowsType:typeof response.data?.t1904OutBlock1,responseCode:String(response.data?.rsp_cd||'').slice(0,10)};throw error;}
   if(header&&header.date!==response.data.t1904OutBlock.date)throw Error('HOLDINGS_MIXED_DATE');header=response.data.t1904OutBlock;rows.push(...response.data.t1904OutBlock1);
   if(response.continuation?.flag!=='Y')return normalizeHoldings({t1904OutBlock:header,t1904OutBlock1:rows},symbol,new Date().toISOString());
   continuation=response.continuation;if(!continuation.key||cursors.has(continuation.key))throw Error('HOLDINGS_CURSOR');cursors.add(continuation.key);

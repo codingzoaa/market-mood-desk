@@ -38,7 +38,7 @@ export async function collectSectorEtfs(env){
    saved.holdings||={};saved.holdingErrors||={};
    if(!saved.holdings[etf.symbol]||kst(new Date(saved.holdings[etf.symbol].asOf)).date!==date){
     try{saved.holdings[etf.symbol]=await fetchHoldings(request,etf.symbol,date);delete saved.holdingErrors[etf.symbol];}
-    catch(error){saved.holdingErrors[etf.symbol]=typeof error.code==='string'&&/^LS_[A-Z0-9_]+$/.test(error.code)?error.code:typeof error.message==='string'&&/^HOLDINGS_[A-Z_]+$/.test(error.message)?error.message:'HOLDINGS_COLLECTION_FAILED';}
+    catch(error){if(error.diagnostic){saved.holdingDiagnostics||={};saved.holdingDiagnostics[etf.symbol]=error.diagnostic;}saved.holdingErrors[etf.symbol]=typeof error.code==='string'&&/^LS_[A-Z0-9_]+$/.test(error.code)?error.code:typeof error.message==='string'&&/^HOLDINGS_[A-Z_]+$/.test(error.message)?error.message:'HOLDINGS_COLLECTION_FAILED';}
    }
   }
   saved.lastAttemptAt=stamp();saved.error=null;
