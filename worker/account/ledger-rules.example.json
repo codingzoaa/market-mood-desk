@@ -1,0 +1,10 @@
+{
+  "reviewed": false,
+  "version": "REPLACE_AFTER_LEDGER_SEMANTICS_REVIEW",
+  "ordering": "TRD_NO_ASC",
+  "processedTimeFormat": "HHmmssSSS",
+  "symbology": "A_PREFIXED_KRX_6",
+  "taxSemanticsReviewed": false,
+  "taxFields": [],
+  "rules": []
+}

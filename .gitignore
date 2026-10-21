@@ -7,3 +7,10 @@ output/
 .dev.vars
 .dev.vars.*
 .wrangler/
+
+# Private account data and local deployment settings
+account-data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+worker/account/wrangler.local.jsonc

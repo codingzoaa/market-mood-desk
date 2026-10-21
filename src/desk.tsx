@@ -7,7 +7,7 @@ import { liveMarketDetails } from './live';
 import { localApi as api } from './storage';
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutDashboard, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
 import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
 type View='overview'|'sectors'|'stocks'|'calendar'|'data';
 const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'주도주 캘린더',icon:CalendarDays}];
@@ -44,7 +44,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
  const filtered=(stockMode==='strong'?stocks:turnoverPool).filter(s=>(theme==='ALL'||s.themes.includes(theme))&&(!watchOnly||stars.includes(s.symbol))&&[s.name,s.symbol,...s.themes].join(' ').toLowerCase().includes(search.toLowerCase())).sort((a,b)=>sort==='change'?b.changePct-a.changePct:sort==='name'?a.name.localeCompare(b.name):b.turnoverKRW-a.turnoverKRW);
  const asOf=snap?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(snap.asOf)):'';
  const lastDate=dates.at(-1);
- const Empty=({title='저장된 시세를 기다립니다.',description='평일 09:00–15:30에 5분마다 자동 수집합니다. 수집이 완료되면 자동으로 표시됩니다.'}:{title?:string;description?:string})=><div className="empty-state"><Database size={30}/><h3>{title}</h3><p>{description}</p></div>;
+ const Empty=({title='저장된 시세를 기다립니다.',description='평일 09:00–16:10에 5분마다 자동 수집합니다. 수집이 완료되면 자동으로 표시됩니다.'}:{title?:string;description?:string})=><div className="empty-state"><Database size={30}/><h3>{title}</h3><p>{description}</p></div>;
  function metricsRow(){return <MarketCards snap={panelSnap} onHeatmap={board=>{setHeatBoard(board);setExpanded('heatmap');}} onFlows={()=>setExpanded('flows')}/>;}
  function etfPanels(){
   const pool=kodexEtfs(snap?.etfs);
@@ -65,9 +65,9 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
    <header className="site-header">
     <div className="topbar">
      <a className="brand mobile-desk-brand" href="#overview" onClick={()=>go('overview')}><span className="brand-symbol">m</span><span>market<span className="brand-light">note</span></span></a>
-     <div className="top-actions"><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
+     <div className="top-actions"><a className="icon-btn" href="https://market-note-private-account.kby0991.workers.dev/" aria-label="개인 계좌 분석" title="본인 전용 계좌 분석"><ShieldCheck size={17}/></a><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
     </div>
-    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}><v.icon size={19}/><span>{v.name}</span></a>)}</nav>
+    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}><v.icon size={19}/><span>{v.name}</span></a>)}<a href="https://market-note-private-account.kby0991.workers.dev/" aria-label="계좌 분석 · 본인 로그인 필요" title="본인 로그인 후 이용"><LockKeyhole size={19}/><span>계좌 분석</span></a></nav>
    </header>
    <main id="main" data-workspace={view}>
 
@@ -97,7 +97,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <section className="panel note-panel"><div className="section-title"><h2>이날의 관찰 메모</h2><span className="muted">{demo?'예시 공간 · 저장 안 됨':'날짜별 브라우저 저장'}</span></div><textarea aria-label="날짜별 관찰 메모" placeholder="강세가 확산했는지, 대금이 이어졌는지 기록하세요." value={note} maxLength={3000} onChange={e=>setNote(e.target.value)}/><div className="note-actions"><span>{note.length} / 3,000</span><button className="btn primary" disabled={demo||!snap||busy} onClick={saveNote}><Check size={15}/>메모 저장</button></div></section>
     </>}
     {view==='data'&&dataPage()}
-    {view!=='overview'&&<footer><span>MARKETNOTE</span><span>KRX · 15:30까지 수집 · KST</span></footer>}
+    {view!=='overview'&&<footer><span>MARKETNOTE</span><span>KRX · 16:10까지 수집 · KST</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}

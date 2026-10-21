@@ -1,9 +1,9 @@
 import {useEffect,useState} from 'react';
 import {API_URL} from './live';
-export type ClosePoint={date:string;kospi:number;changePct:number;individual:number};
+export type ClosePoint={date:string;kospi:number;changePct:number;individual:number;recoveredAt?:string;source?:'NAVER'|'LS_HISTORY'};
 export function validateClosePoints(raw:any):ClosePoint[]{
  if(!Array.isArray(raw)||raw.length>365)throw Error('상관관계 데이터 형식 오류');
- const seen=new Set<string>();return raw.map(p=>{if(!p||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||!Number.isFinite(Date.parse(p.date+'T00:00:00Z'))||new Date(p.date+'T00:00:00Z').toISOString().slice(0,10)!==p.date||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)throw Error('상관관계 수치 오류');seen.add(p.date);return {date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual};}).sort((a,b)=>a.date.localeCompare(b.date));
+ const seen=new Set<string>();return raw.map(p=>{if(!p||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||!Number.isFinite(Date.parse(p.date+'T00:00:00Z'))||new Date(p.date+'T00:00:00Z').toISOString().slice(0,10)!==p.date||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)throw Error('상관관계 수치 오류');seen.add(p.date);if(p.recoveredAt!==undefined&&(typeof p.recoveredAt!=='string'||!Number.isFinite(Date.parse(p.recoveredAt))||new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(p.recoveredAt))!==p.date))throw Error('상관관계 보충 시각 오류');return {date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(p.recoveredAt?{recoveredAt:p.recoveredAt}:{}),...(['NAVER','LS_HISTORY'].includes(p.source)?{source:p.source as 'NAVER'|'LS_HISTORY'}:{})};}).sort((a,b)=>a.date.localeCompare(b.date));
 }
 export function correlationStats(points:ClosePoint[]){
  const n=points.length;if(n<2)return null;const mx=points.reduce((s,p)=>s+p.changePct,0)/n,my=points.reduce((s,p)=>s+p.individual/10000,0)/n;let xx=0,yy=0,xy=0;for(const p of points){const x=p.changePct-mx,y=p.individual/10000-my;xx+=x*x;yy+=y*y;xy+=x*y;}return xx>0&&yy>0?{r:xy/Math.sqrt(xx*yy),slope:xy/xx,intercept:my-xy/xx*mx}:null;
@@ -11,7 +11,7 @@ export function correlationStats(points:ClosePoint[]){
 const signed=(n:number,d=2)=>(n>0?'+':'')+n.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const short=(date:string)=>date.slice(5).replace('-','/');
 export function CorrelationCharts({points}:{points:ClosePoint[]}){
- const [picked,setPicked]=useState<string|null>(null);const selected=points.find(p=>p.date===picked)||points.at(-1);if(!selected)return <p className="correlation-empty">아직 장 마감 데이터가 없습니다. 15:30분에 수집한 코스피 지수와 개인 수급이 함께 있는 날짜부터 점이 쌓입니다.</p>;
+ const [picked,setPicked]=useState<string|null>(null);const selected=points.find(p=>p.date===picked)||points.at(-1);if(!selected)return <p className="correlation-empty">아직 장 마감 데이터가 없습니다. 장 마감 후 확인한 코스피 지수와 개인 수급이 함께 있는 날짜부터 점이 쌓입니다.</p>;
  const stats=correlationStats(points),W=600,H=330,L=62,R=22,T=24,B=48,pw=W-L-R,ph=H-T-B;
  const xr=Math.max(1,...points.map(p=>Math.abs(p.changePct)))*1.15,yr=Math.max(.1,...points.map(p=>Math.abs(p.individual/10000)))*1.15;
  const sx=(v:number)=>L+(v+xr)/(2*xr)*pw,sy=(v:number)=>T+(yr-v)/(2*yr)*ph;
@@ -29,7 +29,7 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  {points.map(p=><g key={p.date} role="button" tabIndex={0} aria-label={`${p.date} 코스피 ${signed(p.changePct)}%, 개인 ${signed(p.individual,0)}억원`} aria-pressed={p.date===selected.date} onClick={()=>choose(p)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(p);}}}><title>{p.date} · {signed(p.changePct)}% · {signed(p.individual,0)}억원</title><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r="12" fill="transparent"/><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r={p.date===selected.date?6:4} fill={color(p)} stroke={p.date===selected.date?'#172f46':'#62798e'} strokeWidth={p.date===selected.date?2:1}/></g>)}
  <text x={Math.max(L+22,Math.min(W-R-22,sx(selected.changePct)))} y={Math.max(T+12,sy(selected.individual/10000)-12)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>
  </svg>
- <div className="correlation-selection" role="status"><strong>{selected.date}</strong><span>코스피 {selected.kospi.toLocaleString('ko-KR',{maximumFractionDigits:2})} <b className={selected.changePct>=0?'flow-positive':'flow-negative'}>{signed(selected.changePct)}%</b></span><span>개인 {signed(selected.individual,0)}억원</span></div>
+ <div className="correlation-selection" role="status"><strong>{selected.date}</strong><span>코스피 {selected.kospi.toLocaleString('ko-KR',{maximumFractionDigits:2})} <b className={selected.changePct>=0?'flow-positive':'flow-negative'}>{signed(selected.changePct)}%</b></span><span>개인 {signed(selected.individual,0)}억원</span><span>출처: {selected.source==='NAVER'?'네이버 금융':selected.source==='LS_HISTORY'?'LS증권 · 과거 조회':'LS증권'}</span>{selected.recoveredAt&&<span>마감 후 보충 · {new Date(selected.recoveredAt).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'})} 조회</span>}</div>
  <svg viewBox={`0 0 ${W} ${H}`} className="correlation-svg kospi-history" role="group" aria-label="선택 날짜가 표시된 코스피 종가 추이">
  <text x={L} y={14}>코스피 종가</text>
  {[0,1,2,3,4].map(i=>{const v=low+(high-low)*i/4;return <g key={i}><line x1={L} x2={W-R} y1={ty(v)} y2={ty(v)} stroke="#e6ebef"/><text x={L-8} y={ty(v)+4} textAnchor="end">{Math.round(v).toLocaleString('ko-KR')}</text></g>;})}

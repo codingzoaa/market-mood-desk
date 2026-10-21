@@ -1,3 +1,4 @@
+import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {pipelineRead} from './pipeline/read.mjs';
 import {preopenMaintenance} from './pipeline/maintenance.mjs';
 import {Meter,meteredD1} from './pipeline/db.mjs';
@@ -73,7 +74,7 @@ export async function collect(env){
   const asOf=new Date(now).toISOString();
   const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강',stocks,etfs,metrics,note:''};
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
-  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · KRX 15:30까지 · 시장별 최대100개'});
+  await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
   // Opt-in only; the hook cannot roll back or invalidate the latest snapshot.
   try{await captureAfterLatest(originalEnv,snapshot,historyObservedAt);}catch{/* Preserve the successful latest quote collection. */}
@@ -85,12 +86,19 @@ export async function collect(env){
   await state(env,'sync',{...old,checkedAt:new Date().toISOString(),error:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:'LS 수집 실패 · 마지막 정상 기록 유지'});
  }finally{if(session)await session.close();await persistCollectorMetrics(originalEnv,collectionMeter,'core',trCounts);}
 }
-// Accept only the closing-minute observations from both independent LS series.
-// A later enrichment timestamp must never turn intraday flows into a closing point.
+// Normal observations must be post-close and no later than16:10. A verified
+// one-off recovery may be later; preserve its real observation timestamp.
 export function closingPoints(rows,now=new Date()){
  const current=kst(now),seen=new Set();
- const closing=(value,date)=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;const t=kst(new Date(value));return t.date===date&&t.time==='1530';};
- return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p.date)||!closing(p.flowAt,p.date)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(({date,kospi,changePct,individual})=>({date,kospi,changePct,individual})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
+ const recovered=p=>{
+  if(p.recoveryMethod!=='LS_KRX_CLOSING_RECOVERY_V1'||p.recoveryDate!==p.date||typeof p.recoveryAt!=='string'||!Number.isFinite(Date.parse(p.recoveryAt))||Date.parse(p.recoveryAt)>now.getTime())return false;
+  const at=kst(new Date(p.recoveryAt));return at.date===p.date&&at.time>'1610';
+ };
+ const closing=(value,p)=>{
+  if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;
+  const t=kst(new Date(value));return t.date===p.date&&t.time>='1530'&&(t.time<='1610'||recovered(p)&&Date.parse(value)<=Date.parse(p.recoveryAt));
+ };
+ return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 export default {
  async fetch(request,env,ctx){
@@ -115,9 +123,14 @@ export default {
      json_extract(payload,'$.indices.KOSPI.changePct') AS changePct,
      json_extract(payload,'$.indices.KOSPI.asOf') AS indexAt,
      json_extract(payload,'$.flows.segments.KOSPI.individual') AS individual,
-     json_extract(payload,'$.flows.asOf') AS flowAt
+     json_extract(payload,'$.flows.asOf') AS flowAt,
+     json_extract(payload,'$.closingRecovery.method') AS recoveryMethod,
+     json_extract(payload,'$.closingRecovery.tradeDate') AS recoveryDate,
+     json_extract(payload,'$.closingRecovery.observedAt') AS recoveryAt
      FROM state WHERE id LIKE 'details:%' AND substr(id,9)>=date('now','-365 day') ORDER BY id DESC LIMIT 365`).all();
-    return reply({points:closingPoints(rows.results),unit:'억원',market:'KOSPI'});
+    const history=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'correlation-history:%:KOSPI:%' ORDER BY id DESC LIMIT 365").all();
+    const records=history.results.flatMap(row=>{try{return [JSON.parse(row.payload)];}catch{return [];}});
+    return reply({points:mergeCorrelationHistory(closingPoints(rows.results),records),unit:'억원',market:'KOSPI'});
    }
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
