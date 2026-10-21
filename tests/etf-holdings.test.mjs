@@ -15,3 +15,8 @@ test('holdings endpoint helper reads saved data only and rejects unknown ETF ide
  let reads=0;const env={DB:{prepare(sql){assert.match(sql,/^SELECT/);reads++;return {bind(){return this;},async first(){return {payload:JSON.stringify({holdings:{'396500':normalizeHoldings(response(),'396500','2026-10-21T03:00:00Z')}})};}};}}};
  assert.equal((await etfHoldingsPayload(env,'396500')).status,'READY');assert.equal(reads,1);assert.equal(await etfHoldingsPayload(env,'000000'),null);assert.equal(reads,1);
 });
+
+test('source dates accept harmless formatting and empty cash dates without inventing a date',()=>{
+ for(const d of ['20261021 ',20261021,'2026-10-21','2026/10/21']){const r=response();r.t1904OutBlock.date=d;r.t1904OutBlock1[0].profitdate='00000000';r.t1904OutBlock1[1].profitdate=' ';assert.equal(normalizeHoldings(r,'396500','2026-10-21T04:00:00Z').date,'2026-10-21');}
+ const r=response();r.t1904OutBlock.date='';assert.throws(()=>normalizeHoldings(r,'396500','2026-10-21T04:00:00Z'));
+});
