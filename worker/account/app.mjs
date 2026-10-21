@@ -1,3 +1,4 @@
+import {priorJournalOnce} from './prior-once.mjs';
 import {visibleJournal} from './t0150.mjs';
 import {ordinaryLedgerToTrade,ORDINARY_MAPPING_VERSION} from './ordinary-trades.mjs';
 import {loadLedger} from './ledger-store.mjs';
@@ -51,5 +52,5 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
    const asset=await env.ASSETS.fetch(request),headers=new Headers(asset.headers);for(const [k,v] of Object.entries(privateHeaders))headers.set(k,v);return new Response(asset.body,{status:asset.status,headers});
   }catch{return json({error:'ACCOUNT_DATA_UNAVAILABLE'},503);}
  },
- async scheduled(event,env,ctx){ctx.waitUntil(runScheduledAccountSync(env,sessionFactory).catch(()=>{}));}
+ async scheduled(event,env,ctx){ctx.waitUntil((env.ACCOUNT_PRIOR_ONCE_CRON===event.cron?priorJournalOnce(env,sessionFactory):runScheduledAccountSync(env,sessionFactory)).catch(()=>{}));}
 };}
