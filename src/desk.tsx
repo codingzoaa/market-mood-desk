@@ -1,3 +1,4 @@
+import {SectorEtfPanels} from './sector-etfs';
 import Correlation from './correlation';
 import FullscreenPanel from './fullscreen-panel';
 import {MarketCards,HeatmapPanel,InvestorPanel} from './market-panels';
@@ -82,6 +83,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='overview'&&<>
      {metricsRow()}
      {dayLeadersPanel()}
+     <SectorEtfPanels date={selected} demo={demo}/>
 
     </>}
     {view==='signals'&&<Correlation/>}
