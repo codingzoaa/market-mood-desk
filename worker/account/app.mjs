@@ -1,3 +1,4 @@
+import {ordinaryLedgerToTrade,ORDINARY_MAPPING_VERSION} from './ordinary-trades.mjs';
 import {loadLedger} from './ledger-store.mjs';
 import {readLedgerRules,ledgerToTrade} from './cdpcq04700.mjs';
 import {authenticate,browserLogin,check,privateHeaders} from './security.mjs';
@@ -30,12 +31,13 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
    if(url.pathname==='/api/account'){
     const contract=reviewedContract(env),ledgerMode=contract.mode==='CDPCQ04700_LEDGER_V1',ledger=ledgerMode?await loadLedger(env):[];
     let rules=null,rulesError=false;try{rules=readLedgerRules(env);}catch{rulesError=true;}
-    const mapped=ledger.map(row=>({row,...ledgerToTrade(row,rules)})),trades=ledgerMode?mapped.flatMap(x=>x.trade?[x.trade]:[]):await loadTrades(env),summary=analyzeAccount(trades),selected=url.searchParams.get('date');
+    const mapped=ledger.map(row=>({row,...(rules?ledgerToTrade(row,rules):rulesError?{issue:'INVALID_LEDGER_RULES'}:ordinaryLedgerToTrade(row))})),trades=ledgerMode?mapped.flatMap(x=>x.trade?[x.trade]:[]):await loadTrades(env),summary=analyzeAccount(trades),selected=url.searchParams.get('date');
     if(ledger.length){const dates=ledger.map(r=>r.date).sort();summary.from=dates[0];summary.to=dates.at(-1);}
     const blocked=mapped.filter(x=>x.issue),blockedAnalysis=blocked.length>0;
     if(blockedAnalysis)Object.assign(summary,{realizedKRW:null,feesKRW:null,buyKRW:null,sellKRW:null,winRate:null,complete:false,daily:[],holdings:[]});
+    if(!blockedAnalysis&&summary.unknownSells>0&&summary.knownSells===0){summary.realizedKRW=null;summary.daily=[];}
     const reviewGroups=[...new Map(blocked.map(x=>{const f=x.row.fields,key=JSON.stringify([f.TpCodeNm,f.SmryNo,f.SmryNm,f.CancTpNm,f.CrcyCode,x.issue]);return [key,{type:f.TpCodeNm||'',summaryCode:f.SmryNo||'',summary:f.SmryNm||'',cancellation:f.CancTpNm||'',currency:f.CrcyCode||'',issue:x.issue}];})).values()].slice(0,100);
-    const ledgerStatus={mode:ledgerMode?'LEDGER':'CUSTOM_MAPPING',records:ledger.length,cashMovements:mapped.filter(x=>x.cashMovement).length,blockedRecords:blocked.length,analysisBlocked:blockedAnalysis,rulesReady:!!rules&&!rulesError,rulesError,reviewGroups};
+    const ledgerStatus={mode:ledgerMode?'LEDGER':'CUSTOM_MAPPING',records:ledger.length,cashMovements:mapped.filter(x=>x.cashMovement).length,blockedRecords:blocked.length,analysisBlocked:blockedAnalysis,rulesReady:!rulesError,rulesError,mappingVersion:rules?.version||ORDINARY_MAPPING_VERSION,mappedTrades:trades.length,buyTrades:trades.filter(t=>t.side==='BUY').length,sellTrades:trades.filter(t=>t.side==='SELL').length,reviewGroups};
     check(!selected||/^\d{4}-\d{2}-\d{2}$/.test(selected),'INVALID_DATE');
     const visible=trades.filter(t=>!selected||t.date===selected).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)||b.id.localeCompare(a.id));
     const recentTrades=visible.slice(0,200).map(({date,time,symbol,name,side,quantity,price,grossKRW,feeKRW,taxKRW,orderingBasis})=>({date,time,symbol,name,side,quantity,price,grossKRW,feeKRW,taxKRW,timeBasis:orderingBasis==='LEDGER_SEQUENCE'?'PROCESSING':'EXECUTION'}));
