@@ -18,8 +18,10 @@ state의 sector-etfs:v1에 최신80거래일씩을 저장하고 GET /api/sector-
 
 ## ETF 구성종목 창
 
-ETF 이름을 누르면 최신 PDF 구성종목을 편입 비중(평가금액 weight, %) 내림차순으로 보여준다. 섹터 이름은 기존 차트 강조 동작을 유지한다. 출처는 LS t1904, 경로 /stock/etf, 입력 shcode/date(최신은 빈값)/sgb1/exchgubunK이다. 공식 ETF API 가이드: https://openapi.ls-sec.co.kr/apiservice?group_id=73142d9f-1983-48d2-8543-89b75535d34c&api_id=30b6dfd6-b0bd-4e63-a510-7d5d94edc740 . 2026-09-12 공식 필드추가 공지의 exchgubun을 반영한다.
+ETF 이름을 누르면 최신 PDF 구성종목을 편입 비중(평가금액 weight, %) 내림차순으로 보여준다. 섹터 이름은 기존 차트 강조 동작을 유지한다. 출처는 LS t1904, 경로 /stock/etf, 입력 shcode/date(수집 거래일 YYYYMMDD)/sgb1/exchgubunK이다. 공식 ETF API 가이드: https://openapi.ls-sec.co.kr/apiservice?group_id=73142d9f-1983-48d2-8543-89b75535d34c&api_id=30b6dfd6-b0bd-4e63-a510-7d5d94edc740 . 2026-09-12 공식 필드추가 공지의 exchgubun을 반영한다.
 
 응답의 t1904OutBlock.date가 PDF적용일, OutBlock1의 shcode/hname/weight가 종목과 비중이다. profitdate가 있으면 헤더 날짜와 대조한다. 연속조회는 응답 헤더의 커서를 이어가며 최대10페이지/1000행, 반복 커서는 실패 처리한다. 부족한 페이지나 비중을 합성하지 않는다. 현금·기타 자산도 원천에 있으면 표시하며 일부 목록인 경우 경고한다.
 
 기존 ETF 수집 세션에서 각ETF를 하루1회 저장한다. 실패 시 마지막 정상 구성과 오류 상태를 유지한다. 추가 기본 호출은 하루20건이며 페이지/실패 재시도에 따라 늘 수 있다. GET /api/etf-holdings?symbol=지정ETF코드는 저장된 sector-etfs:v1의 holdings만 읽으며 클릭할 때 LS를 호출하지 않는다. 구성은 최신 조회 가능 자료로 선택한 과거 날짜의 구성과 혼동하지 않도록 별도 기준일·조회시각을 표시한다. 창 닫기/배경 클릭/ESC, 키보드 포커스 제한 및 복원을 지원한다.
+
+2026-10-21 PR #8 배포 후 첫 실제 수집은 HOLDINGS_SHAPE로 실패했다. ETF 시세 수집과 사이트 배포는 정상이나 구성종목은 아직 확인되지 않았다. 빈 날짜 요청 대신 수집 거래일을 명시하고 실패 시 응답 최상위 키/블록 형식/응답코드만 제한적으로 저장하는 후속 검토안을 준비했다. 인증정보나 원본 응답 값은 진단에 저장하지 않는다. 이 수정의 실제 LS 응답 재검증은 별도 배포 승인 후 수행한다.
