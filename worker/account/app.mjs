@@ -18,8 +18,12 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
   }
   const url=new URL(request.url);
   if(request.method==='POST'){
-   if(!['/api/sync','/api/connection-test'].includes(url.pathname))return json({error:'NOT_FOUND'},404);
+   if(!['/api/sync','/api/connection-test','/api/journal-previous'].includes(url.pathname))return json({error:'NOT_FOUND'},404);
    if(request.headers.get('Origin')!==url.origin||request.headers.get('Sec-Fetch-Site')==='cross-site'||request.headers.get('Content-Type')!=='application/json')return json({error:'REQUEST_REJECTED'},403);
+   if(url.pathname==='/api/journal-previous'){
+    if(env.ENABLE_T0150!=='true'||!env.JOURNAL_BACKFILL_DATE)return json({error:'JOURNAL_DISABLED'},409);
+    ctx.waitUntil(priorJournalOnce({...env,ACCOUNT_PRIOR_ONCE_DATE:env.JOURNAL_BACKFILL_DATE,ACCOUNT_PRIOR_ONCE_EXPIRES:new Date(Date.now()+300000).toISOString()},sessionFactory).catch(()=>{}));return json({accepted:true},202);
+   }
    if(url.pathname==='/api/connection-test'){
     try{const result=await checkAccountConnection(env,sessionFactory);return json(result,result.ok?200:409);}catch{return json({ok:false,error:'ACCOUNT_CONNECTION_UNAVAILABLE'},503);}
    }
