@@ -25,7 +25,9 @@ export async function syncAccount(env,sessionFactory,now=Date.now()){
   const daily=env.ACCOUNT_SYNC_MODE==='DAILY_1630';
   const ledgerComplete=daily&&saved?.dailyDate===today&&!saved.job&&saved.through===today;
   const journalEnabled=daily&&env.ENABLE_T0150==='true';
-  if(ledgerComplete&&(!journalEnabled||(await readState(env,'journal'))?.date===today))return {ok:true,more:false,alreadyComplete:true};
+  const backfillDate=env.JOURNAL_BACKFILL_DATE;
+  const priorNeeded=journalEnabled&&backfillDate&&backfillDate<today&&(await readState(env,'journalPrevious'))?.date!==backfillDate;
+  if(!priorNeeded&&ledgerComplete&&(!journalEnabled||(await readState(env,'journal'))?.date===today))return {ok:true,more:false,alreadyComplete:true};
   const job=daily?(saved?.dailyDate===today&&saved.job?saved.job:{from:today,to:today,continuation:{flag:'N',key:''}}):(saved?.job||{from:saved?.through?shift(saved.through,-1):initial,to:null,continuation:{flag:'N',key:''}});
   if(!job.to)job.to=[shift(job.from,c.maxRangeDays-1),today].sort()[0];
   // A delayed scheduled event must never start shared-key OAuth during quotes.
@@ -34,6 +36,7 @@ export async function syncAccount(env,sessionFactory,now=Date.now()){
   // LS tokens can be bound to the egress IP: acquire and use in the same TLS session.
   // No account OAuth token is persisted to D1 or shared with the public collector.
   const oauth=await tokenForAccount(env,session.fetch);
+  if(priorNeeded){const journal=await collectJournal(env,{fetcher:session.fetch,token:oauth.token,date:backfillDate,now,tr:'t0151'});return {ok:true,more:journal.ok===true,journal};}
   if(ledgerComplete){const journal=await collectJournal(env,{fetcher:session.fetch,token:oauth.token,date:today,now});return {ok:true,more:false,journal};}
   const page=await accountPage(env,{job,token:oauth.token,fetcher:session.fetch});
   let digests=job.pageDigests||[];
