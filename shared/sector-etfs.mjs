@@ -16,8 +16,9 @@ export function sectorRotation(saved,requestedDate){
  const windows=[5,20,60];
  const rows=SECTOR_ETFS.map(etf=>{
   const quote=saved?.quotes?.[etf.symbol],map=new Map((quote?.bars||[]).map(b=>[b.date,b]));
-  const current=map.get(anchor),missing=[];const result={...etf,asOf:quote?.asOf||null,date:anchor,return5:null,return20:null,return60:null,rs5:null,rs20:null,rs60:null,rsComposite:null,avgTurnover20:null,status:'INSUFFICIENT_DATA',missing};
+  const current=map.get(anchor),missing=[];const result={...etf,asOf:quote?.asOf||null,date:anchor,todayChangePct:null,return5:null,return20:null,return60:null,rs5:null,rs20:null,rs60:null,rsComposite:null,avgTurnover20:null,status:'INSUFFICIENT_DATA',missing};
   if(!anchor||!current){missing.push('ALIGNED_DAILY_CLOSE');return result;}
+  const yesterday=map.get(benchmark.at(-2)?.date);if(yesterday)result.todayChangePct=(current.close/yesterday.close-1)*100;
   for(const n of windows){const days=benchmark.slice(-(n+1));if(days.length<n+1||days.some(d=>!map.has(d.date))){missing.push(n+'D_ALIGNED_HISTORY');continue;}
    const prev=map.get(days[0].date);const ret=(current.close/prev.close-1)*100,bret=(days.at(-1).close/days[0].close-1)*100;
    result['return'+n]=ret;result['rs'+n]=ret-bret;
@@ -28,5 +29,5 @@ export function sectorRotation(saved,requestedDate){
   return result;
  });
  const ranked=rows.filter(r=>r.status==='READY').sort((a,b)=>b.rs20-a.rs20||b.rs5-a.rs5||a.symbol.localeCompare(b.symbol));
- return {methodology:'sector-etf-rs-v1',requestedDate,date:anchor,source:'LS증권 일봉 · KRX',benchmark:BENCHMARK,benchmarkAsOf:saved?.benchmark?.asOf||null,ready:ranked.length,total:20,top5:ranked.slice(0,5),rows,lastAttemptAt:saved?.lastAttemptAt||null,error:saved?.error||null};
+ return {methodology:'sector-etf-rs-v1',requestedDate,date:anchor,source:'LS증권 일봉 · KRX',benchmark:BENCHMARK,benchmarkAsOf:saved?.benchmark?.asOf||null,mode:saved?.mode||'CLOSE',ready:ranked.length,total:20,top5:ranked.slice(0,5),rows,lastAttemptAt:saved?.lastAttemptAt||null,error:saved?.error||null};
 }

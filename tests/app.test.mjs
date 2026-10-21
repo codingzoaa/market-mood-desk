@@ -34,7 +34,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   assert.doesNotMatch(document.body.textContent,/접속 코드|실시간 시세 연결 없음|투자 관제실/);
   assert.equal(document.querySelector('.error-banner')?.textContent,undefined);assert.notEqual(document.querySelector('.index-value').textContent,'—');
   assert.ok(document.querySelector('.calendar-day-detail'));assert.equal(document.querySelector('.correlation-panel'),null);
-  const overviewLeaders=document.querySelector('.calendar-day-detail').textContent;
+  assert.match(document.querySelector('.calendar-day-detail h2').textContent,/오늘의 주도주/);const overviewLeaders=document.querySelector('.day-leaders').textContent;
   assert.ok(document.querySelector('.market-summary').compareDocumentPosition(document.querySelector('.calendar-day-detail')) & window.Node.DOCUMENT_POSITION_FOLLOWING);
   const card=document.querySelector('[aria-label="코스피 섹터 히트맵 열기"]');card.focus();await click(card);
   assert.ok(document.querySelector('[role="dialog"].fullscreen-panel'));assert.equal(document.body.style.overflow,'hidden');
@@ -44,7 +44,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   await click(document.querySelector('nav a[href="#sectors"]'));assert.ok(document.querySelector('.rotation-panel'));assert.equal(document.querySelector('.market-summary'),null);
   await click(document.querySelector('nav a[href="#stocks"]'));assert.equal(document.querySelectorAll('.etf-panel').length,2);
   await click(document.querySelector('nav a[href="#calendar"]'));assert.equal(document.querySelectorAll('.calendar-grid .day').length,28);
-  assert.equal(document.querySelector('.calendar-day-detail').textContent,overviewLeaders);assert.equal(document.querySelector('.correlation-panel'),null);
+  assert.equal(document.querySelector('.day-leaders').textContent,overviewLeaders);assert.equal(document.querySelector('.correlation-panel'),null);
   await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
   await click(document.querySelector('[aria-label="데이터 관리"]'));assert.match(document.body.textContent,/5分|5분/);assert.equal(document.querySelector('input[type=password]'),null);
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}

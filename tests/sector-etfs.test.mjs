@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {SECTOR_ETFS,sectorRotation,normalizeDaily} from '../shared/sector-etfs.mjs';
-import {sectorEtfPayload,safeCollectSectorEtfs} from '../worker/sector-etfs.mjs';
+import {sectorEtfPayload,safeCollectSectorEtfs,refreshPhase,mergeDailyHistory} from '../worker/sector-etfs.mjs';
 const days=Array.from({length:65},(_,i)=>new Date(Date.UTC(2026,5,1+i)).toISOString().slice(0,10));
 // Synthetic data exists only in unit tests; the production collector has no fallback data.
 function fixture(){const bars=days.map((date,i)=>({date,close:100+i,turnoverKRW:1e8}));return {benchmark:{bars,asOf:'2026-08-05T08:00:00Z'},quotes:Object.fromEntries(SECTOR_ETFS.map((e,j)=>[e.symbol,{bars:bars.map((b,i)=>({...b,close:100+i*(j+1)})),asOf:'2026-08-05T08:00:00Z'}]))};}
@@ -27,4 +27,10 @@ test('read-only payload uses one stored-state query and failure isolation protec
  const queries=[];const env={DB:{prepare(sql){queries.push(sql);return {bind(){return this;},async first(){return {payload:JSON.stringify(fixture())};}};}}};
  assert.equal((await sectorEtfPayload(env,days.at(-1))).ready,20);assert.equal(queries.length,1);assert.match(queries[0],/^SELECT/);
  assert.equal(await safeCollectSectorEtfs({}),undefined);
+});
+
+test('five-minute refresh buckets, current-day returns and short updates preserve historical baselines',()=>{
+ assert.equal(refreshPhase('2026-10-21','1201'),'2026-10-21:1200');assert.equal(refreshPhase('2026-10-21','1204'),'2026-10-21:1200');assert.equal(refreshPhase('2026-10-21','1205'),'2026-10-21:1205');
+ const saved=fixture(),last=saved.quotes[SECTOR_ETFS[0].symbol].bars.at(-1);const merged=mergeDailyHistory(saved.quotes[SECTOR_ETFS[0].symbol].bars,[{...last,close:200}]);assert.equal(merged.length,65);assert.equal(merged.at(-1).close,200);assert.equal(merged[0].close,100);saved.quotes[SECTOR_ETFS[0].symbol].bars=merged;
+ const row=sectorRotation(saved,days.at(-1)).rows[0];assert.ok(Math.abs(row.todayChangePct-(200/163-1)*100)<1e-10);assert.ok(row.return20>0);
 });
