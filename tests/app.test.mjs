@@ -33,6 +33,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   assert.equal(document.querySelector('.shared-toolbar'),null);
   assert.doesNotMatch(document.body.textContent,/접속 코드|실시간 시세 연결 없음|투자 관제실/);
   assert.equal(document.querySelector('.error-banner')?.textContent,undefined);assert.notEqual(document.querySelector('.index-value').textContent,'—');
+  assert.match(document.querySelector('.leadership-summary').textContent,/테마 분류/);assert.match(document.querySelector('.leadership-summary').textContent,/강세 종목 대금 집중도/);
   assert.ok(document.querySelector('.calendar-day-detail'));assert.equal(document.querySelector('.correlation-panel'),null);
   assert.match(document.querySelector('.calendar-day-detail h2').textContent,/오늘의 주도주/);const overviewLeaders=document.querySelector('.day-leaders').textContent;
   assert.ok(document.querySelector('.market-summary').compareDocumentPosition(document.querySelector('.calendar-day-detail')) & window.Node.DOCUMENT_POSITION_FOLLOWING);
@@ -63,3 +64,4 @@ test('duplicate dates require explicit overwrite; invalid and demo imports prese
   await localApi('/api/import', { schemaVersion: 2, snapshots: [{ ...saved, note: '교체한 메모' }], overwrite: true });
   assert.equal((await localApi('/api/dashboard')).snapshots[0].note, '교체한 메모');
 });
+

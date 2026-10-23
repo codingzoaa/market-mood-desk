@@ -130,3 +130,10 @@ html{scroll-padding-top:68px}body{background:#f3f6f3}.app-shell.mobile-workspace
 @media(min-width:601px){
 .sector-etf-dashboard{min-width:0}.sector-etf-table-wrap{overflow:visible;max-width:100%}.sector-etf-table{width:100%;min-width:0;table-layout:fixed;font-variant-numeric:tabular-nums}.sector-etf-table th,.sector-etf-table td{min-width:0;padding:11px 4px;white-space:normal;overflow-wrap:anywhere;line-height:1.5;font-size:11px}.sector-etf-table th:first-child{width:24%;min-width:0}.sector-etf-table thead th{font-size:10px;vertical-align:bottom}.sector-etf-table .sector-sort-button{white-space:normal;line-height:1.5;max-width:100%;min-height:40px}.sector-etf-table .sector-name-button{white-space:normal;line-height:1.5}.sector-etf-table .etf-holdings-link{white-space:normal;overflow-wrap:anywhere;line-height:1.5;max-width:100%}.sector-etf-table small{white-space:normal;overflow-wrap:anywhere;line-height:1.6}
 }
+
+
+.market-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.market-summary-grid strong{font-size:14px;line-height:1.6}
+.market-summary-grid p,.theme-group-note{font-size:12px;line-height:1.7;color:#53635d;margin:5px 0 0}
+.theme-group-note{display:block;overflow-wrap:anywhere}
+@media(max-width:600px){.market-summary-grid{grid-template-columns:1fr;gap:12px}}
