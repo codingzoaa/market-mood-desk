@@ -1,3 +1,4 @@
+import {safeCollectCloseEvidence,closeEvidencePayload} from './close-evidence.mjs';
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
@@ -103,7 +104,7 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/close-evidence'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
@@ -132,6 +133,7 @@ export default {
    if(path==='/api/etf-holdings'){const symbol=new URL(request.url).searchParams.get('symbol');const data=await etfHoldingsPayload(env,symbol);return data?reply(data):reply({error:'INVALID_ETF_SYMBOL'},400);}
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
+   if(path==='/api/close-evidence')return reply(await closeEvidencePayload(env,to));
    if(path==='/api/sector-etfs')return reply(await sectorEtfPayload(env,to));
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
@@ -139,7 +141,7 @@ export default {
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);const detailsPending=await collectDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{const closePending=await safeCollectCloseEvidence(env);await collect(env);const detailsPending=await collectDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending||closePending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
@@ -154,5 +156,6 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collect(this.env);const detailsPending=await collectDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
+ async alarm(){const closePending=await safeCollectCloseEvidence(this.env);await collect(this.env);const detailsPending=await collectDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending||closePending)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
 }
+
