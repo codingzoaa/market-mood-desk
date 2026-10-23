@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutDashboard, Activity, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
 import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
 type View='overview'|'sectors'|'stocks'|'calendar'|'signals'|'data';
-const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'주도주 캘린더',icon:CalendarDays},{key:'signals',name:'시장 신호',icon:Activity}];
+const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'강세 섹터 캘린더',icon:CalendarDays},{key:'signals',name:'시장 신호',icon:Activity}];
 const number=(v:number|null|undefined,d=0)=>v===undefined||v===null?'—':v.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const money=(v:number)=>number(v/1e8,1)+'억';
 const pct=(v:number|null|undefined)=>v===undefined||v===null?'—':(v>0?'+':'')+number(v,2)+'%';
