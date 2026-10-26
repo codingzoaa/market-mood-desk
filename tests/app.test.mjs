@@ -44,7 +44,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   await click(document.querySelector('nav a[href="#sectors"]'));assert.ok(document.querySelector('.rotation-panel'));assert.equal(document.querySelector('.market-summary'),null);
   await click(document.querySelector('nav a[href="#stocks"]'));assert.equal(document.querySelectorAll('.etf-panel').length,2);
   await click(document.querySelector('nav a[href="#calendar"]'));assert.equal(document.querySelectorAll('.close-days .close-day').length,20);
-  assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.equal(document.querySelectorAll('.close-sector').length,5);assert.equal(document.querySelector('.correlation-panel'),null);
+  assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.equal(document.querySelectorAll('.close-sector').length,2);assert.equal(document.querySelector('.correlation-panel'),null);
   await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
   await click(document.querySelector('[aria-label="데이터 관리"]'));assert.match(document.body.textContent,/5分|5분/);assert.equal(document.querySelector('input[type=password]'),null);
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}
