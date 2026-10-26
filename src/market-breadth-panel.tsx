@@ -36,13 +36,10 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
           </p>
           <MarketBreadthChart rows={chartRows} asOf={asOf} />
         </>;
-  return <section className="panel" style={{padding:0,overflow:'hidden'}}>
-    <button type="button" aria-expanded={expanded} aria-controls="kospi-market-breadth-content" onClick={()=>setExpanded(v=>!v)}
-      style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,
-        padding:'18px 20px',font:'inherit',textAlign:'left',fontWeight:700,
-        color:'var(--ink)',background:'var(--paper)',border:0,cursor:'pointer'}}>
+  return <section className="panel correlation-panel market-breadth-accordion">
+    <button type="button" className="correlation-toggle" aria-expanded={expanded} aria-controls="kospi-market-breadth-content" onClick={()=>setExpanded(v=>!v)}>
       <span>코스피와 20일선 하락비율</span>
-      <span aria-hidden="true" style={{fontSize:22,color:'var(--green)',fontWeight:400,lineHeight:1}}>{expanded?'−':'+'}</span>
+      <span aria-hidden="true">{expanded?'−':'+'}</span>
     </button>
     {expanded && <div id="kospi-market-breadth-content" style={{padding:'0 12px 14px'}}>{content}</div>}
   </section>;
