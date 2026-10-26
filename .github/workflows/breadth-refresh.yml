@@ -17,6 +17,13 @@ jobs:
       - run: python -m pip install pandas pyarrow numpy finance-datareader
       - name: Compute from latest public market records
         run: python scripts/refresh_kospi_breadth.py
+      - name: Archive missing-day inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: breadth-refresh-report
+          path: breadth_refresh_report.json
+          if-no-files-found: ignore
       - name: Propose changes without auto-deploying
         env:
           GH_TOKEN: ${{ github.token }}
