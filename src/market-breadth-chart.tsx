@@ -87,6 +87,9 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
     else if (period === '1Y') startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
     else startDate.setUTCFullYear(startDate.getUTCFullYear() - 5);
     const startTime = Math.max(toTime(clean[0].date), startDate.getTime());
+    // Percent zoom is controlled explicitly so each button always resets the slider.
+    const lowerIndex = Math.max(0, clean.findIndex(row => toTime(row.date) >= startTime));
+    const zoomStart = clean.length <= 1 ? 0 : lowerIndex / (clean.length - 1) * 100;
     const option: EChartsCoreOption = {
       animation: false,
       color: ['#3474ed', '#159d8f'],
@@ -113,7 +116,7 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
       ],
       dataZoom: [
         { type: 'inside', xAxisIndex: [0], filterMode: 'none' },
-        { type: 'slider', xAxisIndex: [0], filterMode: 'none', height: 26, bottom: 23, showDetail: false, startValue: startTime, endValue: latest }
+        { type: 'slider', xAxisIndex: [0], filterMode: 'none', height: 26, bottom: 23, showDetail: false, start: zoomStart, end: 100 }
       ],
       series: [
         { name: '85% 이상 음영', type: 'line', yAxisIndex: 1, data: breadth, symbol: 'none', showSymbol: false, lineStyle: { opacity: 0 }, itemStyle: { opacity: 0 }, silent: true, tooltip: { show: false }, markArea: band(85, 'rgba(236,116,122,0.13)'), z: 0 },
@@ -124,6 +127,7 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
       ]
     };
     chart.setOption(option, { notMerge: true });
+    chart.dispatchAction({ type: 'dataZoom', dataZoomIndex: 0, start: zoomStart, end: 100 });
   }, [clean, period]);
 
   return <section className="panel market-breadth-panel" aria-label="코스피 20일선 하락비율">
