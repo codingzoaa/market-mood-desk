@@ -8,7 +8,85 @@ const latestReview:CloseReview[]=[{date:'2026-10-23',session:'KRX 정규장 마�
 {name:'건설·플랜트',scoreInput:{date:'2026-10-23',streak:3,news:'reported',sourceUrls:['https://www.yna.co.kr/view/AKR20261023044651008']},status:'HOT',kind:'지속성 후보 · 개별주 집중',leader:'삼성E&A +7.94%',companions:'동일 재료의 동반 강세 종목은 미확인',reason:'3분기 영업이익 5,006억원(+183.6%). 자사주 7,800억원 취득 계획 중 6,900억원은 소각 예정.',outlook:'3거래일 강세는 확인. 업종 주도보다 실적 기반 개별주 성격이 강함.',change:'10/22 +16.14% → 10/23 +7.94% · 3거래일 연속 상승',sourceIds:[5,1]},
 {name:'우주항공·위성',scoreInput:{date:'2026-10-23',news:'reported',sourceUrls:['https://www.myasset.com/myasset/research/rs_global/RS_0401000_M.cmd?glblGubun=KS']},status:'NEW',kind:'이벤트형 · 수주 확인 필요',leader:'컨텍 +29.87% (상한가)',companions:'AP위성 · LK삼양 상승 확인 (종가 등락률 미기재)',reason:'태국 사업 기대와 광통신 실증 성공 보도가 부각.',outlook:'실증·기대와 확정 수주를 구분. 다음 거래일 대금 유지 확인.',change:'당일 뉴스 부각 · 전일 순위 미확인',sourceIds:[0,2]},
 {name:'정치·인맥 테마',scoreInput:{date:'2026-10-23',news:'reported',sourceUrls:['https://www2.edaily.co.kr/News/Read?mediaCodeNo=257&newsId=04605126645615872']},status:'NEW',kind:'단기 이벤트 · 소멸 위험',leader:'진양화학 +29.81% · 진양산업 +29.79%',companions:'진양폴리 · 진양홀딩스 상승 확인',reason:'오세훈 서울시장 항소심 무죄 판결에 관련주 동반 급등.',outlook:'기업 실적과 직접 연결이 약한 정치 테마. 하루짜리 급등 위험이 높음.',change:'당일 판결 재료 부각 · 전일 순위 미확인',sourceIds:[0,2,3]}
-]}];
+]},
+{
+  "date": "2026-10-26",
+  "session": "KRX 정규장 마감 · 15:30 KST",
+  "summary": "코스피 5,469.47 (−1.46%) · 코스닥 727.21 (−3.26%). 의료AI·일부 로봇주만 종가 기준 동반 강세 확인.",
+  "coverageNote": "2026-10-26 15:30 정규장 종가를 확인한 산업 그룹 2개만 수록했습니다. 사이버보안은 오전 강세 기사는 있으나 국내 종목의 정규장 종가·동반 상승을 검증하지 못해 TOP5에서 제외했습니다. 구성종목 전체의 거래대금·시총·외국인/기관 수급·상승종목 비율·연속 상승일·신고가 수가 부족해 총점·등급을 산출하지 않습니다. NEW/RE는 10/23 리뷰에서 같은 산업을 확인하지 못해 잠정 분류입니다.",
+  "marketFlow": "10/26 15:45 KRX 잠정 집계: 코스피 외국인 약 7,070억원 순매도, 기관 약 6,040억원·개인 약 640억원 순매수. 시장 전체 수급이며 아래 종목의 수급 점수에 사용하지 않았습니다.",
+  "sources": [
+    {
+      "title": "머니투데이 · 2026-10-26 16:22 · 정규장 마감 및 로봇·의료AI 종가",
+      "url": "https://www.mt.co.kr/stock/2026/10/26/2026102616101322514"
+    },
+    {
+      "title": "머니 스톰 · 2026-10-26 · 건강관리기술 종가 및 동반주",
+      "url": "https://www.moneystorm.kr/news/articleView.html?idxno=7674"
+    },
+    {
+      "title": "뉴스투데이 · 2026-10-26 10:06 · 의료AI 가치평가 및 로봇 실적 전망 (장중 재료만)",
+      "url": "https://www.news2day.co.kr/article/20261026500071"
+    },
+    {
+      "title": "뉴스핌 · 2026-10-26 15:58 · ETF 시장 마감·보안 관련 ETF (국내 보안주 종가 아님)",
+      "url": "https://www.newspim.com/news/view/20261026001028"
+    },
+    {
+      "title": "뉴스핌 · 2026-10-26 09:49 · 사이버보안 종목 장중 (TOP5 제외 근거)",
+      "url": "https://www.newspim.com/news/view/20261026000259"
+    }
+  ],
+  "sectors": [
+    {
+      "name": "의료 AI·디지털 헬스케어",
+      "status": "NEW",
+      "kind": "산업 · 다종목 동반 강세 · 지속성 검증 전",
+      "leader": "루닛 +30.00% (종가 14,690원)",
+      "companions": "뷰노 +29.95% · 씨어스 +17.51% · 뉴로핏 +15.96% · 쓰리빌리언 +13.00% (정규장 종가)",
+      "reason": "[언론·증권사 분석, 2026-10-26] NH투자증권이 루닛의 AI 병리·바이오마커 SCOPE 사업가치를 최소 5,000억원으로 평가했다는 보도가 나왔다. 의료 AI 진단·모니터링·유전체 종목으로 매수세가 확산됐지만 기업 공식 공시나 동일한 실적 개선이 확인된 것은 아니다.",
+      "outlook": "상한가 종목이 2개 이상이고 동반주가 많아 당일 상대강도는 강하지만, 신규 공시·수급·다음 거래일 거래대금 유지가 검증되기 전까지 지속형 주도 확정은 보류. 단기 급등 후 변동성 유의.",
+      "change": "직전 거래일 10/23 리뷰에는 의료AI 독립 그룹이 없고 제약·바이오가 있었음. 10/23 의료AI 전체 구성종목 종가를 확보하지 못해 NEW는 잠정이며 전일 대비 섹터 정량 변화 미산출.",
+      "sourceIds": [
+        0,
+        1,
+        2
+      ],
+      "scoreInput": {
+        "date": "2026-10-26",
+        "news": "reported",
+        "sourceUrls": [
+          "https://www.mt.co.kr/stock/2026/10/26/2026102616101322514",
+          "https://www.moneystorm.kr/news/articleView.html?idxno=7674",
+          "https://www.news2day.co.kr/article/20261026500071"
+        ]
+      }
+    },
+    {
+      "name": "로봇·자동화",
+      "status": "RE",
+      "kind": "산업 · 일부 로봇주 강세 · 대형주 확산 제한",
+      "leader": "로보티즈 +9.56% (종가 246,500원)",
+      "companions": "에브리봇 +6.92% · 티로보틱스 +4.90% · 에스피지 +1.03% (정규장 종가)",
+      "reason": "[언론·증권사 분석, 2026-10-26] 10/21 LS증권 보고서에서 로보티즈의 액추에이터 출하 확대와 우즈베키스탄 공장 가동에 따른 2027년 실적 성장 가능성을 제시한 내용이 10/26 다시 부각됐다. 당일 신규 계약 공시로 확인된 상승은 아니다.",
+      "outlook": "로보티즈와 일부 부품·서비스 종목이 동반 상승했으나 레인보우로보틱스 등 대형주 전체 확산은 미확인. 중기 수요 기대와 당일 추격 매수는 분리해 판단.",
+      "change": "10/23 리뷰에는 로봇 그룹이 없으나 10/19 과거 리뷰에는 포함됨. 10/23 전체 로봇주 종가가 미확인이라 RE는 잠정이며 전일 대비 거래대금 증감률은 미산출.",
+      "sourceIds": [
+        0,
+        2
+      ],
+      "scoreInput": {
+        "date": "2026-10-26",
+        "news": "reported",
+        "sourceUrls": [
+          "https://www.mt.co.kr/stock/2026/10/26/2026102616101322514",
+          "https://www.news2day.co.kr/article/20261026500071"
+        ]
+      }
+    }
+  ]
+}];
+
 
 // Historical coverage stops at the latest completed session; holidays are separate.
 const historicalReviews:CloseReview[]=[
