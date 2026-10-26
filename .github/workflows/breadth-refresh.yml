@@ -1,0 +1,35 @@
+name: Review KOSPI breadth updates
+on:
+  schedule:
+    - cron: "45 9 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pandas pyarrow numpy finance-datareader
+      - name: Compute from latest public market records
+        run: python scripts/refresh_kospi_breadth.py
+      - name: Propose changes without auto-deploying
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- public/market-breadth.json; then
+            echo "No update to propose"; exit 0
+          fi
+          BRANCH="automation/kospi-breadth-refresh"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add public/market-breadth.json
+          git commit -m "Update provisional KOSPI breadth observations"
+          git push --force-with-lease origin "$BRANCH"
+          gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' | grep . ||
+            gh pr create --base main --head "$BRANCH" --title "Review provisional KOSPI breadth refresh" --body "Source: FinanceData/marcap and FinanceDataReader KS11. New readings are provisional and require review before merge; no automatic main deployment."
