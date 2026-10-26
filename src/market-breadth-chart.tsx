@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, TooltipComponent, DataZoomComponent, MarkAreaComponent, MarkLineComponent } from 'echarts/components';
@@ -44,6 +44,7 @@ const formatDay = (timestamp: number) => new Date(timestamp).toISOString().slice
 const toTime = (date: string) => Date.parse(`${date}T00:00:00Z`);
 
 export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketBreadthChartProps) {
+  const [period, setPeriod] = useState<'1M'|'3M'|'1Y'|'5Y'>('1Y');
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<EChartsType | null>(null);
   const clean = useMemo(() => {
@@ -79,6 +80,13 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
         { xAxis: start }, { xAxis: end }
       ])
     });
+    const latest = toTime(clean[clean.length - 1].date);
+    const startDate = new Date(latest);
+    if (period === '1M') startDate.setUTCMonth(startDate.getUTCMonth() - 1);
+    else if (period === '3M') startDate.setUTCMonth(startDate.getUTCMonth() - 3);
+    else if (period === '1Y') startDate.setUTCFullYear(startDate.getUTCFullYear() - 1);
+    else startDate.setUTCFullYear(startDate.getUTCFullYear() - 5);
+    const startTime = Math.max(toTime(clean[0].date), startDate.getTime());
     const option: EChartsCoreOption = {
       animation: false,
       color: ['#3474ed', '#159d8f'],
@@ -105,7 +113,7 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
       ],
       dataZoom: [
         { type: 'inside', xAxisIndex: [0], filterMode: 'none' },
-        { type: 'slider', xAxisIndex: [0], filterMode: 'none', height: 26, bottom: 23, showDetail: false, start: clean.length > 260 ? Math.max(0, 100 * (clean.length - 260) / clean.length) : 0, end: 100 }
+        { type: 'slider', xAxisIndex: [0], filterMode: 'none', height: 26, bottom: 23, showDetail: false, startValue: startTime, endValue: latest }
       ],
       series: [
         { name: '85% 이상 음영', type: 'line', yAxisIndex: 1, data: breadth, symbol: 'none', showSymbol: false, lineStyle: { opacity: 0 }, itemStyle: { opacity: 0 }, silent: true, tooltip: { show: false }, markArea: band(85, 'rgba(236,116,122,0.13)'), z: 0 },
@@ -116,12 +124,24 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
       ]
     };
     chart.setOption(option, { notMerge: true });
-  }, [clean]);
+  }, [clean, period]);
 
   return <section className="panel market-breadth-panel" aria-label="코스피 20일선 하락비율">
-    <div className="section-title"><div><span className="eyebrow">MARKET BREADTH</span><h2>코스피 20일선 하락비율</h2></div><span className="muted">85% 주의 · 90% 극단적 과매도</span></div>
+    <div className="section-title"><div><span className="eyebrow">MARKET BREADTH</span><h2>코스피와 20일선 하락비율</h2></div><span className="muted">85% 주의 · 90% 극단적 과매도</span></div>
+    <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginBottom:12}} role="group" aria-label="차트 조회 기간">
+      {(['1M','3M','1Y','5Y'] as const).map(key => <button
+        key={key}
+        type="button"
+        aria-pressed={period === key}
+        onClick={() => setPeriod(key)}
+        style={{padding:'6px 12px',border:'1px solid var(--line)',borderRadius:8,
+          background: period === key ? 'var(--forest)' : 'var(--paper)',
+          color: period === key ? '#fff' : 'var(--ink)',fontSize:12,fontWeight:period === key ? 700 : 400}}
+      >{{'1M':'1개월','3M':'3개월','1Y':'1년','5Y':'5년'}[key]}</button>)}
+      <span className="muted" style={{fontSize:12,marginLeft:8}}>차트 내부 휠·드래그 및 하단 슬라이더로 확대·축소</span>
+    </div>
     {clean.length === 0 && <p className="muted">표시할 검증된 일별 데이터가 없습니다.</p>}
-    <div ref={el} style={{ width: '100%', height: clean.length ? height : 0, minHeight: clean.length ? 280 : 0 }} role="img" aria-label="코스피 지수 및 20일선 하락비율 시계열 차트" />
+    <div ref={el} style={{ width: '100%', height: clean.length ? height : 0, minHeight: clean.length ? 280 : 0 }} role="img" aria-label="코스피 지수 및 20일선 하락비율 시계열 차트: 마우스 툴팁과 날짜 확대 축소 지원" />
     <p className="muted" style={{ fontSize: 12 }}>빨간 음영은 85% 이상(연한 색), 90% 이상(진한 색)인 거래일을 의미합니다. 종목 분류·수정주가 검증이 끝난 데이터만 입력하세요.</p>
   </section>;
 }
