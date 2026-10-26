@@ -142,6 +142,6 @@ export default function MarketBreadthChart({ rows, height = 480, asOf }: MarketB
     </div>
     {clean.length === 0 && <p className="muted">표시할 검증된 일별 데이터가 없습니다.</p>}
     <div ref={el} style={{ width: '100%', height: clean.length ? height : 0, minHeight: clean.length ? 280 : 0 }} role="img" aria-label="코스피 지수 및 20일선 하락비율 시계열 차트: 마우스 툴팁과 날짜 확대 축소 지원" />
-    <p className="muted" style={{ fontSize: 12 }}>빨간 음영은 85% 이상(연한 색), 90% 이상(진한 색)인 거래일을 의미합니다. 종목 분류·수정주가 검증이 끝난 데이터만 입력하세요.</p>
+    <p className="muted" style={{ fontSize: 12 }}>빨간 음영은 85% 이상(연한 색), 90% 이상(진한 색)인 거래일을 의미합니다. 현재 표시는 잠정 지표이며 원본 수정주가·종목 분류 검증이 완료되지 않았습니다.</p>
   </section>;
 }
