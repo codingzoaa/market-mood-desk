@@ -16,7 +16,7 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
   }, [url]);
   // These dates require source-level verification. Exclude their breadth readings
   // from chart thresholds without altering the original data file.
-  const flaggedDates = new Set(['2020-08-18', '2026-03-04', '2026-10-23']);
+  const flaggedDates = new Set(['2020-08-18', '2026-03-04']);
   const chartRows = data?.rows.map(row =>
     flaggedDates.has(row.date) ? { ...row, below20Pct: null } : row
   ) ?? [];
@@ -31,7 +31,7 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
           </p>
           <p className="muted" style={{marginBottom:8,fontSize:12}}>
             주의: 원본 수정주가·과거 구성종목 검증 전이므로 모든 하락비율은 잠정치입니다.
-            의심 날짜 2020-08-18, 2026-03-04와 2026-10-23 결측은 그래프 및 음영에서 제외했습니다.
+            의심 날짜 2020-08-18, 2026-03-04는 표시에서 제외하고, 원본 결측값은 그대로 유지합니다.
             마지막 유효 하락비율 날짜: {lastValid ?? '없음'}
           </p>
           <MarketBreadthChart rows={chartRows} asOf={asOf} />
