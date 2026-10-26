@@ -1,6 +1,7 @@
 import CloseCalendar from './close-calendar';
 import {SectorEtfPanels} from './sector-etfs';
 import Correlation from './correlation';
+import MarketBreadthPanel from './market-breadth-panel';
 import FullscreenPanel from './fullscreen-panel';
 import {MarketCards,HeatmapPanel,InvestorPanel} from './market-panels';
 import {demoMarketDetails,type Board} from './market-details';
@@ -86,7 +87,10 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <SectorEtfPanels date={selected} demo={demo}/>
 
     </>}
-    {view==='signals'&&<Correlation/>}
+    {view==='signals'&&<>
+  <MarketBreadthPanel url="./market-breadth.json" />
+  <Correlation/>
+</>}
     {view==='sectors'&&<>
      <section className="sector-map-launch"><div><strong>업종 전체의 온도</strong><p>코스피·코스닥 업종 히트맵</p></div><button className="btn" onClick={()=>{setHeatBoard('KOSPI');setExpanded('heatmap');}}>코스피<ArrowUpRight size={14}/></button><button className="btn" onClick={()=>{setHeatBoard('KOSDAQ');setExpanded('heatmap');}}>코스닥<ArrowUpRight size={14}/></button></section>
      {sectorPanel(true)}{rotationPanel()}
