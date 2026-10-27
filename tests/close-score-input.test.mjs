@@ -27,7 +27,15 @@ test('stored LS turnover joins same-date heatmap market cap and verified close s
  assert.ok(x.sourceUrls.every(url=>url.includes('2026-10-27')));
 });
 
-test('breadth is only filled when an explicit full heatmap sector is supplied',()=>{
+test('curated STOCK_MAP breadth is used only when every mapped member is present',()=>{
+ const x=buildAutoScoreInput({date,leaderSymbol:'000660',breadthGroup:'메모리 반도체'},snapshots,details);
+ assert.equal(x.members,2);assert.equal(x.up,2);
+ const incomplete={...details,heatmap:{...details.heatmap,stocks:details.heatmap.stocks.filter(x=>x.symbol!=='005930')}};
+ const missing=buildAutoScoreInput({date,leaderSymbol:'000660',breadthGroup:'메모리 반도체'},snapshots,incomplete);
+ assert.equal(missing.members,undefined);assert.equal(missing.up,undefined);
+});
+
+test('legacy heatmap sector breadth remains available only when explicitly requested',()=>{
  const x=buildAutoScoreInput({date,leaderSymbol:'000660',breadthSector:'반도체와반도체장비'},snapshots,details);
  assert.equal(x.members,3);assert.equal(x.up,2);
  const absent=buildAutoScoreInput({date,leaderSymbol:'000660',breadthSector:'HBM'},snapshots,details);
