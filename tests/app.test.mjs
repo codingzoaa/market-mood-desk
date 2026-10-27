@@ -27,7 +27,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
  try{
   await act(async()=>root.render(React.createElement(Desk)));
   assert.equal(document.querySelector('.mode-banner'),null);
-  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','강세 섹터 캘린더','시장 신호','계좌 분석']);
+  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','강세 섹터 캘린더','종목 섹터맵','시장 신호','계좌 분석']);
   const accountLink=document.querySelector('a[aria-label="계좌 분석 · 본인 로그인 필요"]');assert.equal(accountLink.href,'https://market-note-private-account.kby0991.workers.dev/');assert.ok(accountLink.querySelector('svg'));assert.equal(document.querySelector('iframe'),null);
   assert.ok(document.querySelector('.page-heading [aria-label="조회 기준일"]'));
   assert.equal(document.querySelector('.shared-toolbar'),null);
@@ -45,6 +45,8 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   await click(document.querySelector('nav a[href="#stocks"]'));assert.equal(document.querySelectorAll('.etf-panel').length,2);
   await click(document.querySelector('nav a[href="#calendar"]'));assert.equal(document.querySelectorAll('.close-days .close-day').length,20);
   assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.equal(document.querySelectorAll('.close-sector').length,5);assert.equal(document.querySelector('.correlation-panel'),null);
+  await click(document.querySelector('nav a[href="#stockmap"]'));assert.equal(document.querySelector('h1').textContent,'종목 섹터맵');assert.ok(document.querySelector('.sector-map-page'));assert.ok(document.querySelector('.sector-map-table'));assert.match(document.querySelector('.sector-map-page').textContent,/SK하이닉스/);
+  await click(button('섹터별 보기'));assert.ok(document.querySelector('.sector-group-list'));assert.match(document.querySelector('.sector-group-list').textContent,/반도체/);
   await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
   await click(document.querySelector('[aria-label="데이터 관리"]'));assert.match(document.body.textContent,/5分|5분/);assert.equal(document.querySelector('input[type=password]'),null);
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}
