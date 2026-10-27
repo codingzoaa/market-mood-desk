@@ -27,8 +27,8 @@ test('automatic live data, compact heading date, workspace separation and fullsc
  try{
   await act(async()=>root.render(React.createElement(Desk)));
   assert.equal(document.querySelector('.mode-banner'),null);
-  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','강세 섹터 캘린더','종목 섹터맵','시장 신호','계좌 분석']);assert.ok(document.querySelector('header.site-header nav.workspace-nav'));
-  const accountLink=document.querySelector('a[aria-label="계좌 분석 · 본인 로그인 필요"]');assert.equal(accountLink.href,'https://market-note-private-account.kby0991.workers.dev/');assert.ok(accountLink.querySelector('svg'));assert.equal(document.querySelector('iframe'),null);
+  assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','강세 섹터 캘린더','종목 섹터맵','시장 신호','계좌 분석']);assert.ok(document.querySelector('header.site-header nav.workspace-nav'));assert.equal(document.querySelectorAll('nav[aria-label="WORKSPACE"] svg').length,0);
+  const accountLink=document.querySelector('a[aria-label="계좌 분석 · 본인 로그인 필요"]');assert.equal(accountLink.href,'https://market-note-private-account.kby0991.workers.dev/');assert.equal(accountLink.querySelector('svg'),null);assert.equal(document.querySelector('iframe'),null);
   assert.ok(document.querySelector('.page-heading [aria-label="조회 기준일"]'));
   assert.equal(document.querySelector('.shared-toolbar'),null);
   assert.doesNotMatch(document.body.textContent,/접속 코드|실시간 시세 연결 없음|투자 관제실/);
