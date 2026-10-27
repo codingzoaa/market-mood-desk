@@ -1125,19 +1125,6 @@
     "updatedAt": "2026-10-27"
   },
   {
-    "symbol": "078350",
-    "name": "한양디지텍",
-    "market": "KOSDAQ",
-    "sector": "우주항공",
-    "subSector": "우주발사체·특수부품",
-    "themes": [
-      "우주항공",
-      "전자부품"
-    ],
-    "breadth": true,
-    "updatedAt": "2026-10-27"
-  },
-  {
     "symbol": "099320",
     "name": "쎄트렉아이",
     "market": "KOSDAQ",
