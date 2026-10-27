@@ -10,11 +10,11 @@ const heat=(symbol,name,market,changePct,marketCap=100000)=>({symbol,name,market
 const details=stocks=>({date,asOf:date+'T15:35:00+09:00',indices:{},errors:{},heatmap:{asOf:date+'T15:35:00+09:00',source:'네이버 증권 KRX · 네이버 업종',stocks}});
 
 test('curated stock map has unique codes, single score subsector and expanded industries',()=>{
- assert.ok(STOCK_MAP.length>=94);
+ assert.ok(STOCK_MAP.length>=142);
  assert.equal(new Set(STOCK_MAP.map(x=>x.symbol)).size,STOCK_MAP.length);
  assert.ok(STOCK_MAP.every(x=>/^\d{6}$/.test(x.symbol)&&x.subSector&&x.sector&&x.breadth===true));
- for(const sector of ['반도체','2차전지','로봇','전력기기','바이오','조선','방산','자동차','원전'])assert.ok(STOCK_MAP.some(x=>x.sector===sector));
- for(const group of ['메모리 반도체','PCB·반도체 기판','반도체 장비·테스트','2차전지 셀·소재','로봇·자동화','전력기기·전력망','제약·바이오','조선·기자재','방산','자동차','원전'])assert.ok(BREADTH_GROUPS[group]);
+ for(const sector of ['반도체','2차전지','로봇','전력기기','바이오','조선','방산','자동차','원전','화장품','건설·EPC','금융·증권','우주항공','사이버보안'])assert.ok(STOCK_MAP.some(x=>x.sector===sector));
+ for(const group of ['메모리 반도체','PCB·반도체 기판','반도체 장비·테스트','2차전지 셀·소재','로봇·자동화','전력기기·전력망','AI 데이터센터·전력 인프라','제약·바이오','조선·기자재','방산','자동차','원전','화장품','건설·EPC','금융·증권','우주항공','사이버보안'])assert.ok(BREADTH_GROUPS[group]);
 });
 
 test('breadth uses fixed members, reports strong-up ratio and fails closed on missing quotes',()=>{
@@ -42,4 +42,12 @@ test('heatmap auto-seed never enters breadth until curated',()=>{
 test('expanded industries have stable breadth universes',()=>{
  const expected={바이오:12,조선:10,방산:7,자동차:10,원전:10};
  for(const [sector,count] of Object.entries(expected))assert.equal(STOCK_MAP.filter(x=>x.sector===sector&&x.breadth).length,count);
+});
+
+
+test('second expansion has stable breadth universes',()=>{
+ const expected={'전력기기':9,'화장품':10,'건설·EPC':9,'금융·증권':10,'우주항공':7,'사이버보안':10};
+ for(const [sector,count] of Object.entries(expected))assert.equal(STOCK_MAP.filter(x=>x.sector===sector&&x.breadth).length,count);
+ assert.equal(STOCK_MAP.find(x=>x.symbol==='010120').subSector,'AI데이터센터 배전·전력제어');
+ assert.equal(STOCK_MAP.some(x=>x.symbol==='078350'&&x.sector==='우주항공'),false);
 });
