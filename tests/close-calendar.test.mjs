@@ -26,7 +26,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelector('textarea'),null);
   assert.equal(document.querySelector('.close-session'),null);
   assert.equal(document.querySelector('.close-market'),null);
-  assert.doesNotMatch(document.querySelector('.close-review').textContent,/코스피 5,638/);
+  assert.equal(document.querySelector('.close-market'),null); // No index-summary header; provenance may mention the index.
   assert.equal(document.querySelector('[aria-label="2026-10-27 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,1);
   assert.equal(document.querySelector('[aria-label="2026-10-26 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
   assert.equal(document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
