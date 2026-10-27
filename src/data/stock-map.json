@@ -248,6 +248,162 @@
     "updatedAt": "2026-10-27"
   },
   {
+    "symbol": "087010",
+    "name": "펩트론",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "바이오 플랫폼",
+    "themes": [
+      "장기지속형",
+      "비만치료"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "141080",
+    "name": "리가켐바이오",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "바이오 플랫폼",
+    "themes": [
+      "ADC",
+      "기술수출"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "196170",
+    "name": "알테오젠",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "바이오 플랫폼",
+    "themes": [
+      "SC플랫폼",
+      "기술수출"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "298380",
+    "name": "에이비엘바이오",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "바이오 플랫폼",
+    "themes": [
+      "이중항체",
+      "기술수출"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "068270",
+    "name": "셀트리온",
+    "market": "KOSPI",
+    "sector": "바이오",
+    "subSector": "바이오 CDMO·바이오시밀러",
+    "themes": [
+      "바이오시밀러",
+      "신약"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "207940",
+    "name": "삼성바이오로직스",
+    "market": "KOSPI",
+    "sector": "바이오",
+    "subSector": "바이오 CDMO·바이오시밀러",
+    "themes": [
+      "CDMO",
+      "바이오의약품"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "000100",
+    "name": "유한양행",
+    "market": "KOSPI",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "항암제",
+      "렉라자"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "000250",
+    "name": "삼천당제약",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "바이오시밀러",
+      "안과"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "028300",
+    "name": "HLB",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "항암제",
+      "신약"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "128940",
+    "name": "한미약품",
+    "market": "KOSPI",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "비만치료",
+      "신약"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "310210",
+    "name": "보로노이",
+    "market": "KOSDAQ",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "표적항암",
+      "기술수출"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "326030",
+    "name": "SK바이오팜",
+    "market": "KOSPI",
+    "sector": "바이오",
+    "subSector": "신약·제약",
+    "themes": [
+      "CNS",
+      "신약"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
     "symbol": "000660",
     "name": "SK하이닉스",
     "market": "KOSPI",
@@ -480,6 +636,359 @@
     "updatedAt": "2026-10-27"
   },
   {
+    "symbol": "003570",
+    "name": "SNT다이내믹스",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 전자·부품",
+    "themes": [
+      "변속기",
+      "화기"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "103140",
+    "name": "풍산",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 전자·부품",
+    "themes": [
+      "탄약",
+      "방산소재"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "272210",
+    "name": "한화시스템",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 전자·부품",
+    "themes": [
+      "레이더",
+      "C4I"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "012450",
+    "name": "한화에어로스페이스",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 체계·플랫폼",
+    "themes": [
+      "K9",
+      "엔진",
+      "우주항공"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "047810",
+    "name": "한국항공우주",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 체계·플랫폼",
+    "themes": [
+      "전투기",
+      "항공기"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "064350",
+    "name": "현대로템",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 체계·플랫폼",
+    "themes": [
+      "K2전차",
+      "지상무기"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "079550",
+    "name": "LIG넥스원",
+    "market": "KOSPI",
+    "sector": "방산",
+    "subSector": "방산 체계·플랫폼",
+    "themes": [
+      "유도무기",
+      "미사일"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "006910",
+    "name": "보성파워텍",
+    "market": "KOSDAQ",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "전력기자재",
+      "원전구조물"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "032820",
+    "name": "우리기술",
+    "market": "KOSDAQ",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "제어계측",
+      "원전제어"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "046120",
+    "name": "오르비텍",
+    "market": "KOSDAQ",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "방사선",
+      "원전해체"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "083650",
+    "name": "비에이치아이",
+    "market": "KOSDAQ",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "HRSG",
+      "보조기기"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "100840",
+    "name": "SNT에너지",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "열교환기",
+      "복수기"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "105840",
+    "name": "우진",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 보조기기",
+    "themes": [
+      "계측기",
+      "원전계측"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "051600",
+    "name": "한전KPS",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 설계·정비",
+    "themes": [
+      "정비",
+      "발전설비"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "052690",
+    "name": "한전기술",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 설계·정비",
+    "themes": [
+      "원전설계",
+      "EPC"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "130660",
+    "name": "한전산업",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 설계·정비",
+    "themes": [
+      "발전정비",
+      "원전운영"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "034020",
+    "name": "두산에너빌리티",
+    "market": "KOSPI",
+    "sector": "원전",
+    "subSector": "원전 주기기",
+    "themes": [
+      "SMR",
+      "원자로",
+      "터빈"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "000270",
+    "name": "기아",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "완성차",
+    "themes": [
+      "전기차",
+      "하이브리드"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "005380",
+    "name": "현대차",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "완성차",
+    "themes": [
+      "전기차",
+      "하이브리드"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "005850",
+    "name": "에스엘",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "램프",
+      "전장"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "010690",
+    "name": "화신",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "섀시",
+      "차체부품"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "011210",
+    "name": "현대위아",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "구동계",
+      "열관리"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "012330",
+    "name": "현대모비스",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "전장",
+      "모듈"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "015750",
+    "name": "성우하이텍",
+    "market": "KOSDAQ",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "차체부품",
+      "경량화"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "018880",
+    "name": "한온시스템",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "열관리",
+      "전기차"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "204320",
+    "name": "HL만도",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 부품",
+    "themes": [
+      "ADAS",
+      "제동"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "307950",
+    "name": "현대오토에버",
+    "market": "KOSPI",
+    "sector": "자동차",
+    "subSector": "자동차 SW·전장",
+    "themes": [
+      "SDV",
+      "자율주행"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
     "symbol": "000500",
     "name": "가온전선",
     "market": "KOSPI",
@@ -565,6 +1074,133 @@
     "themes": [
       "변압기",
       "전력망"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "014620",
+    "name": "성광벤드",
+    "market": "KOSDAQ",
+    "sector": "조선",
+    "subSector": "조선 기자재·엔진",
+    "themes": [
+      "피팅",
+      "플랜트"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "017960",
+    "name": "한국카본",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 기자재·엔진",
+    "themes": [
+      "LNG보냉재"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "023160",
+    "name": "태광",
+    "market": "KOSDAQ",
+    "sector": "조선",
+    "subSector": "조선 기자재·엔진",
+    "themes": [
+      "피팅",
+      "플랜트"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "033500",
+    "name": "동성화인텍",
+    "market": "KOSDAQ",
+    "sector": "조선",
+    "subSector": "조선 기자재·엔진",
+    "themes": [
+      "LNG보냉재"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "082740",
+    "name": "한화엔진",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 기자재·엔진",
+    "themes": [
+      "선박엔진"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "009540",
+    "name": "HD한국조선해양",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 완성선박",
+    "themes": [
+      "조선지주",
+      "LNG선"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "010140",
+    "name": "삼성중공업",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 완성선박",
+    "themes": [
+      "LNG선",
+      "해양플랜트"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "010620",
+    "name": "HD현대미포",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 완성선박",
+    "themes": [
+      "중형선",
+      "탱커"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "042660",
+    "name": "한화오션",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 완성선박",
+    "themes": [
+      "LNG선",
+      "특수선"
+    ],
+    "breadth": true,
+    "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "329180",
+    "name": "HD현대중공업",
+    "market": "KOSPI",
+    "sector": "조선",
+    "subSector": "조선 완성선박",
+    "themes": [
+      "LNG선",
+      "함정"
     ],
     "breadth": true,
     "updatedAt": "2026-10-27"
