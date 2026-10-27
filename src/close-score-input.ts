@@ -11,15 +11,21 @@ export type AutoScoreSpec={
 const API_BASE='https://market-note-ls-api.kby0991.workers.dev';
 const unique=(xs:string[])=>[...new Set(xs)];
 
+function previousWeekday(date:string){
+ const d=new Date(date+'T12:00:00Z');
+ do{d.setUTCDate(d.getUTCDate()-1);}while([0,6].includes(d.getUTCDay()));
+ return d.toISOString().slice(0,10);
+}
 function verifiedPositiveStreak(snapshots:Snapshot[],date:string,symbol:string){
  const rows=snapshots.filter(s=>s.date<=date).slice().sort((a,b)=>b.date.localeCompare(a.date));
  if(!rows.length||rows[0].date!==date)return undefined;
- let streak=0;
+ let streak=0,expected=date;
  for(const row of rows){
+  if(row.date!==expected)break;
   const stock=row.stocks.find(s=>s.symbol===symbol);
-  if(!stock)break;
-  if(stock.changePct<=0)break;
+  if(!stock||stock.changePct<=0)break;
   streak++;
+  expected=previousWeekday(expected);
  }
  return streak||undefined;
 }
