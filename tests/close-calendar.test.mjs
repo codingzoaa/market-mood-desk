@@ -19,8 +19,8 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.match(document.querySelector('.close-review h2').textContent,/2026-10-27/);
   assert.equal(document.querySelectorAll('.close-sector').length,5);
   assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,5);
-  assert.match(document.querySelector('.close-review').textContent,/SK하이닉스 \\+5.18%/);
-  assert.match(document.querySelector('.close-review').textContent,/삼성전자 \\+4.23%/);
+  assert.ok(document.querySelector('.close-review').textContent.includes('SK하이닉스 +5.18%'));
+  assert.ok(document.querySelector('.close-review').textContent.includes('삼성전자 +4.23%'));
   assert.match(document.querySelector('.close-review').textContent,/총점 미산출/);
   assert.equal(document.querySelectorAll('.close-score-grid').length,5);
   assert.equal(document.querySelector('textarea'),null);
