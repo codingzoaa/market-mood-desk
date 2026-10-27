@@ -1,4 +1,5 @@
 import type {ScoreInput} from './close-score';
+import {review20261027} from './close-review-2026-10-27';
 export type CloseSector={name:string;status:'NEW'|'HOT'|'RE'|'WEAK';kind:string;leader:string;companions:string;reason:string;outlook:string;change:string;sourceIds:number[];scoreInput?:ScoreInput};
 export type CloseReview={date:string;session:string;summary:string;coverageNote?:string;marketFlow?:string;sectors:CloseSector[];sources:{title:string;url:string}[]};
 // Source-checked editorial records, independent of incomplete live theme tags.
@@ -951,7 +952,7 @@ const historicalReviews:CloseReview[]=[
     ]
   }
 ];
-const records=[...historicalReviews,...latestReview];
+const records=[...historicalReviews,...latestReview,review20261027];
 export const closeReviews:CloseReview[]=records.map((review,index)=>({...review,sectors:review.sectors.map(sector=>{
  if(index===0||!historicalReviews.includes(review))return sector;
  const previous=records[index-1],match=previous.sectors.find(s=>s.name===sector.name);
