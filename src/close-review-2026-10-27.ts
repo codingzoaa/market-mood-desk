@@ -73,6 +73,7 @@ export const review20261027:CloseReview={
     {
       name:'제약·바이오',
       leaderSymbol:'207940',
+      breadthGroup:'제약·바이오',
       status:'RE',
       kind:'산업 · 선별 반등 · RE 잠정',
       leader:'삼성바이오로직스 +5.37% · 거래대금 1,232억원',
