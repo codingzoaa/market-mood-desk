@@ -11,10 +11,10 @@ import { liveMarketDetails } from './live';
 import { localApi as api } from './storage';
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutDashboard, Activity, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff, Tags } from 'lucide-react';
+import { Layers3, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
 import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
 type View='overview'|'sectors'|'stocks'|'calendar'|'stockmap'|'signals'|'data';
-const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'강세 섹터 캘린더',icon:CalendarDays},{key:'stockmap',name:'종목 섹터맵',icon:Tags},{key:'signals',name:'시장 신호',icon:Activity}];
+const views: {key:View;name:string}[]=[{key:'overview',name:'국장'},{key:'sectors',name:'주도 섹터'},{key:'stocks',name:'거래대금'},{key:'calendar',name:'강세 섹터 캘린더'},{key:'stockmap',name:'종목 섹터맵'},{key:'signals',name:'시장 신호'}];
 const number=(v:number|null|undefined,d=0)=>v===undefined||v===null?'—':v.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const money=(v:number)=>number(v/1e8,1)+'억';
 const pct=(v:number|null|undefined)=>v===undefined||v===null?'—':(v>0?'+':'')+number(v,2)+'%';
@@ -71,7 +71,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <a className="brand mobile-desk-brand" href="#overview" onClick={()=>go('overview')}><span className="brand-symbol">m</span><span>market<span className="brand-light">note</span></span></a>
      <div className="top-actions"><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
     </div>
-    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}><v.icon size={19}/><span>{v.name}</span></a>)}<a href="https://market-note-private-account.kby0991.workers.dev/" aria-label="계좌 분석 · 본인 로그인 필요" title="본인 로그인 후 이용"><LockKeyhole size={19}/><span>계좌 분석</span></a></nav>
+    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}>{v.name}</a>)}<a href="https://market-note-private-account.kby0991.workers.dev/" aria-label="계좌 분석 · 본인 로그인 필요" title="본인 로그인 후 이용">계좌 분석</a></nav>
    </header>
    <main id="main" data-workspace={view}>
 
