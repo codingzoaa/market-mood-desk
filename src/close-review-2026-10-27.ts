@@ -17,6 +17,7 @@ export const review20261027:CloseReview={
     {
       name:'메모리 반도체',
       leaderSymbol:'000660',
+      breadthGroup:'메모리 반도체',
       status:'RE',
       kind:'산업 · 대형주 동반 반등 · RE 잠정',
       leader:'SK하이닉스 +5.18% · 거래대금 3조8,387억원',
@@ -30,6 +31,7 @@ export const review20261027:CloseReview={
     {
       name:'PCB·반도체 기판',
       leaderSymbol:'007810',
+      breadthGroup:'PCB·반도체 기판',
       status:'RE',
       kind:'산업 · 다종목 확산 · RE 잠정',
       leader:'코리아써키트 +13.40% · 거래대금 669억원',
@@ -43,6 +45,7 @@ export const review20261027:CloseReview={
     {
       name:'반도체 장비·테스트',
       leaderSymbol:'253590',
+      breadthGroup:'반도체 장비·테스트',
       status:'RE',
       kind:'산업 · 소부장 확산 · RE 잠정',
       leader:'네오셈 +13.29% · 거래대금 825억원',
@@ -56,6 +59,7 @@ export const review20261027:CloseReview={
     {
       name:'2차전지 셀·소재',
       leaderSymbol:'006400',
+      breadthGroup:'2차전지 셀·소재',
       status:'RE',
       kind:'산업 · 대형주·소재 동반 반등 · RE 잠정',
       leader:'삼성SDI +5.07% · 거래대금 2,348억원',
