@@ -30,7 +30,8 @@ function validateMap(input:unknown):StockMapEntry[]{
   if(!v||typeof v!=='object'||!/^\d{6}$/.test(v.symbol)||seen.has(v.symbol))throw Error('STOCK_MAP 종목코드 오류');
   seen.add(v.symbol);
   if(!['KOSPI','KOSDAQ'].includes(v.market)||typeof v.name!=='string'||!v.name.trim()||typeof v.sector!=='string'||!v.sector.trim()||typeof v.subSector!=='string'||!v.subSector.trim()||!Array.isArray(v.themes)||typeof v.breadth!=='boolean')throw Error('STOCK_MAP 항목 오류');
-  return {symbol:v.symbol,name:v.name.trim(),market:v.market,sector:v.sector.trim(),subSector:v.subSector.trim(),themes:[...new Set(v.themes.filter((x:any)=>typeof x==='string'&&x.trim()).map((x:string)=>x.trim()))],breadth:v.breadth,...(typeof v.updatedAt==='string'?{updatedAt:v.updatedAt}:{})};
+  const themes:string[]=[...new Set<string>((v.themes as unknown[]).filter((x):x is string=>typeof x==='string'&&!!x.trim()).map(x=>x.trim()))];
+  return {symbol:String(v.symbol),name:v.name.trim(),market:v.market as 'KOSPI'|'KOSDAQ',sector:v.sector.trim(),subSector:v.subSector.trim(),themes,breadth:Boolean(v.breadth),...(typeof v.updatedAt==='string'?{updatedAt:v.updatedAt}:{})};
  });
 }
 
