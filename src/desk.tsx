@@ -1,4 +1,5 @@
 import CloseCalendar from './close-calendar';
+import StockSectorMap from './stock-sector-map';
 import {SectorEtfPanels} from './sector-etfs';
 import Correlation from './correlation';
 import MarketBreadthPanel from './market-breadth-panel';
@@ -10,10 +11,10 @@ import { liveMarketDetails } from './live';
 import { localApi as api } from './storage';
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutDashboard, Activity, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Activity, Layers3, BarChart3, CalendarDays, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff, Tags } from 'lucide-react';
 import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
-type View='overview'|'sectors'|'stocks'|'calendar'|'signals'|'data';
-const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'강세 섹터 캘린더',icon:CalendarDays},{key:'signals',name:'시장 신호',icon:Activity}];
+type View='overview'|'sectors'|'stocks'|'calendar'|'stockmap'|'signals'|'data';
+const views: {key:View;name:string;icon:typeof Layers3}[]=[{key:'overview',name:'국장',icon:LayoutDashboard},{key:'sectors',name:'주도 섹터',icon:Layers3},{key:'stocks',name:'거래대금',icon:BarChart3},{key:'calendar',name:'강세 섹터 캘린더',icon:CalendarDays},{key:'stockmap',name:'종목 섹터맵',icon:Tags},{key:'signals',name:'시장 신호',icon:Activity}];
 const number=(v:number|null|undefined,d=0)=>v===undefined||v===null?'—':v.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const money=(v:number)=>number(v/1e8,1)+'억';
 const pct=(v:number|null|undefined)=>v===undefined||v===null?'—':(v>0?'+':'')+number(v,2)+'%';
@@ -75,12 +76,12 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
    <main id="main" data-workspace={view}>
 
     {view!=='calendar'&&error&&<div role="alert" className="error-banner">{error}<button className="text-link" onClick={()=>reload()}>다시 시도</button></div>}
-    <div className="page-heading"><div><span className="eyebrow">{view==='data'?'MY DATA':'WORKSPACE · '+String(Math.max(0,views.findIndex(v=>v.key===view))+1).padStart(2,'0')}</span><h1>{views.find(v=>v.key===view)?.name||'데이터 관리'}</h1><p>{view==='overview'?'국내 시장과 오늘의 핵심 흐름':view==='sectors'?'돈이 모이는 섹터와 강세의 확산':view==='stocks'?'거래대금으로 찾는 종목과 ETF':view==='calendar'?'장 마감 기준 강세 섹터 TOP5와 대표 종목':view==='signals'?'수급과 지수 흐름으로 살펴보는 시장 신호':'자동 시세 수집과 기록 관리'}</p></div>{view!=='data'&&view!=='calendar'&&<div className="heading-date"><div className="date-control"><span>기준일</span><button className="icon-btn" aria-label="이전 저장일" disabled={!dates.some(d=>d<selected)} onClick={()=>setSelected(dates.filter(d=>d<selected).at(-1)!)}><ChevronLeft size={17}/></button><input type="date" aria-label="조회 기준일" value={selected} max={today} onChange={e=>{if(e.target.value){setSelected(e.target.value);if(e.target.value>end||e.target.value<shiftDay(end,-27))setEnd(e.target.value);}}}/><button className="icon-btn" aria-label="다음 저장일" disabled={!dates.some(d=>d>selected)} onClick={()=>setSelected(dates.find(d=>d>selected)!)}><ChevronRight size={17}/></button><button className="text-link" disabled={!lastDate} onClick={()=>{setSelected(lastDate!);setEnd(today);}}>최근</button></div></div>}</div>
-    {view!=='data'&&view!=='calendar'&&<>
+    <div className="page-heading"><div><span className="eyebrow">{view==='data'?'MY DATA':'WORKSPACE · '+String(Math.max(0,views.findIndex(v=>v.key===view))+1).padStart(2,'0')}</span><h1>{views.find(v=>v.key===view)?.name||'데이터 관리'}</h1><p>{view==='overview'?'국내 시장과 오늘의 핵심 흐름':view==='sectors'?'돈이 모이는 섹터와 강세의 확산':view==='stocks'?'거래대금으로 찾는 종목과 ETF':view==='calendar'?'장 마감 기준 강세 섹터 TOP5와 대표 종목':view==='stockmap'?'종목별 대분류·세부섹터·Breadth 구성 기준':view==='signals'?'수급과 지수 흐름으로 살펴보는 시장 신호':'자동 시세 수집과 기록 관리'}</p></div>{view!=='data'&&view!=='calendar'&&view!=='stockmap'&&<div className="heading-date"><div className="date-control"><span>기준일</span><button className="icon-btn" aria-label="이전 저장일" disabled={!dates.some(d=>d<selected)} onClick={()=>setSelected(dates.filter(d=>d<selected).at(-1)!)}><ChevronLeft size={17}/></button><input type="date" aria-label="조회 기준일" value={selected} max={today} onChange={e=>{if(e.target.value){setSelected(e.target.value);if(e.target.value>end||e.target.value<shiftDay(end,-27))setEnd(e.target.value);}}}/><button className="icon-btn" aria-label="다음 저장일" disabled={!dates.some(d=>d>selected)} onClick={()=>setSelected(dates.find(d=>d>selected)!)}><ChevronRight size={17}/></button><button className="text-link" disabled={!lastDate} onClick={()=>{setSelected(lastDate!);setEnd(today);}}>최근</button></div></div>}</div>
+    {view!=='data'&&view!=='calendar'&&view!=='stockmap'&&<>
      {['sectors','stocks'].includes(view)&&<div className="shared-toolbar"><div className="filters"><select aria-label="시장 선택" value={market} onChange={e=>setMarket(e.target.value)}><option value="ALL">전체 시장</option><option value="KOSPI">코스피</option><option value="KOSDAQ">코스닥</option></select><select aria-label="거래대금 상위 범위" value={topN} onChange={e=>setTopN(Number(e.target.value))}><option value="30">대금 상위 30</option><option value="50">대금 상위 50</option><option value="100">대금 상위 100</option><option value="3000">수집 범위 전체</option></select></div></div>}
      <div className="provenance"><Clock3 size={12}/><span>{snap?(demo?'가상 시세':snap.source)+' · '+asOf+' KST':'선택한 날짜는 미등록입니다.'}</span></div>
     </>}
-    {view!=='calendar'&&!demo&&feed?.failed&&<div className="auto-market-note negative" role="status"><span>{feed.message||'연결 오류 · 마지막 정상 기록 유지'}</span></div>}
+    {view!=='calendar'&&view!=='stockmap'&&!demo&&feed?.failed&&<div className="auto-market-note negative" role="status"><span>{feed.message||'연결 오류 · 마지막 정상 기록 유지'}</span></div>}
     {view==='overview'&&<>
      {metricsRow()}
      {dayLeadersPanel()}
@@ -99,7 +100,8 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      <div className="stock-toolbar"><div className="stock-scope-tabs" aria-label="거래대금 종목 범위"><button className={stockMode==='all'?'active':''} aria-pressed={stockMode==='all'} onClick={()=>setStockMode('all')}>전체 종목</button><button className={stockMode==='strong'?'active':''} aria-pressed={stockMode==='strong'} onClick={()=>setStockMode('strong')}>+4% 강세</button><button className={watchOnly?'active':''} aria-pressed={watchOnly} onClick={()=>setWatchOnly(!watchOnly)}><Star size={13}/>관심종목</button></div><div className="theme-pills"><button className={theme==='ALL'?'active':''} onClick={()=>setTheme('ALL')}>전체 테마</button>{sectors.map(s=><button key={s.name} className={theme===s.name?'active':''} onClick={()=>setTheme(s.name)}>{s.name}</button>)}</div><div className="stock-search"><div className="search"><Search size={16}/><input aria-label="종목·테마 검색" placeholder="종목·코드·테마 검색" value={search} onChange={e=>setSearch(e.target.value)}/></div><select aria-label="종목 정렬" value={sort} onChange={e=>setSort(e.target.value)}><option value="turnover">거래대금 순</option><option value="change">등락률 순</option><option value="name">종목명 순</option></select></div></div>
      {stockTable()}{etfPanels()}
     </>}
-    {view==='calendar'&&<CloseCalendar snapshots={snapshots}/>}
+    {view==='calendar'&&<CloseCalendar snapshots={snapshots}/>} 
+    {view==='stockmap'&&<StockSectorMap/>}
     {view==='data'&&dataPage()}
     {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>KRX · 16:10까지 수집 · KST</span></footer>}
    </main>
