@@ -1,11 +1,13 @@
 import type {ScoreInput} from './close-score';
 import type {MarketDetails} from './market-details';
 import type {Snapshot} from './market';
+import {getSectorBreadth} from './stock-map';
 
 export type AutoScoreSpec={
  date:string;
  leaderSymbol?:string;
  breadthSector?:string;
+ breadthGroup?:string;
 };
 
 const API_BASE='https://market-note-ls-api.kby0991.workers.dev';
@@ -48,7 +50,13 @@ export function buildAutoScoreInput(spec:AutoScoreSpec,snapshots:Snapshot[],deta
   const heatLeader=details.heatmap.stocks.find(s=>s.symbol===spec.leaderSymbol);
   // Naver domestic marketSum is stored by collectHeatmap in 억원; turnover above is converted to 억원.
   if(heatLeader?.marketCap>0)input.marketCap=heatLeader.marketCap;
-  if(spec.breadthSector){
+  if(spec.breadthGroup){
+   const breadth=getSectorBreadth(details,spec.breadthGroup);
+   if(breadth?.complete){
+    input.members=breadth.members;
+    input.up=breadth.up;
+   }
+  }else if(spec.breadthSector){
    const members=details.heatmap.stocks.filter(s=>s.sector===spec.breadthSector);
    if(members.length>=2){
     input.members=members.length;
