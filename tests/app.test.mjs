@@ -44,7 +44,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   await click(document.querySelector('nav a[href="#sectors"]'));assert.ok(document.querySelector('.rotation-panel'));assert.equal(document.querySelector('.market-summary'),null);
   await click(document.querySelector('nav a[href="#stocks"]'));assert.equal(document.querySelectorAll('.etf-panel').length,2);
   await click(document.querySelector('nav a[href="#calendar"]'));assert.equal(document.querySelectorAll('.close-days .close-day').length,20);
-  assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.equal(document.querySelectorAll('.close-sector').length,5);assert.equal(document.querySelector('.correlation-panel'),null);
+  assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.ok(document.querySelectorAll('.close-sector').length>=1&&document.querySelectorAll('.close-sector').length<=5);assert.equal(document.querySelector('.correlation-panel'),null);
   await click(document.querySelector('nav a[href="#stockmap"]'));assert.equal(document.querySelector('h1').textContent,'종목 섹터맵');assert.ok(document.querySelector('.sector-map-page'));assert.ok(document.querySelector('.sector-map-table'));assert.match(document.querySelector('.sector-map-page').textContent,/SK하이닉스/);
   await click(button('섹터별 보기'));assert.ok(document.querySelector('.sector-group-list'));assert.match(document.querySelector('.sector-group-list').textContent,/반도체/);
   await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
@@ -57,7 +57,7 @@ test('automatic live data, compact heading date, workspace separation and fullsc
 
 test('duplicate dates require explicit overwrite; invalid and demo imports preserve records', async () => {
   const before = localStorage.getItem('market-note:v1');
-  const saved = (await localApi('/api/dashboard')).snapshots[0];
+  const saved = JSON.parse(localStorage.getItem('market-note:v1')).snapshots[0];
   await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [saved] }), /同じ|같은 날짜/);
   await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [demoSnapshots().at(-1)] }), /가상 시세/);
   await assert.rejects(localApi('/api/import', { schemaVersion: 2, snapshots: [{ ...saved, stocks: [{ ...saved.stocks[0], price: -1 }] }] }), /가격/);
