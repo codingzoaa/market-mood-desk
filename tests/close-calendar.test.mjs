@@ -28,6 +28,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelector('.close-session'),null);
   assert.equal(document.querySelector('.close-market'),null);
   assert.equal(document.querySelector('.close-market'),null); // No index-summary header; provenance may mention the index.
+  assert.equal(document.querySelector('.close-market-flow'),null); // No market-index summary above detail cards.
   assert.equal(document.querySelector('[aria-label="2026-10-30 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
   assert.equal(document.querySelector('[aria-label="2026-10-29 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,1);
   assert.equal(document.querySelector('[aria-label="2026-10-28 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
