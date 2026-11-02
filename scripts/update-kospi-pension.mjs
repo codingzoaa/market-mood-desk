@@ -31,5 +31,8 @@ const newDate=new Date(date+'T00:00:00Z');
 if(newDate-previousDate>12*86400000)throw Error('Gap exceeds 12 calendar days: backfill required');
 current.rows.push([date,kospiClose,pensionNetBuyBillion]);
 current.lastDate=date;
+current.source='KRX 사용자 제공 이력 + LS증권 KRX t1511/t1601 장 마감 추가분';
+current.latestDataSource=source;
+current.latestDataObservedAt=observedAt;
 writeFileSync(path,JSON.stringify(current));
 console.log('Added LS verified post-close day '+date+'; '+current.rows.length+' rows');
