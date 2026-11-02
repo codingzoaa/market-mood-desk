@@ -100,8 +100,8 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
     const choosePlotDate = (event: {offsetX: number; offsetY: number}) => {
       if (!instance.containPixel('grid', [event.offsetX, event.offsetY])) return;
       const axis = instance.convertFromPixel({xAxisIndex: 0}, event.offsetX);
-      const idx = typeof axis === 'number' ? Math.round(axis) : Number(axis);
-      if (!Number.isInteger(idx) || idx < 0 || idx >= points.length) return;
+      const idx = typeof axis === 'string' ? byDate.get(axis)?.i : Math.floor(Number(axis));
+      if (idx === undefined || !Number.isInteger(idx) || idx < 0 || idx >= points.length) return;
       const date = points[idx].date;
       if (signalSet.has(date)) setSelectedDate(date);
     };
