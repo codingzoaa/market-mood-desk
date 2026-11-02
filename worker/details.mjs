@@ -16,7 +16,12 @@ export function indexSeries(rows,date){
 export function rawFlows(data){
  return Object.fromEntries(['KOSPI','KOSDAQ','FUTURES','CALL','PUT'].map((key,i)=>{
   const row=data['t1601OutBlock'+(i+1)];if(!row)throw new Error('FLOW_SHAPE');
-  return [key,Object.fromEntries([['foreign','17'],['institution','18'],['individual','08'],['financial','01'],['pension','06']].map(([name,code])=>[name,number(row['svolume_'+code],-1e13,1e13)]))];
+  const flows=Object.fromEntries([['foreign','17'],['institution','18'],['individual','08'],['financial','01']].map(([name,code])=>[name,number(row['svolume_'+code],-1e13,1e13)]));
+  // Keep all existing investor flows if LS omits the optional KOSPI pension field.
+  // Missing pension always fails closed for the pension-specific signal.
+  if(key==='KOSPI'&&row.svolume_06!==undefined&&row.svolume_06!==null)
+   flows.pension=number(row.svolume_06,-1e13,1e13);
+  return [key,flows];
  }));
 }
 const numeric=v=>{if(!['string','number'].includes(typeof v))throw new Error('NAVER_NUMBER');if(typeof v==='string')v=v.replaceAll(',','').trim();if(v===''||v===null||v===undefined||!Number.isFinite(Number(v)))throw new Error('NAVER_NUMBER');return Number(v);};
