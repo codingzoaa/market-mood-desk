@@ -14,7 +14,7 @@ const body=await res.json();
 // Trusted feed contract: {date:"YYYY-MM-DD",kospiClose:5730.74,pensionNetBuyBillion:893,final:true}
 // Source must provide final KRX regular-session pension flows, not intraday or inferred flows.
 const {date,kospiClose,pensionNetBuyBillion,final}=body;
-if(final!==true||typeof date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date)throw Error('Missing verified final trading date');
+if(final!==true||typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date)throw Error('Missing verified final trading date');
 if(!Number.isFinite(kospiClose)||kospiClose<=0||kospiClose>100000||!Number.isInteger(pensionNetBuyBillion)||Math.abs(pensionNetBuyBillion)>100000)throw Error('Invalid final KOSPI / pension flow or unit');
 if(current.schemaVersion!==1||current.pensionUnit!=='십억원'||!Array.isArray(current.rows))throw Error('Existing data schema invalid');
 const last=current.rows.at(-1);
