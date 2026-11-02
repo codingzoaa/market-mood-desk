@@ -113,6 +113,8 @@ export default {
    if(path==='/api/pension-kospi-daily'){
     const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 1").first();
     const detail=stored?.payload?JSON.parse(stored.payload):null;
+    const direct=pensionDailyFeed(detail);
+    if(direct)return reply(direct);
     const recovered=detail?.date?await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('pension-recovery:'+detail.date).first():null;
     const recovery=recovered?.payload?JSON.parse(recovered.payload):null;
     const merged=composeRecoveredPension(detail,recovery);
