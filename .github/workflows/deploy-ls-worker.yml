@@ -6,13 +6,29 @@ on:
       - 'worker/**'
       - '.github/workflows/deploy-ls-worker.yml'
   workflow_dispatch:
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 concurrency:
   group: market-note-ls-worker-deploy
   cancel-in-progress: false
 jobs:
+  credential_check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare deployment token presence (not its value)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo 'CLOUDFLARE_TOKEN_CONFIGURED'
+          else
+            echo '::warning::CLOUDFLARE_TOKEN_NOT_CONFIGURED'
+          fi
   deploy:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
