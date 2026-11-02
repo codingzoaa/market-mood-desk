@@ -16,19 +16,21 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
  try{
   await React.act(async()=>root.render(React.createElement(Calendar)));
   assert.match(document.querySelector('h2').textContent,/강세 섹터 캘린더/);
-  assert.match(document.querySelector('.close-review h2').textContent,/2026-10-30/);
-  assert.equal(document.querySelectorAll('.close-sector').length,2);
-  assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,2);
-  assert.ok(document.querySelector('.close-review').textContent.includes('삼성바이오로직스 +8.86%'));
-  assert.ok(document.querySelector('.close-review').textContent.includes('LG에너지솔루션 +0.98%'));
+  assert.match(document.querySelector('.close-review h2').textContent,/2026-11-02/);
+  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,5);
+  assert.ok(document.querySelector('.close-review').textContent.includes('효성중공업 +13.32%'));
+  assert.ok(document.querySelector('.close-review').textContent.includes('한화오션 +9.80%'));
+  assert.ok(document.querySelector('.close-review').textContent.includes('현대제철 +11.61%'));
   assert.match(document.querySelector('.close-review').textContent,/RE 잠정/);
   assert.match(document.querySelector('.close-review').textContent,/총점 미산출/);
-  assert.equal(document.querySelectorAll('.close-score-grid').length,2);
+  assert.equal(document.querySelectorAll('.close-score-grid').length,5);
   assert.equal(document.querySelector('textarea'),null);
   assert.equal(document.querySelector('.close-session'),null);
   assert.equal(document.querySelector('.close-market'),null);
   assert.equal(document.querySelector('.close-market'),null); // No index-summary header; provenance may mention the index.
   assert.equal(document.querySelector('.close-market-flow'),null); // No market-index summary above detail cards.
+  assert.equal(document.querySelector('[aria-label="2026-11-02 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   assert.equal(document.querySelector('[aria-label="2026-10-30 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
   assert.equal(document.querySelector('[aria-label="2026-10-29 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,1);
   assert.equal(document.querySelector('[aria-label="2026-10-28 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
@@ -58,15 +60,15 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   await click('[aria-label="2026-10-15 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   assert.match(document.querySelector('.close-review').textContent,/확인된 강세 그룹 1개/);
-  assert.match(document.querySelector('[aria-label="2026-10-09 리뷰 미등록"]').textContent,/휴장/);
   assert.equal(document.querySelectorAll('.close-day').length,20);
   assert.equal([...document.querySelectorAll('a')].every(x=>x.href.startsWith('https://')),true);
   await click('button[aria-label="이전 4주"]');
+  assert.match(document.querySelector('[aria-label="2026-10-09 리뷰 미등록"]').textContent,/휴장/);
   await click('[aria-label="2026-09-28 리뷰 미등록"]');
   assert.equal(document.querySelectorAll('.close-sector').length,0);
   assert.match(document.querySelector('.close-review').textContent,/2026-09-28/);
   await React.act(async()=>[...document.querySelectorAll('button')].find(x=>x.textContent==='최신 리뷰').click());
-  assert.equal(document.querySelectorAll('.close-sector').length,2);
-  assert.match(document.querySelector('.close-review').textContent,/2026-10-30/);
+  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.match(document.querySelector('.close-review').textContent,/2026-11-02/);
  }finally{await React.act(async()=>root.unmount());}
 });
