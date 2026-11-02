@@ -26,9 +26,11 @@ export function render(date,details) {
   const i=details.indices||{}, f=details.flows;
   for(const market of ['KOSPI','KOSDAQ']){
     ensure(i[market] && ['value','changePct','advances','unchanged','declines'].every(k=>valid(i[market][k])),'INDEX_MISSING_'+market);
+    ensure(i[market].value>0 && Math.abs(i[market].changePct)<=100 && ['advances','unchanged','declines'].every(k=>Number.isInteger(i[market][k]) && i[market][k]>=0 && i[market][k]<10000),'INDEX_RANGE_'+market);
     const t=kstStamp(i[market].asOf);
     ensure(t.date===date && t.hhmm>='1530','INDEX_NOT_CLOSED_'+market);
   }
+  ensure(!details.errors?.KOSPI && !details.errors?.KOSDAQ && !details.errors?.flows && !details.errors?.ls,'COLLECTION_ERRORS');
   ensure(f && f.unit==='억원' && f.segments,'FLOW_MISSING');
   const stamp=kstStamp(f.asOf);
   ensure(stamp.date===date && stamp.hhmm>='1530','FLOW_NOT_CLOSED');
@@ -68,27 +70,41 @@ export function render(date,details) {
     '※ LS증권 KRX t1511·t1601 저장자료 ('+stamp.hhmm.slice(0,2)+':'+stamp.hhmm.slice(2)+' KST 확인). 확정 여부는 거래소 별도 검증 필요.'
   ].join('\n');
 }
-export async function main(env=process.env) {
-  for(const key of ['MARKET_DETAILS_URL','TELEGRAM_BOT_TOKEN','TELEGRAM_CHAT_ID']) ensure(env[key],'MISSING_'+key);
-  const now=formatKst(new Date()), date=datePart(now);
+// A dry-run validates the real Worker response but never reads Telegram secrets or sends messages.
+// Dependencies can be injected in tests so no external Telegram traffic is generated.
+export async function main(env=process.env, dependencies={}) {
+  ensure(env.MARKET_DETAILS_URL,'MISSING_MARKET_DETAILS_URL');
+  const nowDate = dependencies.now || new Date();
+  const now=formatKst(nowDate), date=datePart(now);
   ensure(now.hour+now.minute>='1630','BEFORE_1630');
-  ensure(!['Sat','Sun'].includes(new Intl.DateTimeFormat('en-US',{timeZone:TZ,weekday:'short'}).format(new Date())),'WEEKEND');
+  ensure(!['Sat','Sun'].includes(new Intl.DateTimeFormat('en-US',{timeZone:TZ,weekday:'short'}).format(nowDate)),'WEEKEND');
   const url=new URL(env.MARKET_DETAILS_URL);
   ensure(url.protocol==='https:','HTTPS_REQUIRED');
   url.searchParams.set('date',date);
-  const payload=await fetchJson(url);
-  const report=render(date,payload.details);
-  // Send only after strict data validation; no stale or estimated figures.
-  const token=env.TELEGRAM_BOT_TOKEN;
+  const payload=await (dependencies.readJson || fetchJson)(url);
+  const report=render(date,payload?.details);
+  const dryRun=env.TELEGRAM_DRY_RUN==='true';
+  if(dryRun){
+    console.log('TELEGRAM_DRY_RUN_OK date='+date+' chars='+report.length+' (no message sent)');
+    return {status:'checked',date};
+  }
+  for(const key of ['TELEGRAM_BOT_TOKEN','TELEGRAM_CHAT_ID'])ensure(env[key],'MISSING_'+key);
+  // Safe for unit tests: tests inject deliverMessage, and never contact Telegram.
   for(let p=0;p<report.length;p+=3500){
-    const resp=await fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:env.TELEGRAM_CHAT_ID,text:report.slice(p,p+3500)})
-    });
-    ensure(resp.ok,'TELEGRAM_HTTP_'+resp.status);
-    const out=await resp.json();ensure(out.ok,'TELEGRAM_REJECTED');
+    const chunk=report.slice(p,p+3500);
+    if(dependencies.deliverMessage){
+      await dependencies.deliverMessage(chunk,env);
+    }else{
+      const resp=await fetch('https://api.telegram.org/bot'+env.TELEGRAM_BOT_TOKEN+'/sendMessage',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({chat_id:env.TELEGRAM_CHAT_ID,text:chunk})
+      });
+      ensure(resp.ok,'TELEGRAM_HTTP_'+resp.status);
+      const out=await resp.json();ensure(out.ok,'TELEGRAM_REJECTED');
+    }
   }
   console.log('Telegram delivery accepted for '+date);
+  return {status:'delivered',date};
 }
 if(process.argv[1] && import.meta.url===new URL('file://'+process.argv[1]).href){
   main().catch(e=>{console.error('Market close delivery failed:',e.message);process.exitCode=1;});
