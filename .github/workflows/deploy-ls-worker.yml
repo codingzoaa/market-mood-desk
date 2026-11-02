@@ -25,7 +25,8 @@ jobs:
           if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
             echo 'CLOUDFLARE_TOKEN_CONFIGURED'
           else
-            echo '::warning::CLOUDFLARE_TOKEN_NOT_CONFIGURED'
+            echo '::error::CLOUDFLARE_TOKEN_NOT_CONFIGURED'
+            exit 1
           fi
   ls_live_probe:
     if: github.event_name == 'pull_request'
@@ -62,11 +63,10 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Cloudflare token not configured; Worker unchanged. Configure CLOUDFLARE_API_TOKEN in repository Actions secrets."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Cloudflare deployment blocked. Register CLOUDFLARE_API_TOKEN in repository Actions secrets."
+            exit 1
           fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
       - name: Deploy existing LS Worker
         if: steps.token.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v4
