@@ -33,16 +33,30 @@ jobs:
             console.error('CLOUDFLARE_TOKEN_FORMAT_INVALID: re-create the secret using only the API token value (no Bearer prefix or extra text).');
             process.exit(1);
           }
-          // Never print the token, its prefix, or Cloudflare response headers.
-          const verify=await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify',{
-            headers:{Authorization:'Bearer '+token,Accept:'application/json'},
-            redirect:'error',
-            signal:AbortSignal.timeout(15000)
-          });
-          const check=await verify.json().catch(()=>({}));
-          if(!verify.ok||check.success!==true||check.result?.status!=='active'){
-            const code=Number(check.errors?.[0]?.code)||verify.status;
-            console.error('CLOUDFLARE_TOKEN_VERIFICATION_FAILED code='+code+' (token invalid, expired, or not an API token).');
+          // Never log the token, token response, or response headers.
+          // Cloudflare supports both user-scoped and account-owned API tokens.
+          const accountId='78961f2ddb841df708b3a777fdcc94c2';
+          let active=false;
+          const failures=[];
+          for (const [kind,verifyPath] of [
+            ['user','/user/tokens/verify'],
+            ['account','/accounts/'+accountId+'/tokens/verify']
+          ]) {
+            const response=await fetch('https://api.cloudflare.com/client/v4'+verifyPath,{
+              headers:{Authorization:'Bearer '+token,Accept:'application/json'},
+              redirect:'error',
+              signal:AbortSignal.timeout(15000)
+            });
+            const check=await response.json().catch(()=>({}));
+            if(response.ok && check.success===true && check.result?.status==='active') {
+              console.log('CLOUDFLARE_'+kind.toUpperCase()+'_TOKEN_ACTIVE');
+              active=true;
+              break;
+            }
+            failures.push(kind+'='+String(Number(check.errors?.[0]?.code)||response.status));
+          }
+          if(!active){
+            console.error('CLOUDFLARE_TOKEN_VERIFICATION_FAILED ('+failures.join(',')+'). Replace the GitHub secret with a valid token for the correct Cloudflare account.');
             process.exit(1);
           }
           console.log('CLOUDFLARE_TOKEN_ACTIVE; deploying Worker.');
