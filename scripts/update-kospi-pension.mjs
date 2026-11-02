@@ -18,7 +18,7 @@ if(regularSessionClosed!==true||source!=='LS증권 KRX t1511 + t1601(기금 06)'
 const observedKst = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(observedAt));
 const observedTime = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(observedAt));
 if(observedKst!==date||observedTime<'15:50')throw Error('Intraday or mismatched LS data');
-if(!Number.isFinite(kospiClose)||kospiClose<=0||kospiClose>100000||!Number.isInteger(pensionNetBuyBillion)||Math.abs(pensionNetBuyBillion)>100000)throw Error('Invalid final KOSPI / pension flow or unit');
+if(!Number.isFinite(kospiClose)||kospiClose<=0||kospiClose>100000||!Number.isFinite(pensionNetBuyBillion)||Math.abs(pensionNetBuyBillion)>100000)throw Error('Invalid final KOSPI / pension flow or unit');
 if(current.schemaVersion!==1||current.pensionUnit!=='십억원'||!Array.isArray(current.rows))throw Error('Existing data schema invalid');
 const last=current.rows.at(-1);
 if(date<last[0]){console.log('Historical day ignored: '+date);process.exit(0);}
