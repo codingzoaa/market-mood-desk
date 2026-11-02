@@ -1,0 +1,77 @@
+name: Deploy LS Cloudflare Worker
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+      - '.github/workflows/deploy-ls-worker.yml'
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: market-note-ls-worker-deploy
+  cancel-in-progress: false
+jobs:
+  credential_check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare deployment token presence (not its value)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo 'CLOUDFLARE_TOKEN_CONFIGURED'
+          else
+            echo '::error::CLOUDFLARE_TOKEN_NOT_CONFIGURED'
+            exit 1
+          fi
+  ls_live_probe:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect already-running LS market details (no API secrets)
+        run: |
+          node --input-type=module <<'JS'
+          const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date());
+          const url='https://market-note-ls-api.kby0991.workers.dev/api/market-details?date='+date;
+          try{
+            const r=await fetch(url,{signal:AbortSignal.timeout(12000)});
+            if(!r.ok){console.log('CURRENT_LS_DETAILS_HTTP_'+r.status);process.exit(0);}
+            const d=(await r.json()).details;
+            console.log('CURRENT_LS_DETAILS_CHECK '+JSON.stringify({
+              date:d?.date??null,
+              kospiClose:d?.indices?.KOSPI?.value??null,
+              quoteAsOf:d?.indices?.KOSPI?.asOf??null,
+              flowAsOf:d?.flows?.asOf??null,
+              flowUnit:d?.flows?.unit??null,
+              pensionAvailable:typeof d?.flows?.segments?.KOSPI?.pension==='number',
+              errorTypes:Object.keys(d?.errors||{})
+            }));
+          }catch(e){console.log('CURRENT_LS_DETAILS_FETCH_ERROR '+String(e?.name||'Unknown'));}
+          JS
+  deploy:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Cloudflare deployment credentials
+        id: token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Cloudflare deployment blocked. Register CLOUDFLARE_API_TOKEN in repository Actions secrets."
+            exit 1
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy existing LS Worker
+        if: steps.token.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          command: deploy --config wrangler.jsonc
+          wranglerVersion: '4'
