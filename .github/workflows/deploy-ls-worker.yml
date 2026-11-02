@@ -66,3 +66,22 @@ jobs:
           if(child.error)console.error('WRANGLER_EXECUTION_FAILED '+child.error.name);
           process.exit(child.status??1);
           JS
+
+      - name: Verify deployed LS pension endpoint without exposing credentials
+        run: |
+          node --input-type=module <<'JS'
+          const url='https://market-note-ls-api.kby0991.workers.dev/api/pension-kospi-daily';
+          const response=await fetch(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(15000),redirect:'error'});
+          const body=await response.json().catch(()=>({}));
+          console.log('LS_PENSION_API_STATUS '+JSON.stringify({
+            http:response.status,
+            date:typeof body.date==='string'?body.date:null,
+            kospiClose:typeof body.kospiClose==='number'?body.kospiClose:null,
+            pensionNetBuyBillion:typeof body.pensionNetBuyBillion==='number'?body.pensionNetBuyBillion:null,
+            pensionUnit:body.pensionUnit||null,
+            error:body.error||null,
+            latestDate:body.latestDate||null
+          }));
+          if(response.status!==200 && !(response.status===503 && body.error==='PENSION_KOSPI_DAILY_NOT_READY'))
+            process.exit(1);
+          JS
