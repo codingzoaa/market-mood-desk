@@ -18,10 +18,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Import verified daily KRX data
+      - name: Import LS post-close KOSPI and pension data
         env:
-          PENSION_DAILY_FEED_URL: ${{ secrets.PENSION_DAILY_FEED_URL }}
-          PENSION_DAILY_FEED_TOKEN: ${{ secrets.PENSION_DAILY_FEED_TOKEN }}
+          PENSION_DAILY_FEED_URL: https://market-note-ls-api.kby0991.workers.dev/api/pension-kospi-daily
         run: node scripts/update-kospi-pension.mjs
       - name: Commit only verified new data
         run: |
