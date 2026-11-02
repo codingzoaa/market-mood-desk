@@ -1,5 +1,8 @@
 name: Update KOSPI pension signal data
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/kospi-pension-daily.yml']
   schedule:
     - cron: '40 9 * * 1-5'
     - cron: '20 12 * * 1-5'
@@ -22,7 +25,19 @@ jobs:
       - name: Import LS post-close KOSPI and pension data
         env:
           PENSION_DAILY_FEED_URL: https://market-note-ls-api.kby0991.workers.dev/api/pension-kospi-daily
-        run: node scripts/update-kospi-pension.mjs
+        run: |
+          # Manual workflow update provides a bounded one-time retry window.
+          if [ "${{ github.event_name }}" != "push" ]; then
+            node scripts/update-kospi-pension.mjs
+          else
+            for attempt in $(seq 1 15); do
+              if node scripts/update-kospi-pension.mjs; then exit 0; fi
+              echo "Waiting for LS post-close pension recovery: attempt $attempt/15"
+              sleep 20
+            done
+            echo "::error::LS pension dataset was not verified in time; no data written"
+            exit 1
+          fi
       - name: Commit only verified new data
         run: |
           if git diff --quiet -- public/kospi-pension-rsi.json; then
