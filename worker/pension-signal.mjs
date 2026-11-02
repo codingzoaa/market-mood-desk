@@ -23,7 +23,7 @@ export function pensionDailyFeed(details) {
   return {
     date: details.date,
     kospiClose: close,
-    pensionNetBuyBillion: Math.round(amountEok / 10),
+    pensionNetBuyBillion: Number((amountEok / 10).toFixed(3)),
     regularSessionClosed: true,
     source: 'LS증권 KRX t1511 + t1601(기금 06)',
     category: '연기금 등(기금)',
