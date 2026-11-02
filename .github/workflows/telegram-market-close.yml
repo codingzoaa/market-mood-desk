@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   send:
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.TELEGRAM_ENABLED == 'true' }}
+    # Scheduled delivery is active by default; explicitly set TELEGRAM_PAUSED=true to pause.
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.TELEGRAM_PAUSED != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
