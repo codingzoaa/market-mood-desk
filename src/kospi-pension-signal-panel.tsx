@@ -184,17 +184,30 @@ export default function KospiPensionSignalPanel({url = './kospi-pension-rsi.json
   useEffect(() => {
     if (!open) return;
     const ctrl = new AbortController();
-    setError('');
-    fetch(url, {signal: ctrl.signal}).then(async response => {
-      if (!response.ok) throw Error('연기금 신호 데이터 다운로드 오류 (' + response.status + ')');
-      return response.json();
-    }).then(json => {
-      const checked = validateKospiPensionDataset(json);
-      if (!ctrl.signal.aborted) setRows(withWilderRsi(checked) as Point[]);
-    }).catch(err => {
-      if (!ctrl.signal.aborted) {setRows([]);setError(err instanceof Error ? err.message : '데이터 로딩 실패');}
-    });
-    return () => ctrl.abort();
+    const load = async () => {
+      try {
+        const response = await fetch(url, {signal:ctrl.signal, cache:'no-store'});
+        if (!response.ok) throw Error('연기금 차트 데이터 갱신 실패 (' + response.status + ')');
+        const checked = validateKospiPensionDataset(await response.json());
+        if (ctrl.signal.aborted) return;
+        setRows(previous => {
+          const latest = previous.at(-1);
+          const next = checked.at(-1);
+          if (latest && next && previous.length === checked.length &&
+              latest.date === next.date && latest.close === next.close &&
+              latest.netBuyBillion === next.netBuyBillion) return previous;
+          return withWilderRsi(checked) as Point[];
+        });
+        setError('');
+      } catch (err) {
+        if (!ctrl.signal.aborted) setError(err instanceof Error ? err.message : '데이터 갱신 실패');
+      }
+    };
+    void load();
+    const timer = window.setInterval(() => void load(), 15*60*1000);
+    const onVisible = () => {if (document.visibilityState === 'visible') void load();};
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {ctrl.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',onVisible);};
   }, [open, url]);
   return <section className="panel" style={{padding:0, overflow:'hidden'}}>
     <button type="button" aria-expanded={open} aria-controls="kospi-pension-rsi-panel" onClick={() => setOpen(v => !v)}
@@ -205,9 +218,9 @@ export default function KospiPensionSignalPanel({url = './kospi-pension-rsi.json
       <span aria-hidden="true" style={{fontSize:22,color:'var(--green)',fontWeight:400,lineHeight:1}}>{open?'−':'+'}</span>
     </button>
     {open && <div id="kospi-pension-rsi-panel" style={{padding:'0 12px 14px'}}>
-      {error ? <p role="alert" className="muted">{error}</p> :
-       rows.length ? <KospiPensionSignalChart points={rows}/> :
-       <p className="muted" role="status" aria-busy="true">코스피·연기금 이력 데이터를 불러오는 중…</p>}
+      {error && <p role="status" className="muted">데이터 갱신 상태: {error} · 마지막 정상 차트는 유지합니다.</p>}
+      {rows.length ? <KospiPensionSignalChart points={rows}/> :
+       !error && <p className="muted" role="status" aria-busy="true">코스피·연기금 이력 데이터를 불러오는 중…</p>}
     </div>}
   </section>;
 }
