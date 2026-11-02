@@ -54,7 +54,7 @@ test('real delivery uses verified, same-day data only',async()=>{
  });
  assert.deepEqual(response,{status:'delivered',date});
  assert.equal(chunks.length,1);
- assert.match(chunks[0],/6012\.44/);
+ assert.match(chunks[0],/6,012\.44/);
 });
 test('wrong-day data never gets delivered',async()=>{
  let sent=false;
