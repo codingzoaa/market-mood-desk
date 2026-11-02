@@ -3,6 +3,7 @@ import StockSectorMap from './stock-sector-map';
 import {SectorEtfPanels} from './sector-etfs';
 import Correlation from './correlation';
 import MarketBreadthPanel from './market-breadth-panel';
+import KospiPensionSignalPanel from './kospi-pension-signal-panel';
 import FullscreenPanel from './fullscreen-panel';
 import {MarketCards,HeatmapPanel,InvestorPanel} from './market-panels';
 import {demoMarketDetails,type Board} from './market-details';
@@ -90,6 +91,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     </>}
     {view==='signals'&&<>
   <MarketBreadthPanel url="./market-breadth.json" />
+  <KospiPensionSignalPanel url="./kospi-pension-rsi.json" />
   <Correlation/>
 </>}
     {view==='sectors'&&<>
