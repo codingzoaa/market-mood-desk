@@ -2,6 +2,7 @@ import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './secto
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {collectDetails} from './details.mjs';
+import {pensionDailyFeed} from './pension-signal.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -103,11 +104,17 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/pension-kospi-daily'){
+    const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 1").first();
+    const detail=stored?.payload?JSON.parse(stored.payload):null;
+    const payload=pensionDailyFeed(detail);
+    return payload?reply(payload):reply({error:'PENSION_KOSPI_DAILY_NOT_READY',latestDate:detail?.date||null},503);
+   }
    if(path==='/api/correlation'){
     const rows=await env.DB.prepare(`SELECT substr(id,9) AS date,
      json_extract(payload,'$.indices.KOSPI.value') AS kospi,
