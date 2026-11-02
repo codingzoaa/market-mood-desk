@@ -56,7 +56,6 @@ export function render(date,details) {
     '',
     '2. 국내 증시 투자자별 수급',
     '현물 수급',row('KOSPI','코스피'),row('KOSDAQ','코스닥'),
-    '- ETF: 투자자별 수급 확인 불가 (금융투자 수급으로 대체하지 않음)',
     '',
     '파생상품 수급 (KOSPI200)',
     row('FUTURES','선물'),row('CALL','콜옵션'),row('PUT','풋옵션'),
