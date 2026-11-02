@@ -1,0 +1,29 @@
+name: Diagnose pension recovery
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/check-pension-recovery.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read market-note LS pension recovery status
+        run: |
+          node --input-type=module <<'JS'
+          const url='https://market-note-ls-api.kby0991.workers.dev/api/pension-kospi-daily';
+          const r=await fetch(url,{headers:{accept:'application/json'},signal:AbortSignal.timeout(12000),redirect:'error'});
+          const d=await r.json().catch(()=>({}));
+          console.log('PENSION_RECOVERY_DIAGNOSTIC '+JSON.stringify({
+            http:r.status,
+            date:d.date||d.latestDate||null,
+            close:Number.isFinite(d.kospiClose)?d.kospiClose:null,
+            pension:Number.isFinite(d.pensionNetBuyBillion)?d.pensionNetBuyBillion:null,
+            unit:d.pensionUnit||null,
+            error:d.error||null,
+            recoveryStatus:d.recoveryStatus||null,
+            recoveryCode:d.recoveryCode||null
+          }));
+          JS
