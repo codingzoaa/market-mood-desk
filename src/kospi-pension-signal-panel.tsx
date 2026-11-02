@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
-import { LineChart, ScatterChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, TooltipComponent, DataZoomComponent, ToolboxComponent } from 'echarts/components';
+import { LineChart } from 'echarts/charts';
+import { GridComponent, LegendComponent, TooltipComponent, DataZoomComponent, ToolboxComponent, MarkAreaComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import { validateKospiPensionDataset, withWilderRsi, signalDays, visiblePriceBounds, periodStartIndex } from './kospi-pension-signal-data.mjs';
 
-echarts.use([LineChart, ScatterChart, GridComponent, LegendComponent, TooltipComponent, DataZoomComponent, ToolboxComponent, CanvasRenderer]);
+echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, DataZoomComponent, ToolboxComponent, MarkAreaComponent, CanvasRenderer]);
 
 type Point = { date: string; close: number; netBuyBillion: number; rsi: number | null };
 type Period = '1M' | '3M' | '1Y' | '5Y' | 'ALL';
@@ -56,7 +56,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
             (typeof change === 'number' ? ' (' + (change >= 0 ? '+' : '') + fmt(change) + '%)' : '') +
             '<br/>RSI(14) ' + (p.rsi === null ? '계산 전' : fmt(p.rsi)) +
             '<br/>연기금 등 ' + (p.netBuyBillion >= 0 ? '+' : '') + fmt(p.netBuyBillion * 10, 0) + '억원' +
-            (signal ? '<br/><b style="color:#d94d40">▲ 신호 조건 충족</b>' : '');
+            (signal ? '<br/><b style="color:#d94d40">음영 구간 · 신호 조건 충족 (클릭)</b>' : '');
         }
       },
       toolbox: {right: 12, top: 5, feature: {dataZoom: {yAxisIndex: 'none', title: {zoom: '드래그 영역 확대', back: '이전 확대'}}}},
@@ -76,20 +76,37 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       ],
       series: [
         {name: '코스피 종가', type: 'line', data: points.map(p => p.close),
-          showSymbol: false, sampling: 'lttb', lineStyle: {width: 1.7, color: '#2e7860'}, z: 3},
-        {name: 'RSI≤35 · 연기금≥1,000억', type: 'scatter',
-          data: signals.map(p => [p.date, p.close]), symbol: 'triangle', symbolSize: 13, symbolOffset: [0, -12],
-          itemStyle: {color: '#e45d4b', borderColor: '#fff', borderWidth: 1.4}, z: 7}
+          showSymbol: false, sampling: 'lttb', lineStyle: {width: 1.7, color: '#2e7860'}, z: 3,
+          markArea: {
+            silent: false,
+            itemStyle: {color: 'rgba(228,93,75,0.18)', borderWidth: 0},
+            emphasis: {itemStyle: {color: 'rgba(228,93,75,0.34)'}},
+            data: signals.map(p => {
+              const i = byDate.get(p.date)?.i ?? 0;
+              return [{name: p.date, xAxis: p.date}, {xAxis: points[Math.min(i + 1, points.length - 1)].date}];
+            })
+          }
+        }
       ]
     };
     instance.setOption(option);
+    const signalSet = new Set(signals.map(p => p.date));
     const chooseSignal = (params: unknown) => {
-      const event = params as {seriesIndex?: number; data?: unknown};
-      if (event.seriesIndex !== 1 || !Array.isArray(event.data)) return;
-      const date = String(event.data[0]);
-      if (byDate.has(date)) setSelectedDate(date);
+      const event = params as {componentType?: string; name?: string; dataIndex?: number};
+      if (event.componentType === 'markArea' && event.name && signalSet.has(event.name)) setSelectedDate(event.name);
+    };
+    // Underlying plot clicks may not be delivered to markArea after zoom.
+    // Resolve a clicked date from the actual data-axis pixel to preserve selection.
+    const choosePlotDate = (event: {offsetX: number; offsetY: number}) => {
+      if (!instance.containPixel('grid', [event.offsetX, event.offsetY])) return;
+      const axis = instance.convertFromPixel({xAxisIndex: 0}, event.offsetX);
+      const idx = typeof axis === 'number' ? Math.round(axis) : Number(axis);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= points.length) return;
+      const date = points[idx].date;
+      if (signalSet.has(date)) setSelectedDate(date);
     };
     instance.on('click', chooseSignal);
+    instance.getZr().on('click', choosePlotDate);
 
     // ECharts keeps Y bounds fixed while dataZoom has filterMode:'none'.
     // Refit from the actual visible rows on every wheel, drag, slider or resize event.
@@ -105,7 +122,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     observer?.observe(host.current);
     fitVisible();
-    return () => {observer?.disconnect(); instance.off('datazoom', fitVisible); instance.off('click', chooseSignal); instance.dispose(); chart.current = null;};
+    return () => {observer?.disconnect(); instance.off('datazoom', fitVisible); instance.off('click', chooseSignal); instance.getZr().off('click', choosePlotDate); instance.dispose(); chart.current = null;};
   }, [points, signals, byDate]);
 
   useEffect(() => {
@@ -130,13 +147,13 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
             border:'1px solid #d6e1d9', background:period === p.value?'#215e47':'#fff',
             color:period === p.value?'#fff':'#305c4a', cursor:'pointer'}}>{p.label}</button>)}
       </div>
-      <span style={{fontSize:12, color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · 매수 신호 {signals.length}일</span>
+      <span style={{fontSize:12, color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · <span style={{background:'rgba(228,93,75,.18)',padding:'3px 5px',borderRadius:3}}>조건 충족 음영</span> {signals.length}일</span>
     </div>
-    <div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 삼각형 신호 표시"
+    <div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 세로 음영 표시"
       style={{width:'100%',height:'min(65vh,620px)',minHeight:390}}/>
     {selected && <section aria-live="polite" style={{margin:'8px 14px 16px',padding:'14px',border:'1px solid #d7e3db',borderRadius:10,background:'#f8fbf8'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-        <strong>▲ {selected.p.date} 매수 신호 이후 코스피 수익률</strong>
+        <strong>▥ {selected.p.date} 음영 구간 이후 코스피 수익률</strong>
         <button type="button" onClick={() => setSelectedDate(null)} aria-label="선택 해제" style={{cursor:'pointer',background:'transparent',border:0,fontSize:18}}>×</button>
       </div>
       <p style={{fontSize:12,margin:'8px 0',color:'#52645c'}}>신호일 종가 {fmt(selected.p.close)}P · RSI {fmt(selected.p.rsi ?? 0)} · 연기금 +{fmt(selected.p.netBuyBillion * 10,0)}억원</p>
@@ -150,7 +167,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       <p style={{fontSize:11,color:'#7b897f',margin:'9px 0 0'}}>신호 당일 종가 기준, 거래비용 미반영 · 과거 수익률은 미래 성과를 보장하지 않습니다.</p>
     </section>}
     <p style={{fontSize:12, color:'#748077', margin:'0 14px 8px'}}>
-      삼각형 신호 클릭: 5·10·20일 후 수익률 · 휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구로 드래그 구간 선택 · 하단 슬라이더: 범위 조절
+      음영 구간 클릭: 5·10·20거래일 후 수익률 · 휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구로 드래그 구간 선택 · 하단 슬라이더: 범위 조절
       <br/>확대 시 현재 보이는 날짜의 최고·최저값 기준으로 세로축을 자동 맞춤합니다.
     </p>
     <p style={{fontSize:11, color:'#748077', margin:'0 14px 12px'}}>
