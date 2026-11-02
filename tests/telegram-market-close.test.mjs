@@ -12,10 +12,10 @@ const dependencies={now:new Date('2026-10-28T07:30:00Z'),readJson:async url=>{
   assert.equal(new URL(url).searchParams.get('date'),date);
   return {details:valid};
 }};
-test('formats five KRX segments with units, cautious positioning and ETF disclosure',()=>{
+test('formats five KRX segments with units, cautious positioning and no ETF item',()=>{
  const s=render(date,valid);
  assert.match(s,/코스피: 개인/);
- assert.match(s,/ETF: 투자자별 수급 확인 불가/);
+ assert.doesNotMatch(s,/ETF|상장지수펀드|금융투자 수급으로 대체/);
  assert.match(s,/상방 우위/);
  assert.match(s,/OI 미확인/);
  assert.match(s,/확정 여부는 거래소 별도 검증 필요/);
@@ -55,6 +55,7 @@ test('real delivery uses verified, same-day data only',async()=>{
  assert.deepEqual(response,{status:'delivered',date});
  assert.equal(chunks.length,1);
  assert.match(chunks[0],/6,012\.44/);
+ assert.doesNotMatch(chunks[0],/ETF|상장지수펀드/);
 });
 test('wrong-day data never gets delivered',async()=>{
  let sent=false;
