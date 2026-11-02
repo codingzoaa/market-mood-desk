@@ -18,7 +18,7 @@ test('LS evening pension reconciliation keeps existing market details immutable'
  const payload=pensionDailyFeed(composed);
  assert.equal(payload.date,date);
  assert.equal(payload.kospiClose,5859.08);
- assert.equal(payload.pensionNetBuyBillion,123);
+ assert.equal(payload.pensionNetBuyBillion,123.4);
  assert.equal(payload.pensionUnit,'십억원');
  assert.equal(original.flows.segments.KOSPI.pension,undefined);
  assert.equal(original.flows.asOf,asOf);
