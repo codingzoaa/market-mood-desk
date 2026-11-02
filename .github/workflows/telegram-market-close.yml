@@ -1,0 +1,67 @@
+name: Telegram Market Close (KRX)
+on:
+  schedule:
+    - cron: '30 16 * * 1-5'
+      timezone: 'Asia/Seoul'
+  workflow_dispatch:
+    inputs:
+      deliver:
+        description: 'Send a real Telegram message (unchecked = read-only data validation)'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-market-close
+  cancel-in-progress: false
+
+jobs:
+  send:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.TELEGRAM_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Calculate delivery date (KST)
+        id: day
+        run: echo "key=$(TZ=Asia/Seoul date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Check market close data without sending
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deliver != true }}
+        env:
+          MARKET_DETAILS_URL: ${{ vars.MARKET_DETAILS_URL || 'https://market-note-ls-api.kby0991.workers.dev/api/market-details' }}
+          TELEGRAM_DRY_RUN: 'true'
+        run: node scripts/telegram-market-close.mjs
+      - name: Restore previous successful delivery marker
+        if: ${{ github.event_name == 'schedule' || inputs.deliver == true }}
+        id: once
+        uses: actions/cache/restore@v4
+        with:
+          path: .telegram-once
+          key: telegram-market-close-v1-${{ steps.day.outputs.key }}
+      - name: Send verified market close
+        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+        env:
+          MARKET_DETAILS_URL: ${{ vars.MARKET_DETAILS_URL || 'https://market-note-ls-api.kby0991.workers.dev/api/market-details' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram-market-close.mjs
+      - name: Create delivered marker
+        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+        run: |
+          mkdir -p .telegram-once
+          echo "${{ steps.day.outputs.key }}" > .telegram-once/date
+      - name: Save delivered marker to prevent repeat sends
+        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .telegram-once
+          key: telegram-market-close-v1-${{ steps.day.outputs.key }}
+      - name: Already delivered
+        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit == 'true' }}
+        run: echo 'ALREADY_DELIVERED_KST_DAY; duplicate send skipped'
