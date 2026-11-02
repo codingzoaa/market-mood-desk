@@ -21,6 +21,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
   const host = useRef<HTMLDivElement>(null);
   const chart = useRef<EChartsType | null>(null);
   const [period, setPeriod] = useState<Period>('1Y');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const signals = useMemo(() => signalDays(points) as Point[], [points]);
   const byDate = useMemo(() => new Map(points.map((p, i) => [p.date, {p, i}])), [points]);
   const latest = points.at(-1)?.date || '';
@@ -82,6 +83,13 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       ]
     };
     instance.setOption(option);
+    const chooseSignal = (params: unknown) => {
+      const event = params as {seriesIndex?: number; data?: unknown};
+      if (event.seriesIndex !== 1 || !Array.isArray(event.data)) return;
+      const date = String(event.data[0]);
+      if (byDate.has(date)) setSelectedDate(date);
+    };
+    instance.on('click', chooseSignal);
 
     // ECharts keeps Y bounds fixed while dataZoom has filterMode:'none'.
     // Refit from the actual visible rows on every wheel, drag, slider or resize event.
@@ -97,7 +105,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     observer?.observe(host.current);
     fitVisible();
-    return () => {observer?.disconnect(); instance.off('datazoom', fitVisible); instance.dispose(); chart.current = null;};
+    return () => {observer?.disconnect(); instance.off('datazoom', fitVisible); instance.off('click', chooseSignal); instance.dispose(); chart.current = null;};
   }, [points, signals, byDate]);
 
   useEffect(() => {
@@ -107,6 +115,12 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
     const start = first / Math.max(1, points.length - 1) * 100;
     instance.dispatchAction({type: 'dataZoom', dataZoomIndex: 0, start, end: 100});
   }, [period, points]);
+
+  const selected = selectedDate ? byDate.get(selectedDate) : undefined;
+  const returns = selected ? [5,10,20].map(days => {
+    const future = points[selected.i + days];
+    return {days, value: future ? (future.close / selected.p.close - 1) * 100 : null, date: future?.date};
+  }) : [];
 
   return <>
     <div style={{display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:10, margin:'4px 12px 6px'}}>
@@ -120,8 +134,23 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
     </div>
     <div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 삼각형 신호 표시"
       style={{width:'100%',height:'min(65vh,620px)',minHeight:390}}/>
+    {selected && <section aria-live="polite" style={{margin:'8px 14px 16px',padding:'14px',border:'1px solid #d7e3db',borderRadius:10,background:'#f8fbf8'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+        <strong>▲ {selected.p.date} 매수 신호 이후 코스피 수익률</strong>
+        <button type="button" onClick={() => setSelectedDate(null)} aria-label="선택 해제" style={{cursor:'pointer',background:'transparent',border:0,fontSize:18}}>×</button>
+      </div>
+      <p style={{fontSize:12,margin:'8px 0',color:'#52645c'}}>신호일 종가 {fmt(selected.p.close)}P · RSI {fmt(selected.p.rsi ?? 0)} · 연기금 +{fmt(selected.p.netBuyBillion * 10,0)}억원</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:8}}>
+        {returns.map(item => <div key={item.days} style={{padding:'12px 8px',background:'#fff',borderRadius:8,border:'1px solid #e3ebe5',textAlign:'center'}}>
+          <div style={{fontSize:12,color:'#64776d'}}>{item.days}거래일 후</div>
+          <strong style={{fontSize:20,color:item.value===null?'#64776d':item.value>=0?'#c64040':'#2868b0'}}>{item.value===null?'미산출':(item.value>=0?'+':'')+fmt(item.value)+'%'}</strong>
+          <div style={{fontSize:11,color:'#7b897f'}}>{item.date ?? '미래 데이터 없음'}</div>
+        </div>)}
+      </div>
+      <p style={{fontSize:11,color:'#7b897f',margin:'9px 0 0'}}>신호 당일 종가 기준, 거래비용 미반영 · 과거 수익률은 미래 성과를 보장하지 않습니다.</p>
+    </section>}
     <p style={{fontSize:12, color:'#748077', margin:'0 14px 8px'}}>
-      휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구로 드래그 구간 선택 · 하단 슬라이더: 범위 조절
+      삼각형 신호 클릭: 5·10·20일 후 수익률 · 휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구로 드래그 구간 선택 · 하단 슬라이더: 범위 조절
       <br/>확대 시 현재 보이는 날짜의 최고·최저값 기준으로 세로축을 자동 맞춤합니다.
     </p>
     <p style={{fontSize:11, color:'#748077', margin:'0 14px 12px'}}>
