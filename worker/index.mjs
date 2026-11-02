@@ -3,6 +3,7 @@ import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mj
 import {mergeCorrelationHistory} from './correlation-history.mjs';
 import {collectDetails} from './details.mjs';
 import {pensionDailyFeed} from './pension-signal.mjs';
+import {recoverPensionAfterClose,composeRecoveredPension} from './pension-evening-recovery.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -112,8 +113,14 @@ export default {
    if(path==='/api/pension-kospi-daily'){
     const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 1").first();
     const detail=stored?.payload?JSON.parse(stored.payload):null;
-    const payload=pensionDailyFeed(detail);
-    return payload?reply(payload):reply({error:'PENSION_KOSPI_DAILY_NOT_READY',latestDate:detail?.date||null},503);
+    const recovered=detail?.date?await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('pension-recovery:'+detail.date).first():null;
+    const recovery=recovered?.payload?JSON.parse(recovered.payload):null;
+    const merged=composeRecoveredPension(detail,recovery);
+    const payload=pensionDailyFeed(merged||detail);
+    if(payload)return reply(payload);
+    const failed=detail?.date?await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('pension-recovery-status:'+detail.date).first():null;
+    const status=failed?.payload?JSON.parse(failed.payload):null;
+    return reply({error:'PENSION_KOSPI_DAILY_NOT_READY',latestDate:detail?.date||null,recoveryStatus:status?.status||'NOT_ATTEMPTED',recoveryCode:status?.code||null},503);
    }
    if(path==='/api/correlation'){
     const rows=await env.DB.prepare(`SELECT substr(id,9) AS date,
@@ -146,7 +153,9 @@ export default {
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
- scheduled(event,env,ctx){ctx.waitUntil((async()=>{await collect(env);const detailsPending=await collectDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+ scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+  if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
+  await collect(env);const detailsPending=await collectDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
