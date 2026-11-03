@@ -4,6 +4,7 @@ import {review20261028} from './close-review-2026-10-28';
 import {review20261029} from './close-review-2026-10-29';
 import {review20261030} from './close-review-2026-10-30';
 import {review20261102} from './close-review-2026-11-02';
+import {review20261103} from './close-review-2026-11-03';
 export type CloseSector={name:string;status:'NEW'|'HOT'|'RE'|'WEAK';kind:string;leader:string;leaderSymbol?:string;breadthSector?:string;breadthGroup?:string;companions:string;reason:string;outlook:string;change:string;sourceIds:number[];scoreInput?:ScoreInput};
 export type CloseReview={date:string;session:string;summary:string;coverageNote?:string;marketFlow?:string;sectors:CloseSector[];sources:{title:string;url:string}[]};
 // Source-checked editorial records, independent of incomplete live theme tags.
