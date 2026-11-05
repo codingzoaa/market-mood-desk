@@ -24,7 +24,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.ok(document.querySelector('.close-review').textContent.includes('넷마블 +7.31%'));
   assert.match(document.querySelector('.close-review').textContent,/RE 잠정/);
   assert.match(document.querySelector('.close-review').textContent,/총점 미산출/);
-  assert.equal(document.querySelectorAll('.close-score-grid').length,4);
+  assert.equal(document.querySelectorAll('.close-score-grid').length,5);
   assert.equal(document.querySelector('textarea'),null);
   assert.equal(document.querySelector('.close-session'),null);
   assert.equal(document.querySelector('.close-market'),null);
