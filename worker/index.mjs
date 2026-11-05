@@ -1,3 +1,4 @@
+import {readStockRegistry,syncStockRegistry} from './stock-registry.mjs';
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
@@ -26,8 +27,6 @@ export async function collect(env){
   const chart=(await requestTR('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:'99999999',cts_date:'',comp_yn:'N',sujung:'N'})).data;
   stage='CHART_VALIDATE';
   if(!verifySession(chart)){await state(env,'sync',{checkedAt:new Date().toISOString(),error:null,message:'휴장·개장 전 · 기존 저장 기록 유지'});return;}
-  const stored=await env.DB.prepare('SELECT symbol,payload FROM themes WHERE expires_at>?').bind(now).all();
-  const themeMap=new Map(stored.results.map(x=>[x.symbol,JSON.parse(x.payload)]));
   await state(env,'progress',{stage:'RANKING',startedAt:new Date(now).toISOString()});
   const stocks=[],etfs=[],seen=new Set();
   for(const [gubun,market] of [['1','KOSPI'],['2','KOSDAQ']]){
@@ -40,7 +39,7 @@ export async function collect(env){
     for(const row of rows){if(count>=100)break;if(seen.has(row.shcode))throw new LSFailure('LS_RESPONSE_INVALID');seen.add(row.shcode);count++;
      stage='RANK_NORMALIZE_'+market;
      if(/^[0-9A-Z]{6}$/.test(row.shcode)&&!/^\d{6}$/.test(row.shcode)){if(typeof row.hname==='string'&&/^KODEX/i.test(row.hname))etfs.push({symbol:row.shcode,name:row.hname,price:number(row.price,0,1e9),changePct:signed(row.diff,row.sign),turnoverKRW:number(row.value,0,1e9)*1000000});continue;}
-     const item=normalizeStock(row,market,themeMap.get(row.shcode)||[]);stocks.push(item);if(/^KODEX/i.test(item.name))etfs.push({symbol:item.symbol,name:item.name,price:item.price,changePct:item.changePct,turnoverKRW:item.turnoverKRW});
+     const item=normalizeStock(row,market,[]);stocks.push(item);if(/^KODEX/i.test(item.name))etfs.push({symbol:item.symbol,name:item.name,price:item.price,changePct:item.changePct,turnoverKRW:item.turnoverKRW});
     }
     stage='RANK_CURSOR_'+market;
     const next=response.data.t1463OutBlock?.idx;if(next===undefined)throw new LSFailure('LS_RESPONSE_INVALID');
@@ -49,17 +48,6 @@ export async function collect(env){
    }
   }
   if(!stocks.length)throw new LSFailure('LS_RESPONSE_INVALID');
-  // Enrich at most 12 names per cycle; gradually fill the daily theme cache.
-  stage='THEMES';
-  await state(env,'progress',{stage,startedAt:new Date(now).toISOString()});
-  const themesToWrite=[];
-  for(const item of stocks.filter(s=>s.changePct>=4&&!themeMap.has(s.symbol)).sort((a,b)=>b.turnoverKRW-a.turnoverKRW).slice(0,12)){
-   await wait(1100);
-   try{const data=(await requestTR('t1532',{shcode:item.symbol})).data;if(!Array.isArray(data.t1532OutBlock))continue;
-    const names=[...new Set(data.t1532OutBlock.map(x=>x.tmname).filter(x=>typeof x==='string'&&x.trim()&&x.length<=40))].slice(0,5);item.themes=names;
-    themesToWrite.push(env.DB.prepare('INSERT INTO themes(symbol,payload,expires_at) VALUES(?,?,?) ON CONFLICT(symbol) DO UPDATE SET payload=excluded.payload,expires_at=excluded.expires_at').bind(item.symbol,JSON.stringify(names),now+86400000));
-   }catch(error){if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED')throw error;/* Keep missing themes unclassified; never invent a classification. */}
-  }
   await state(env,'progress',{stage:'INDICES',startedAt:new Date(now).toISOString()});
   const metrics={};
   for(const [upcode,key] of [['001','kospi'],['301','kosdaq']]){stage='INDEX_'+key;const data=(await requestTR('t1511',{upcode})).data;const row=data.t1511OutBlock;if(!row)throw new LSFailure('LS_RESPONSE_INVALID');metrics[key]=number(row.pricejisu,0,1e7);metrics[key+'ChangePct']=signed(row.diffjisu,row.sign);}
@@ -69,8 +57,10 @@ export async function collect(env){
   stage='STORE';
   const asOf=new Date(now).toISOString();
   const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강',stocks,etfs,metrics,note:''};
-  await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
+  await env.DB.batch([env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
+  // Non-destructive LS top-100 registry enrichment. Failed classification never rolls back verified quotes.
+  try{await syncStockRegistry(env,snapshot,requestTR,wait);}catch{/* Retain source snapshot and retry on next collector cycle. */}
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
  }catch(error){
   if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
@@ -105,11 +95,12 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/stock-map')return reply(await readStockRegistry(env));
    if(path==='/api/pension-kospi-daily'){
     const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 1").first();
     const detail=stored?.payload?JSON.parse(stored.payload):null;
