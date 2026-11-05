@@ -1,4 +1,5 @@
 import CloseCalendar from './close-calendar';
+import {leadershipGroups} from './leadership';
 import StockSectorMap from './stock-sector-map';
 import {SectorEtfPanels} from './sector-etfs';
 import Correlation from './correlation';
@@ -13,7 +14,7 @@ import { localApi as api } from './storage';
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layers3, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
-import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
+import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
 type View='overview'|'sectors'|'stocks'|'calendar'|'stockmap'|'signals'|'data';
 const views: {key:View;name:string}[]=[{key:'overview',name:'국장'},{key:'sectors',name:'주도 섹터'},{key:'stocks',name:'거래대금'},{key:'calendar',name:'강세 섹터 캘린더'},{key:'stockmap',name:'종목 섹터맵'},{key:'signals',name:'시장 신호'}];
 const number=(v:number|null|undefined,d=0)=>v===undefined||v===null?'—':v.toLocaleString('ko-KR',{maximumFractionDigits:d});
@@ -29,7 +30,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
  const [expanded,setExpanded]=useState<'heatmap'|'flows'|null>(null),[stockMode,setStockMode]=useState<'all'|'strong'>('all');
  const [heatBoard,setHeatBoard]=useState<Board>('KOSPI');
  const file=useRef<HTMLInputElement>(null),toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null),manualMode=useRef(false),activeImport=useRef(false),serverLatest=useRef(initialSnapshots.at(-1)?.date);
- const active=demo?examples:snapshots;const dates=active.map(s=>s.date).sort();const snap=active.find(s=>s.date===selected);const stocks=gainers(snap?.stocks||[],topN,market,snap?.etfs);const sectors=rankSectors(stocks);const stars=demo?demoWatch:watchlist;
+ const active=demo?examples:snapshots;const dates=active.map(s=>s.date).sort();const snap=active.find(s=>s.date===selected);const stocks=gainers(snap?.stocks||[],topN,market,snap?.etfs);const sectors=leadershipGroups(stocks);const stars=demo?demoWatch:watchlist;
  const panelSnap=snap&&marketDetail?.date===selected&&!demo?{...snap,...(marketDetail.details?{details:marketDetail.details}:{})}:snap;
  function notify(text:string){setToast(text);if(toastTimer.current)clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(''),4500);}
  async function reload(first=false){setLoading(true);setError('');try{const data=await api('/api/dashboard'+(end!==today?'?date='+encodeURIComponent(end):''));setSnapshots(data.snapshots);setWatchlist(data.watchlist);setFeed(data.feed);setClock(Date.now());const oldLatest=serverLatest.current,nextLatest=data.snapshots.map((s:Snapshot)=>s.date).sort().at(-1);if(!first&&nextLatest)setSelected(prev=>!oldLatest||prev===oldLatest?nextLatest:prev);serverLatest.current=nextLatest;if(first&&!manualMode.current){setDemo(initialDemo);setSelected(data.snapshots.map((s:Snapshot)=>s.date).sort().at(-1)||examples.at(-1)?.date||today);}}catch(e){setFeed((prev:any)=>({...prev,failed:true}));setError(e instanceof Error?e.message:'데이터를 불러오지 못했습니다.');}finally{setLoading(false);}}
