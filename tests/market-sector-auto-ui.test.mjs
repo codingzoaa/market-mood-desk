@@ -11,7 +11,7 @@ test('Today’s Market precedes the 5-minute index and flow chart in the Korean 
  const c=contents.indexOf('<FlowChart details={details}/>',a);
  assert.ok(a>=0&&b>a&&c>b);
 });
-test('New LS close session does not create a review before editorial validation',async()=>{
+test('An LS snapshot cannot replace an independently verified editorial calendar review',async()=>{
  await build({entryPoints:['src/close-calendar.tsx'],bundle:true,platform:'node',format:'esm',outfile:'work/close-calendar-dynamic.mjs',packages:'external',jsx:'automatic'});
  const {default:Calendar}=await import('../work/close-calendar-dynamic.mjs');
  const dom=new JSDOM('<main id="root"></main>');
@@ -23,8 +23,9 @@ test('New LS close session does not create a review before editorial validation'
  const snap={date,asOf:'2026-11-05T06:45:00Z',source:'LS증권 KRX · 검증된 시세',note:'',metrics:{},stocks:[{symbol:'005930',name:'삼성전자',market:'KOSPI',themes:['메모리 반도체'],price:110000,changePct:6,turnoverKRW:1000000000000}]};
  try{
   await React.act(async()=>root.render(React.createElement(Calendar,{snapshots:[snap]})));
-  assert.match(document.querySelector('.close-review h2').textContent,/2026-11-04/);
-  assert.equal(document.querySelector('[aria-label="2026-11-05 장 마감 리뷰"]'),null);
+  assert.match(document.querySelector('.close-review h2').textContent,/2026-11-05/);
+  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.match(document.querySelector('.close-review').textContent,/셀트리온/);
   assert.doesNotMatch(document.querySelector('.close-review').textContent,/LS 자동 집계/);
  }finally{await React.act(async()=>root.unmount());}
 });
