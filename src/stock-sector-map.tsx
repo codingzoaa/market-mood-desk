@@ -1,32 +1,33 @@
 'use client';
 import {useMemo,useState} from 'react';
 import {Search,Layers3,ListFilter,CheckCircle2} from 'lucide-react';
-import {STOCK_MAP,type StockMapEntry} from './stock-map';
+import {combinedStockMap,type StockMapEntry} from './stock-map';
 
 type Mode='stocks'|'sectors';
 
 const uniq=(xs:string[])=>[...new Set(xs)].sort((a,b)=>a.localeCompare(b,'ko'));
 const normalize=(v:string)=>v.trim().toLowerCase();
 
-export default function StockSectorMap(){
+export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntry[]}){
+ const registry=useMemo(()=>combinedStockMap(discovered),[discovered]);
  const [mode,setMode]=useState<Mode>('stocks');
  const [query,setQuery]=useState('');
  const [sector,setSector]=useState('ALL');
  const [subSector,setSubSector]=useState('ALL');
- const [breadthOnly,setBreadthOnly]=useState(true);
+ const [breadthOnly,setBreadthOnly]=useState(false);
 
- const sectors=useMemo(()=>uniq(STOCK_MAP.map(x=>x.sector)),[]);
- const subSectors=useMemo(()=>uniq(STOCK_MAP.filter(x=>sector==='ALL'||x.sector===sector).map(x=>x.subSector)),[sector]);
+ const sectors=useMemo(()=>uniq(registry.map(x=>x.sector)),[]);
+ const subSectors=useMemo(()=>uniq(registry.filter(x=>sector==='ALL'||x.sector===sector).map(x=>x.subSector)),[sector]);
  const filtered=useMemo(()=>{
   const q=normalize(query);
-  return STOCK_MAP.filter(x=>{
+  return registry.filter(x=>{
    if(sector!=='ALL'&&x.sector!==sector)return false;
    if(subSector!=='ALL'&&x.subSector!==subSector)return false;
    if(breadthOnly&&!x.breadth)return false;
    if(!q)return true;
    return normalize([x.name,x.symbol,x.market,x.sector,x.subSector,...x.themes].join(' ')).includes(q);
   }).sort((a,b)=>a.sector.localeCompare(b.sector,'ko')||a.subSector.localeCompare(b.subSector,'ko')||a.name.localeCompare(b.name,'ko'));
- },[query,sector,subSector,breadthOnly]);
+ },[query,sector,subSector,breadthOnly,registry]);
 
  const grouped=useMemo(()=>{
   const map=new Map<string,Map<string,StockMapEntry[]>>();
@@ -43,8 +44,8 @@ export default function StockSectorMap(){
 
  return <section className="sector-map-page" aria-label="종목 섹터맵">
   <div className="sector-map-summary">
-   <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>강세 섹터 breadth 계산에 사용하는 고정 종목군을 확인합니다.</p></div>
-   <div className="sector-map-count"><strong>{filtered.length}</strong><span>/ {STOCK_MAP.length} 종목</span></div>
+   <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>고정 분류와 LS 거래대금 상위 100개 신규 종목을 함께 확인합니다. 미분류 종목은 검증 전까지 분류 대기로 표시합니다.</p></div>
+   <div className="sector-map-count"><strong>{filtered.length}</strong><span>/ {registry.length} 종목</span></div>
   </div>
 
   <div className="panel sector-map-controls">
