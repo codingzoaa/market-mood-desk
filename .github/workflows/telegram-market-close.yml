@@ -1,9 +1,12 @@
 name: Telegram Market Close (KRX)
 on:
   schedule:
-    # KST 17:30 / 18:00. Use explicit UTC to avoid unexpected timezone scheduler behavior.
+    # KST 17:30 initial, 17:45/18:00/18:15/18:30 retries. All times explicit UTC.
     - cron: '30 8 * * 1-5'
+    - cron: '45 8 * * 1-5'
     - cron: '0 9 * * 1-5'
+    - cron: '15 9 * * 1-5'
+    - cron: '30 9 * * 1-5'
   workflow_dispatch:
     inputs:
       deliver:
@@ -30,6 +33,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Log trigger and KST time
+        run: echo "TELEGRAM_SCHEDULE_TRIGGER event=${{ github.event_name }} utc=$(date -u +%FT%TZ) kst=$(TZ=Asia/Seoul date +%FT%T%z)"
       - name: Calculate delivery date (KST)
         id: day
         run: echo "key=$(TZ=Asia/Seoul date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
