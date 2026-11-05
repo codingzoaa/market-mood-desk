@@ -56,7 +56,7 @@ export async function collect(env){
   assertCollectionWindow();
   stage='STORE';
   const asOf=new Date(now).toISOString();
-  const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 테마 부분 보강',stocks,etfs,metrics,note:''};
+  const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 섹터맵 분류 별도 확인',stocks,etfs,metrics,note:''};
   await env.DB.batch([env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
   // Non-destructive LS top-100 registry enrichment. Failed classification never rolls back verified quotes.
