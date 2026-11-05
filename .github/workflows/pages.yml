@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Data commits made with GITHUB_TOKEN do not trigger ordinary push workflows.
+  workflow_run:
+    workflows: ['Update KOSPI pension signal data']
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -16,6 +21,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
