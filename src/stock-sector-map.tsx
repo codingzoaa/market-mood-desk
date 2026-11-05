@@ -16,8 +16,8 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
  const [subSector,setSubSector]=useState('ALL');
  const [breadthOnly,setBreadthOnly]=useState(false);
 
- const sectors=useMemo(()=>uniq(registry.map(x=>x.sector)),[]);
- const subSectors=useMemo(()=>uniq(registry.filter(x=>sector==='ALL'||x.sector===sector).map(x=>x.subSector)),[sector]);
+ const sectors=useMemo(()=>uniq(registry.map(x=>x.sector)),[registry]);
+ const subSectors=useMemo(()=>uniq(registry.filter(x=>sector==='ALL'||x.sector===sector).map(x=>x.subSector)),[sector,registry]);
  const filtered=useMemo(()=>{
   const q=normalize(query);
   return registry.filter(x=>{
