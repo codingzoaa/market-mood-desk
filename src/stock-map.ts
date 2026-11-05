@@ -100,3 +100,17 @@ export function seedStockMapFromHeatmap(details:MarketDetails|undefined|null):St
 }
 
 export const BREADTH_GROUPS=Object.freeze({...GROUPS});
+
+/** One authoritative taxonomy: curated entries win; LS-discovered candidates never enter Breadth automatically. */
+export function combinedStockMap(discovered:StockMapEntry[]=[]):StockMapEntry[]{
+ const byCode=new Map(STOCK_MAP.map(x=>[x.symbol,x]));
+ for(const x of discovered){
+  if(!x||!/^\d{6}$/.test(x.symbol)||byCode.has(x.symbol)||!['KOSPI','KOSDAQ'].includes(x.market)||!x.name||!x.sector||!x.subSector||!Array.isArray(x.themes))continue;
+  byCode.set(x.symbol,{...x,themes:x.themes.filter(t=>typeof t==='string'&&!!t.trim()).slice(0,5),breadth:false});
+ }
+ return [...byCode.values()];
+}
+export function stockMapThemes<T extends {symbol:string;themes:string[]}>(stocks:T[],discovered:StockMapEntry[]=[]):T[]{
+ const registry=new Map(combinedStockMap(discovered).map(x=>[x.symbol,x]));
+ return stocks.map(stock=>({...stock,themes:[...(registry.get(stock.symbol)?.themes||[])]}));
+}
