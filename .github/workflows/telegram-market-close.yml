@@ -1,8 +1,9 @@
 name: Telegram Market Close (KRX)
 on:
   schedule:
-    - cron: '30 16 * * 1-5'
-      timezone: 'Asia/Seoul'
+    # KST 17:30 / 18:00. Use explicit UTC to avoid unexpected timezone scheduler behavior.
+    - cron: '30 8 * * 1-5'
+    - cron: '0 9 * * 1-5'
   workflow_dispatch:
     inputs:
       deliver:
@@ -35,7 +36,7 @@ jobs:
       - name: Check market close data without sending
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.deliver != true }}
         env:
-          MARKET_DETAILS_URL: ${{ vars.MARKET_DETAILS_URL || 'https://market-note-ls-api.kby0991.workers.dev/api/market-details' }}
+          MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
           TELEGRAM_DRY_RUN: 'true'
         run: node scripts/telegram-market-close.mjs
       - name: Restore previous successful delivery marker
@@ -48,7 +49,7 @@ jobs:
       - name: Send verified market close
         if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
         env:
-          MARKET_DETAILS_URL: ${{ vars.MARKET_DETAILS_URL || 'https://market-note-ls-api.kby0991.workers.dev/api/market-details' }}
+          MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node scripts/telegram-market-close.mjs
