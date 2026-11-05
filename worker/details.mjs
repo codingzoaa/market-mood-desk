@@ -1,3 +1,4 @@
+import {appendFlowHistory} from './flow-history.mjs';
 import {lsIndexOHLC} from './index-ohlc.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,number,signed,kst,collectWindow,collectionFetch,LSFailure} from './ls.mjs';
@@ -60,6 +61,7 @@ export async function collectDetails(env){
  if(!collectWindow())return;
  try{details.heatmap=await collectHeatmap(env,date);}catch(e){details.errors.heatmap=String(e.message).slice(0,80);if(old.heatmap)details.heatmap=old.heatmap;}
  if(!collectWindow())return;
+ details.flowHistory=appendFlowHistory(old.flowHistory,details);
  await put(env,'details:'+date,details);
  await env.DB.prepare("DELETE FROM state WHERE id LIKE 'details:%' AND id < 'details:' || date('now','-365 day')").run();
  await env.DB.prepare("UPDATE state SET payload='0' WHERE id='details-lease' AND payload=?").bind(String(now+300000)).run();
@@ -122,3 +124,4 @@ export async function collectHeatmap(env,date,fetcher=naverMarket){
  if(!stocks.length||stocks.length>6000)throw new Error('QUOTES_COUNT');
  return {asOf:new Date().toISOString(),source:'네이버 증권 KRX · 네이버 업종 · 수집 시각 기준',stocks};
 }
+
