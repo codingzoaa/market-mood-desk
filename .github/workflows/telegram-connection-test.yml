@@ -1,0 +1,45 @@
+name: One-time Telegram connection verification
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/telegram-connection-test.yml'
+permissions:
+  contents: read
+jobs:
+  telegram-ping:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/telegram-delivery-20261105' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Send standalone Telegram diagnostic (no market data)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error, datetime
+          token=os.environ.get('TELEGRAM_BOT_TOKEN','')
+          chat=os.environ.get('TELEGRAM_CHAT_ID','')
+          if not token or not chat:
+              raise SystemExit('TELEGRAM_SECRETS_MISSING')
+          msg='[Market Mood Desk] 텔레그램 봇 연결 테스트 — 2026-11-05\n장 마감 브리핑이 아닌 전송 기능 확인용 메시지입니다.'
+          data=json.dumps({'chat_id':chat,'text':msg},ensure_ascii=False).encode('utf-8')
+          url='https://api.telegram.org/bot'+token+'/sendMessage'
+          req=urllib.request.Request(url,data=data,headers={'Content-Type':'application/json; charset=utf-8'},method='POST')
+          try:
+              with urllib.request.urlopen(req,timeout=15) as res:
+                  result=json.load(res)
+                  if not result.get('ok'):
+                      raise SystemExit('TELEGRAM_API_REJECTED')
+                  message=result.get('result') or {}
+                  if not isinstance(message.get('message_id'),int):
+                      raise SystemExit('TELEGRAM_MISSING_MESSAGE_ID')
+                  print('TELEGRAM_SEND_OK message_id='+str(message['message_id']))
+          except urllib.error.HTTPError as e:
+              print('TELEGRAM_API_HTTP_ERROR status='+str(e.code))
+              raise SystemExit(1)
+          except Exception as e:
+              print('TELEGRAM_SEND_FAILED kind='+type(e).__name__)
+              raise SystemExit(1)
+          PY
