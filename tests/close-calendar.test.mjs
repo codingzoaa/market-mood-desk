@@ -48,7 +48,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   await click('[aria-label="2026-10-29 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   await click('[aria-label="2026-10-28 장 마감 리뷰"]');
-  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.equal(document.querySelectorAll('.close-sector').length,4);
   assert.ok(document.querySelector('.close-review').textContent.includes('SK하이닉스 +10.89%'));
   assert.ok(document.querySelector('.close-review').textContent.includes('삼성전자 +9.01%'));
   await click('[aria-label="2026-10-27 장 마감 리뷰"]');
@@ -71,6 +71,6 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.match(document.querySelector('.close-review').textContent,/2026-09-28/);
   await React.act(async()=>[...document.querySelectorAll('button')].find(x=>x.textContent==='최신 리뷰').click());
   assert.equal(document.querySelectorAll('.close-sector').length,5);
-  assert.match(document.querySelector('.close-review').textContent,/2026-11-04/);
+  assert.match(document.querySelector('.close-review').textContent,/2026-11-05/);
  }finally{await React.act(async()=>root.unmount());}
 });
