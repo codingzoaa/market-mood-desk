@@ -19,9 +19,10 @@ const { dayKey, demoSnapshots } = await import('../work/market.js');
 const click = async el => { assert.ok(el, 'click target exists'); await act(async () => el.dispatchEvent(new MouseEvent('click', { bubbles: true }))); };
 const button = text => [...document.querySelectorAll('button')].find(b => b.textContent.includes(text));
 
-test('automatic live data, compact heading date, workspace separation and fullscreen restoration',async()=>{
+test('automatic live data, header date and intraday flows, workspace separation and fullscreen restoration',async()=>{
  localStorage.clear();const previous=globalThis.fetch;const record={...demoSnapshots(new Date(Date.now()-86400000).toISOString().slice(0,10)).at(-1),source:'LS증권 KRX · 테스트',note:''};
  record.details=demoMarketDetails(record);
+ record.details.flowHistory=['0900','0905','0910'].map((time,i)=>({time,asOf:record.date+'T09:'+String(i*5).padStart(2,'0')+':00+09:00',markets:{KOSPI:{individual:i*100,foreign:-i*80,changePct:i*.1},KOSDAQ:{individual:i*10,foreign:-i*8,changePct:-i*.2}}}));
  globalThis.fetch=async url=>Response.json(String(url).includes('market-details')?{details:record.details}:{schemaVersion:2,snapshots:[record],feed:{}});
  let root=createRoot(document.getElementById('root'));
  try{
@@ -29,7 +30,11 @@ test('automatic live data, compact heading date, workspace separation and fullsc
   assert.equal(document.querySelector('.mode-banner'),null);
   assert.deepEqual([...document.querySelectorAll('nav[aria-label="WORKSPACE"] a')].map(a=>a.textContent),['국장','주도 섹터','거래대금','강세 섹터 캘린더','종목 섹터맵','시장 신호','계좌 분석']);assert.ok(document.querySelector('header.site-header nav.workspace-nav'));assert.equal(document.querySelectorAll('nav[aria-label="WORKSPACE"] svg').length,0);
   const accountLink=document.querySelector('a[aria-label="계좌 분석 · 본인 로그인 필요"]');assert.equal(accountLink.href,'https://market-note-private-account.kby0991.workers.dev/');assert.equal(accountLink.querySelector('svg'),null);assert.equal(document.querySelector('iframe'),null);
-  assert.ok(document.querySelector('.page-heading [aria-label="조회 기준일"]'));
+  assert.ok(document.querySelector('.topbar [aria-label="조회 기준일"]'));
+  assert.equal(document.querySelector('.page-heading input[type=date]'),null);
+  assert.match(document.querySelector('.flow-chart-readout').textContent,/개인.*200억/);
+  await click(button('5분 변화량'));assert.match(document.querySelector('.flow-chart-readout').textContent,/개인.*100억/);
+  await click([...document.querySelectorAll('.flow-chart-tabs button')].find(b=>b.textContent==='코스닥'));assert.match(document.querySelector('.flow-chart-readout').textContent,/개인.*10억/);
   assert.equal(document.querySelector('.shared-toolbar'),null);
   assert.doesNotMatch(document.body.textContent,/접속 코드|실시간 시세 연결 없음|투자 관제실/);
   assert.equal(document.querySelector('.error-banner')?.textContent,undefined);assert.notEqual(document.querySelector('.index-value').textContent,'—');
@@ -65,4 +70,5 @@ test('duplicate dates require explicit overwrite; invalid and demo imports prese
   await localApi('/api/import', { schemaVersion: 2, snapshots: [{ ...saved, note: '교체한 메모' }], overwrite: true });
   assert.equal((await localApi('/api/dashboard')).snapshots[0].note, '교체한 메모');
 });
+
 
