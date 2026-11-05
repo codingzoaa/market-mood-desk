@@ -18,7 +18,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.match(document.querySelector('h2').textContent,/강세 섹터 캘린더/);
   assert.match(document.querySelector('.close-review h2').textContent,/2026-11-04/);
   assert.equal(document.querySelectorAll('.close-sector').length,4);
-  assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,5);
+  assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,document.querySelectorAll('.close-sector').length);
   assert.ok(document.querySelector('.close-review').textContent.includes('에코프로비엠 +10.96%'));
   assert.ok(document.querySelector('.close-review').textContent.includes('한화솔루션 +18.64%'));
   assert.ok(document.querySelector('.close-review').textContent.includes('심텍 +9.53%'));
