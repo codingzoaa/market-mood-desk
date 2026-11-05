@@ -28,3 +28,24 @@ test('empty, non-finite, and invalid index baselines are unavailable',()=>{
  for(const bad of [NaN,Infinity,-100,-101])assert.equal(personalFlowDeviation([point('0900',0,bad),point('0905',100)])[1].deviation,null);
  assert.equal(personalFlowDeviation([point('0900',0),point('0905',NaN)])[1].deviation,null);
 });
+
+
+test('large positive and negative differences are highlighted against preceding 30 minutes',()=>{
+ const times=['0900','0905','0910','0915','0920','0925','0930','0935'];
+ for(const sign of [1,-1]){
+  const p=personalFlowDeviation(times.map((t,i)=>point(t,i<7?i*100:600+sign*1000)));
+  assert.equal(p[6].highlightThreshold,null);assert.equal(p[7].highlightThreshold,500);assert.equal(p[7].highlighted,true);
+ }
+});
+test('highlight threshold uses a 500억원 floor and median magnitude, excluding current and future data',()=>{
+ const times=['0900','0905','0910','0915','0920','0925','0930','0935','0940'];
+ let h=times.slice(0,8).map((t,i)=>point(t,i<7?i*400:3100));
+ const before=personalFlowDeviation(h)[7];assert.equal(before.highlightThreshold,800);assert.equal(before.highlighted,false); // 700 vs 800
+ h.push(point(times[8],99999));assert.deepEqual(personalFlowDeviation(h)[7],before);
+ const low=personalFlowDeviation(times.slice(0,8).map((t,i)=>point(t,i<7?0:499)))[7];assert.equal(low.highlightThreshold,500);assert.equal(low.highlighted,false);
+ const zero=personalFlowDeviation(times.slice(0,8).map(t=>point(t,0)))[7];assert.equal(zero.highlighted,false);
+});
+test('a missing interval suspends highlighting until six preceding intervals are complete',()=>{
+ const p=personalFlowDeviation(['0900','0905','0910','0915','0920','0925','0930','0940'].map((t,i)=>point(t,i===7?10000:i*100)));
+ assert.equal(p.at(-1).highlightThreshold,null);assert.equal(p.at(-1).highlighted,false);
+});
