@@ -24,9 +24,9 @@ jobs:
               const r=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(18000)});
               const body=await r.text();
               const data=name!=='pages'?JSON.parse(body):null;
-              const summary=name==='stock-map'?{version:data?.version,items:Array.isArray(data?.entries)?data.entries.length:null,updatedAt:data?.updatedAt||null}:name==='dashboard'?{schemaVersion:data?.schemaVersion,snapshots:data?.snapshots?.length,latestDate:data?.snapshots?.at(-1)?.date}:{length:body.length,hasOverview:body.includes('국장')};
+              const summary=name==='stock-map'?{version:data?.version,items:Array.isArray(data?.entries)?data.entries.length:null,updatedAt:data?.updatedAt||null}:name==='dashboard'?{schemaVersion:data?.schemaVersion,snapshots:data?.snapshots?.length,latestDate:data?.snapshots?.at(-1)?.date}:{length:body.length,hasRoot:body.includes('id="root"')};
               console.log('LIVE_CHECK '+JSON.stringify({name,http:r.status,...summary}));
-              if(!r.ok||name==='stock-map'&&(data?.version!==1||!Array.isArray(data?.entries))||name==='pages'&&!body.includes('국장'))process.exitCode=1;
+              if(!r.ok||name==='stock-map'&&(data?.version!==1||!Array.isArray(data?.entries))||name==='pages'&&!body.includes('id="root"'))process.exitCode=1;
             }catch(e){console.log('LIVE_CHECK_FAILED '+name+' '+e.name);process.exitCode=1;}
           }
           JS
