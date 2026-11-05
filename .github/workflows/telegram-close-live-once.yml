@@ -1,0 +1,27 @@
+name: One-time verified market-close Telegram delivery
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/telegram-close-live-once.yml'
+permissions:
+  contents: read
+jobs:
+  deliver-once:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/telegram-close-live-20261105' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify date before allowing once-only delivery
+        run: |
+          test "$(TZ=Asia/Seoul date +%F)" = "2026-11-05" || { echo 'OUTSIDE_APPROVED_DAY'; exit 1; }
+      - name: Send one fully verified same-day market close
+        env:
+          MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram-market-close.mjs
