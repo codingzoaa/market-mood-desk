@@ -1,0 +1,41 @@
+name: Telegram live data diagnostic (temporary)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/telegram-live-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  check:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/telegram-close-endtoend-20261105' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify public worker and closing data without sending Telegram
+        env:
+          MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
+          TELEGRAM_DRY_RUN: 'true'
+        run: |
+          node - <<'JS'
+          const u=process.env.MARKET_DETAILS_URL+'?date=2026-11-05';
+          try{
+            const r=await fetch(u,{signal:AbortSignal.timeout(12000)});
+            console.log('MARKET_DETAILS_HTTP',r.status);
+            const text=await r.text();
+            if(text.length>1500000)throw Error('TOO_LARGE');
+            let o;try{o=JSON.parse(text)}catch{throw Error('NON_JSON')}
+            const d=o.details;
+            console.log('DETAILS_DIAGNOSTIC',JSON.stringify({
+              hasDetails:!!d,date:d?.date||null,
+              indices:Object.fromEntries(['KOSPI','KOSDAQ'].map(k=>[k,{present:!!d?.indices?.[k],asOf:d?.indices?.[k]?.asOf||null,fields:d?.indices?.[k]?Object.keys(d.indices[k]):[]}])),
+              flows:{present:!!d?.flows,asOf:d?.flows?.asOf||null,segments:Object.fromEntries(['KOSPI','KOSDAQ','FUTURES','CALL','PUT'].map(k=>[k,!!d?.flows?.segments?.[k]]))},
+              errorKeys:Object.keys(d?.errors||{}),collectorRevision:d?.collectorRevision||null
+            }));
+          }catch(e){console.log('LIVE_READ_FAILURE',e.name,e.message);process.exitCode=1;}
+          JS
+          node scripts/telegram-market-close.mjs
