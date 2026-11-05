@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths: ['.github/workflows/kospi-pension-daily.yml']
   schedule:
+    # GitHub Actions uses UTC. 07:30 UTC = 16:30 KST year-round.
+    - cron: '30 7 * * 1-5'
+    # Fall back after LS pension data becomes available; never fabricate values.
     - cron: '40 9 * * 1-5'
     - cron: '20 12 * * 1-5'
     - cron: '45 12 * * 1-5'
@@ -27,16 +30,19 @@ jobs:
         env:
           PENSION_DAILY_FEED_URL: https://market-note-ls-api.kby0991.workers.dev/api/pension-kospi-daily
         run: |
-          # Manual workflow update provides a bounded one-time retry window.
-          if [ "${{ github.event_name }}" != "push" ]; then
+          # Start at 16:30 KST on trading weekdays; retry briefly for LS data
+          # propagation. The importer rejects intraday, stale/conflicting values.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             node scripts/update-kospi-pension.mjs
           else
             for attempt in $(seq 1 15); do
               if node scripts/update-kospi-pension.mjs; then exit 0; fi
-              echo "Waiting for LS post-close pension recovery: attempt $attempt/15"
-              sleep 20
+              if [ "$attempt" -lt 15 ]; then
+                echo "LS post-close data not ready: retry $attempt/15"
+                sleep 20
+              fi
             done
-            echo "::error::LS pension dataset was not verified in time; no data written"
+            echo "::error::LS pension daily data was not verified; existing site data preserved"
             exit 1
           fi
       - name: Commit only verified new data
@@ -49,4 +55,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/kospi-pension-rsi.json
           git commit -m "data: append verified KOSPI pension daily close"
-          git push
+          # Repository can receive other updates while the scheduled job runs.
+          git pull --rebase origin main
+          git push origin HEAD:main
