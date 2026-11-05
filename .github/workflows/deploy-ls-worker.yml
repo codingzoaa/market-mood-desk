@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'worker/**'
+      - 'src/data/stock-map.json'
       - '.github/workflows/deploy-ls-worker.yml'
   workflow_dispatch:
 permissions:
