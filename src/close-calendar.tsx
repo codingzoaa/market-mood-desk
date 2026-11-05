@@ -1,12 +1,12 @@
 import {useEffect,useState} from 'react';
-import {closeReviews} from './close-reviews';
+import {closeReviews,type CloseReview} from './close-reviews';
 import {scoreRules,scoreSector} from './close-score';
 import {buildAutoScoreInput,mergeScoreInput} from './close-score-input';
 import {liveMarketDetails} from './live';
 import type {MarketDetails} from './market-details';
 import {shiftDay,rankSectors,turnoverLeaders,type Snapshot} from './market';
 export default function CloseCalendar({snapshots=[]}:{snapshots?:Snapshot[]}){
- const automatic=snapshots.filter(s=>{
+ const automatic:CloseReview[]=snapshots.filter(s=>{
   if(closeReviews.some(r=>r.date===s.date)||!/LS|KRX/i.test(s.source))return false;
   const when=new Date(s.asOf);if(!Number.isFinite(when.getTime()))return false;
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(when);
