@@ -70,3 +70,12 @@ maxRangeDays=1, 수신100행/1.5MB, 실행당1페이지, 최대1,000개의 연�
 미인증 브라우저의 HTML 탐색은 고정 PRIVATE_APP_ORIGIN과 Access issuer/AUD로 구성한 로그인 주소로 이동한다. API·정적 자산 요청은401을 유지한다. 헤더가 없을 때만 CF_Authorization 쿠키를 사용하며 서명·issuer·AUD·본인 이메일·만료 검증은 동일하다. 중복 쿠키, 위조 쿠키, 잘못된 헤더는 거절한다. 로그인 반환 주소에 사용자 입력 쿼리를 전달하지 않는다. 토큰이 있으나 검증에 실패하면 자동 재이동하지 않아 루프를 막는다.
 
 직접 API 업로드용 `node scripts/build-account-inline.mjs`는 HTML/JS/CSS를 인증 처리 뒤 제공하는 번들을 생성한다. 생성 파일에는 Secret이나 실제 계좌 자료가 없으며 work 경로는 커밋하지 않는다.
+
+
+## 오래된 PR #4 문서 이관 기록 (2026-11-05)
+
+기존 PR #4의 `private-account/README.md`는 대화 첨부 ZIP에 있던 localhost Python 프로토타입을 설명한 **구형 대안 설계**로, 현재 브랜치의 Cloudflare Access + 별도 Worker + `PRIVATE_DB` 구현을 대체하지 않는다. 해당 설명대로 공개 Pages나 공개 시장 DB에 개인 계좌 기능을 연결하지 않는다.
+
+PR #4에서 유효한 로컬 계좌 데이터 파일 제외 규칙은 `private-account/.gitignore`로 옮겼다. 계좌 원장 CSV, SQLite, 계좌 비밀번호, LS Secret, JWT, 암호화 키, 개인정보가 담긴 로그와 백업은 저장소에 커밋하지 않는다. 인증되지 않은 요청은 개인정보 DB에 닿지 않아야 하며, 독립 private D1 및 Access 검증이 통과하기 전 공개 사이트/Worker에 연결하지 않는다.
+
+**현재 통합 상태:** 문서 및 .gitignore만 이관. 개인 Worker와 LS 계좌 조회 기능은 별도 보안 검토/실자료 재현 검증 전까지 이 PR에서 병합·운영 배포하지 않는다.
