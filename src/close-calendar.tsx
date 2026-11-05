@@ -15,7 +15,7 @@ export default function CloseCalendar({snapshots=[]}:{snapshots?:Snapshot[]}){
  }).map(s=>{
   const ranked=rankSectors(turnoverLeaders(s.stocks,100,'ALL',s.etfs).filter(x=>x.changePct>=4));
   return {date:s.date,session:'KRX 종가 이후 LS 자동 집계',summary:'거래대금 상위 100종목 · 섹터맵 분류 기반 잠정 집계',coverageNote:'LS 저장 종목 중 섹터맵 분류가 있는 +4% 이상 종목의 거래대금 순위입니다. 편집 검증·뉴스·공시·섹터 전체 Breadth·종목별 수급은 확인되지 않았으며 강도점수 총점을 산출하지 않습니다.',marketFlow:'',sources:[],sectors:ranked.filter(x=>x.name!=='미분류'&&x.name!=='분류 대기').slice(0,5).map(x=>({name:x.name,status:'NEW' as const,kind:'LS 자동 집계 · 잠정',leader:x.leaders[0]?x.leaders[0].name+' '+(x.leaders[0].changePct>=0?'+':'')+x.leaders[0].changePct.toFixed(2)+'%':'대표종목 미확인',companions:x.leaders.slice(1,5).map(q=>q.name+' '+(q.changePct>=0?'+':'')+q.changePct.toFixed(2)+'%').join(' · ')||'수집 범위 내 동반 종목 미확인',reason:'뉴스·공시 교차검증 대기',outlook:'정규장 이후 자동 집계이며 확정 주도 섹터 여부는 별도 검증 필요',change:'전 거래일 정량 비교 검증 대기',sourceIds:[]}))}
- }).filter(r=>r.sectors.length>0);
+ });
  const allReviews=[...closeReviews,...automatic].sort((a,b)=>a.date.localeCompare(b.date));
  const latest=allReviews.at(-1)!.date;const[selected,setSelected]=useState(latest),[end,setEnd]=useState(latest),[expanded,setExpanded]=useState(true);
  useEffect(()=>{if(latest>selected){setSelected(latest);setEnd(latest);setExpanded(true);}},[latest]);
