@@ -26,6 +26,14 @@ export function personalFlowDeviation(history:FlowPoint[]){
  return points.map((p,i)=>{
   const window=points.slice(Math.max(0,i-5),i+1);
   const complete=window.length===6&&window.every((v,j)=>v.deviation!==null&&(j===0||minuteOf(v.time)-minuteOf(window[j-1].time)===5));
-  return {...p,rolling30:complete?window.reduce((sum,v)=>sum+v.deviation!,0):null,validIntervals:window.filter(v=>v.deviation!==null).length};
+  // Compare only against the preceding six consecutive intervals. Later
+  // observations never change whether an earlier interval was highlighted.
+  const prior=points.slice(Math.max(0,i-6),i);
+  const ready=prior.length===6&&p.deviation!==null&&prior.every((v,j)=>v.deviation!==null&&(j===0||minuteOf(v.time)-minuteOf(prior[j-1].time)===5))&&minuteOf(p.time)-minuteOf(prior[5].time)===5;
+  const magnitudes=ready?prior.map(v=>Math.abs(v.deviation!)).sort((a,b)=>a-b):[];
+  const highlightThreshold=ready?Math.max(500,magnitudes[2]+magnitudes[3]):null;
+  const highlighted=highlightThreshold!==null&&Math.abs(p.deviation!)>=highlightThreshold;
+  return {...p,highlightThreshold,highlighted,rolling30:complete?window.reduce((sum,v)=>sum+v.deviation!,0):null,validIntervals:window.filter(v=>v.deviation!==null).length};
  });
 }
+
