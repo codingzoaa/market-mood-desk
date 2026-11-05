@@ -1,0 +1,32 @@
+name: Sector registry live smoke (temporary)
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/stock-registry-live-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/sector-registry-live-20261105' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check production Pages and API without credentials or mutations
+        run: |
+          node --input-type=module <<'JS'
+          const urls=[
+            ['stock-map','https://market-note-ls-api.kby0991.workers.dev/api/stock-map'],
+            ['dashboard','https://market-note-ls-api.kby0991.workers.dev/api/dashboard'],
+            ['pages','https://codingzoaa.github.io/market-mood-desk/']
+          ];
+          for(const [name,url] of urls){
+            try{
+              const r=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(18000)});
+              const body=await r.text();
+              const data=name!=='pages'?JSON.parse(body):null;
+              const summary=name==='stock-map'?{version:data?.version,items:Array.isArray(data?.entries)?data.entries.length:null,updatedAt:data?.updatedAt||null}:name==='dashboard'?{schemaVersion:data?.schemaVersion,snapshots:data?.snapshots?.length,latestDate:data?.snapshots?.at(-1)?.date}:{length:body.length,hasOverview:body.includes('국장')};
+              console.log('LIVE_CHECK '+JSON.stringify({name,http:r.status,...summary}));
+              if(!r.ok||name==='stock-map'&&(data?.version!==1||!Array.isArray(data?.entries))||name==='pages'&&!body.includes('국장'))process.exitCode=1;
+            }catch(e){console.log('LIVE_CHECK_FAILED '+name+' '+e.name);process.exitCode=1;}
+          }
+          JS
