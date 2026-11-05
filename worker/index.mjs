@@ -1,3 +1,4 @@
+import {captureAfterLatest} from './pipeline/hook.mjs';
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
@@ -72,6 +73,14 @@ export async function collect(env){
   await env.DB.batch([...themesToWrite,env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
+  // Optional 5-minute history writes happen only after the normal snapshot commit.
+  // Missing migration, failed writes, or incomplete receipts must not interrupt quotes.
+  if(env.ENABLE_HISTORY_PIPELINE==='true'){
+   try{
+    const hour=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
+    if(hour<='15:30')await captureAfterLatest(env,snapshot,{});
+   }catch{/* Main snapshot already persisted; optional history may fail closed. */}
+  }
  }catch(error){
   if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
   await state(env,'diagnostic',{code:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:error instanceof LSFailure&&error.safeDetail?error.safeDetail:'Response shape validation failed',checkedAt:new Date().toISOString()});
