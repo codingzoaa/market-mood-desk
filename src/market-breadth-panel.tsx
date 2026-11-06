@@ -1,3 +1,4 @@
+import {SignalPanel} from './signal-panel';
 import { useEffect, useMemo, useState } from 'react';
 import MarketBreadthChart from './market-breadth-chart';
 import { loadMarketBreadth, type BreadthDataset } from './market-breadth-data';
@@ -52,15 +53,5 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
           </p>}
         </details>
       </>;
-  return <section className="panel" style={{padding:0,overflow:'hidden'}}>
-    <button type="button" aria-expanded={expanded} aria-controls="kospi-market-breadth-content"
-      onClick={() => setExpanded(v => !v)}
-      style={{width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:14,
-        padding:'18px 20px', font:'inherit', textAlign:'left', fontWeight:700,
-        color:'var(--ink)', background:'var(--paper)', border:0, cursor:'pointer'}}>
-      <span>코스피와 20일선 하락비율</span>
-      <span aria-hidden="true" style={{fontSize:22,color:'var(--green)',fontWeight:400,lineHeight:1}}>{expanded?'−':'+'}</span>
-    </button>
-    {expanded && <div id="kospi-market-breadth-content" style={{padding:'0 12px 14px'}}>{content}</div>}
-  </section>;
+  return <SignalPanel title="코스피와 20일선 하락비율" id="kospi-market-breadth-content" open={expanded} onToggle={()=>setExpanded(v=>!v)}>{content}</SignalPanel>;
 }

@@ -1,3 +1,4 @@
+import {SignalPanel,signalChartStyle} from './signal-panel';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -150,7 +151,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       <span style={{fontSize:12, color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · <span style={{background:'rgba(228,93,75,.18)',padding:'3px 5px',borderRadius:3}}>조건 충족 음영</span> {signals.length}일</span>
     </div>
     <div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 세로 음영 표시"
-      style={{width:'100%',height:'min(65vh,620px)',minHeight:390}}/>
+      style={signalChartStyle}/>
     {selected && <section aria-live="polite" style={{margin:'8px 14px 16px',padding:'14px',border:'1px solid #d7e3db',borderRadius:10,background:'#f8fbf8'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>
         <strong>▥ {selected.p.date} 음영 구간 이후 코스피 수익률</strong>
@@ -209,18 +210,9 @@ export default function KospiPensionSignalPanel({url = './kospi-pension-rsi.json
     document.addEventListener('visibilitychange', onVisible);
     return () => {ctrl.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',onVisible);};
   }, [open, url]);
-  return <section className="panel" style={{padding:0, overflow:'hidden'}}>
-    <button type="button" aria-expanded={open} aria-controls="kospi-pension-rsi-panel" onClick={() => setOpen(v => !v)}
-      style={{width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:14,
-        padding:'18px 20px', font:'inherit', textAlign:'left', fontWeight:700,
-        color:'var(--ink)', background:'var(--paper)', border:0, cursor:'pointer'}}>
-      <span>코스피 RSI 35 이하 · 연기금 1,000억원 이상 순매수</span>
-      <span aria-hidden="true" style={{fontSize:22,color:'var(--green)',fontWeight:400,lineHeight:1}}>{open?'−':'+'}</span>
-    </button>
-    {open && <div id="kospi-pension-rsi-panel" style={{padding:'0 12px 14px'}}>
+  return <SignalPanel title="코스피 RSI 35 이하 · 연기금 1,000억원 이상 순매수" id="kospi-pension-rsi-panel" open={open} onToggle={()=>setOpen(v=>!v)}>
       {error && <p role="status" className="muted">데이터 갱신 상태: {error} · 마지막 정상 차트는 유지합니다.</p>}
       {rows.length ? <KospiPensionSignalChart points={rows}/> :
        !error && <p className="muted" role="status" aria-busy="true">코스피·연기금 이력 데이터를 불러오는 중…</p>}
-    </div>}
-  </section>;
+    </SignalPanel>;
 }

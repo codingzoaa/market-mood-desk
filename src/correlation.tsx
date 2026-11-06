@@ -1,4 +1,6 @@
-import {useEffect,useState} from 'react';
+import {SignalPanel,SignalPeriods,signalChartStyle} from './signal-panel';
+import {periodStartIndex} from './kospi-pension-signal-data.mjs';
+import {useEffect,useRef,useState} from 'react';
 import {validOHLC} from '../worker/index-ohlc.mjs';
 import {API_URL} from './live';
 export type IndexOHLC={open:number;high:number;low:number;close:number};
@@ -12,9 +14,12 @@ export function correlationStats(points:ClosePoint[]){
 }
 const signed=(n:number,d=2)=>(n>0?'+':'')+n.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const short=(date:string)=>date.slice(5).replace('-','/');
-export function CorrelationCharts({points}:{points:ClosePoint[]}){
+export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
+ const [period,setPeriod]=useState('1Y'),[layout,setLayout]=useState({width:760,height:520}),host=useRef<SVGSVGElement|null>(null);
+ useEffect(()=>{if(!host.current)return;const resize=()=>{const box=host.current?.getBoundingClientRect();if(box&&box.width>0&&box.height>0)setLayout(v=>v.width===box.width&&v.height===box.height?v:{width:box.width,height:box.height});};resize();const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(resize):null;observer?.observe(host.current);window.addEventListener('resize',resize);return()=>{observer?.disconnect();window.removeEventListener('resize',resize);};},[history.length]);
+ const points=history.slice(periodStartIndex(history,period));
  const [picked,setPicked]=useState<string|null>(null);const selected=points.find(p=>p.date===picked)||points.at(-1);if(!selected)return <p className="correlation-empty">아직 장 마감 데이터가 없습니다. 장 마감 후 확인한 코스피 지수와 개인 수급이 함께 있는 날짜부터 점이 쌓입니다.</p>;
- const stats=correlationStats(points),W=600,H=330,L=62,R=22,T=24,B=48,pw=W-L-R,ph=H-T-B;
+ const stats=correlationStats(points),W=layout.width,H=layout.height,L=62,R=22,T=24,B=48,pw=W-L-R,ph=H-T-B;
  const xr=Math.max(1,...points.map(p=>Math.abs(p.changePct)))*1.15,yr=Math.max(.1,...points.map(p=>Math.abs(p.individual/10000)))*1.15;
  const sx=(v:number)=>L+(v+xr)/(2*xr)*pw,sy=(v:number)=>T+(yr-v)/(2*yr)*ph;
  const candleCount=points.filter(p=>p.ohlc).length;
@@ -23,8 +28,8 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  const candleWidth=Math.max(1,Math.min(22,pw/points.length*.6));
  const selectedIndex=points.indexOf(selected);const color=(p:ClosePoint)=>p.changePct>0&&p.individual>0?'#e7863a':p.changePct<0&&p.individual<0?'#e8b518':'#899db7';
  const choose=(p:ClosePoint)=>setPicked(p.date);
- return <><div className="correlation-meta"><span>최근 {points.length}거래일 · 코스피 개인 수급</span><strong>{stats?'상관계수 r = '+stats.r.toFixed(2):'상관계수: 표본 부족'}</strong></div><p className="correlation-help">점을 누르면 아래 코스피 차트에서 같은 날짜를 보여줍니다.</p>
- <svg viewBox={`0 0 ${W} ${H}`} className="correlation-svg" role="group" aria-label="개인 순매수와 코스피 일간 등락률 산점도">
+ return <><div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:10,margin:'4px 12px 6px'}}><SignalPeriods value={period} onChange={value=>{setPeriod(value);setPicked(null);}}/></div><div className="correlation-meta" style={{margin:'0 12px 8px',fontSize:11,color:'#748077'}}><span>최근 {points.length}거래일 · 코스피 개인 수급</span><strong>{stats?'상관계수 r = '+stats.r.toFixed(2):'상관계수: 표본 부족'}</strong></div><p className="correlation-help">점을 누르면 아래 코스피 차트에서 같은 날짜를 보여줍니다.</p>
+ <svg ref={host} style={signalChartStyle} viewBox={`0 0 ${W} ${H}`} className="correlation-svg" role="group" aria-label="개인 순매수와 코스피 일간 등락률 산점도">
  <defs><clipPath id="correlation-plot"><rect x={L} y={T} width={pw} height={ph}/></clipPath></defs>
  {[0,1,2,3,4].map(i=>{const x=-xr+i*xr/2,y=-yr+i*yr/2;return <g key={i}><line x1={sx(x)} x2={sx(x)} y1={T} y2={H-B} stroke="#e6ebef"/><line x1={L} x2={W-R} y1={sy(y)} y2={sy(y)} stroke="#e6ebef"/><text x={sx(x)} y={H-B+19} textAnchor="middle">{signed(x,1)}</text><text x={L-8} y={sy(y)+4} textAnchor="end">{signed(y,2)}</text></g>;})}
  <line x1={sx(0)} x2={sx(0)} y1={T} y2={H-B} stroke="#919da9"/><line x1={L} x2={W-R} y1={sy(0)} y2={sy(0)} stroke="#919da9"/>
@@ -34,7 +39,7 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
  <text x={Math.max(L+22,Math.min(W-R-22,sx(selected.changePct)))} y={Math.max(T+12,sy(selected.individual/10000)-12)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>
  </svg>
  <div className="correlation-selection" role="status"><strong>{selected.date}</strong><span>코스피 {selected.kospi.toLocaleString('ko-KR',{maximumFractionDigits:2})} <b className={selected.changePct>=0?'flow-positive':'flow-negative'}>{signed(selected.changePct)}%</b></span><span>개인 {signed(selected.individual,0)}억원</span><span>출처: {selected.source==='NAVER'?'네이버 금융':selected.source==='LS_HISTORY'?'LS증권 · 과거 조회':'LS증권'}</span>{selected.ohlc&&<span className="correlation-ohlc">시가 {selected.ohlc.open.toLocaleString('ko-KR')} · 고가 {selected.ohlc.high.toLocaleString('ko-KR')} · 저가 {selected.ohlc.low.toLocaleString('ko-KR')} · 종가 {selected.ohlc.close.toLocaleString('ko-KR')}</span>}{selected.ohlcSource&&<span>일봉 출처: {selected.ohlcSource}</span>}{!selected.ohlc&&<span>시가·고가·저가 미확보 · 종가만 표시</span>}{selected.recoveredAt&&<span>마감 후 보충 · {new Date(selected.recoveredAt).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'})} 조회</span>}</div>
- <svg viewBox={`0 0 ${W} ${H}`} className="correlation-svg kospi-history" role="group" aria-label="선택 날짜가 표시된 코스피 일봉·종가 차트">
+ <svg style={signalChartStyle} viewBox={`0 0 ${W} ${H}`} className="correlation-svg kospi-history" role="group" aria-label="선택 날짜가 표시된 코스피 일봉·종가 차트">
  <text x={L} y={14}>코스피 일봉 · 종가</text>
  {[0,1,2,3,4].map(i=>{const v=low+(high-low)*i/4;return <g key={i}><line x1={L} x2={W-R} y1={ty(v)} y2={ty(v)} stroke="#e6ebef"/><text x={L-8} y={ty(v)+4} textAnchor="end">{Math.round(v).toLocaleString('ko-KR')}</text></g>;})}
  <line x1={tx(selectedIndex)} x2={tx(selectedIndex)} y1={T} y2={H-B} stroke="#26876d" strokeDasharray="4 4"/>
@@ -50,5 +55,5 @@ export function CorrelationCharts({points}:{points:ClosePoint[]}){
 export default function Correlation(){
  const [open,setOpen]=useState(false),[points,setPoints]=useState<ClosePoint[]>([]),[status,setStatus]=useState(''),[retry,setRetry]=useState(0);
  useEffect(()=>{if(!open)return;const abort=new AbortController();const load=async()=>{setStatus('장 마감 기록을 불러오는 중…');try{const response=await fetch(API_URL+'/api/correlation',{credentials:'omit',signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)]),redirect:'error'});if(!response.ok)throw Error();const text=await response.text();if(text.length>150000)throw Error();const raw=JSON.parse(text);const data=validateClosePoints(raw.points);if(!abort.signal.aborted){setPoints(data);setStatus('');}}catch{if(!abort.signal.aborted)setStatus('장 마감 기록을 불러오지 못했습니다.');}};load();const timer=setInterval(load,300000);return()=>{abort.abort();clearInterval(timer);};},[open,retry]);
- return <section className="panel correlation-panel"><button className="correlation-toggle" aria-expanded={open} aria-controls="individual-correlation" onClick={()=>setOpen(v=>!v)}><span>개인 수급과 코스피 등락률 상관관계</span><span aria-hidden="true">{open?'−':'+'}</span></button>{open&&<div id="individual-correlation">{status&&<p role="status" className="correlation-help">{status}{status.includes('못했습니다')&&<button className="text-link" onClick={()=>setRetry(v=>v+1)}>다시 시도</button>}</p>}{(!status||points.length>0)&&<CorrelationCharts points={points}/>}</div>}</section>;
+ return <SignalPanel className="correlation-panel" headerClassName="correlation-toggle" title="개인 수급과 코스피 등락률 상관관계" id="individual-correlation" open={open} onToggle={()=>setOpen(v=>!v)}>{status&&<p role="status" className="muted">{status}{status.includes('못했습니다')&&<button className="text-link" onClick={()=>setRetry(v=>v+1)}>다시 시도</button>}</p>}{(!status||points.length>0)&&<CorrelationCharts points={points}/>}</SignalPanel>;
 }

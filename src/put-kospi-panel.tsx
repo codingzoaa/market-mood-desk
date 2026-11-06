@@ -1,3 +1,4 @@
+import {SignalPanel,signalChartStyle} from './signal-panel';
 import {useEffect,useRef,useState} from 'react';
 import * as echarts from 'echarts/core';
 import {LineChart,BarChart} from 'echarts/charts';
@@ -16,8 +17,8 @@ export function validatePutPoints(raw:any):Point[]{
  return raw.map(p=>{if(!p||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||!Number.isFinite(Date.parse(p.date+'T00:00:00Z'))||new Date(p.date+'T00:00:00Z').toISOString().slice(0,10)!==p.date||seen.has(p.date)||![p.kospi,p.changePct,p.individual,p.foreign].every(v=>typeof v==='number'&&Number.isFinite(v))||p.kospi<=0||p.kospi>1e7||Math.abs(p.changePct)>100||Math.max(Math.abs(p.individual),Math.abs(p.foreign))>1e10)throw Error('데이터 수치 오류');seen.add(p.date);const ohlc=validOHLC(p.ohlc,p.kospi);return {date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,foreign:p.foreign,...(ohlc?{ohlc}:{})};}).sort((a,b)=>a.date.localeCompare(b.date));
 }
 export function PutKospiCharts({points}:{points:Point[]}){
- const host=useRef<HTMLDivElement>(null),chart=useRef<EChartsType|null>(null),periodRef=useRef('5Y'),selectedRef=useRef<Record<string,boolean>>({});
- const [period,setPeriod]=useState('5Y'),[picked,setPicked]=useState<string|null>(null),[visible,setVisible]=useState({individual:true,foreign:true});
+ const host=useRef<HTMLDivElement>(null),chart=useRef<EChartsType|null>(null),periodRef=useRef('1Y'),selectedRef=useRef<Record<string,boolean>>({});
+ const [period,setPeriod]=useState('1Y'),[picked,setPicked]=useState<string|null>(null),[visible,setVisible]=useState({individual:true,foreign:true});
  const selected=points.find(p=>p.date===picked)||points.at(-1),latest=points.at(-1)?.date||'';
  useEffect(()=>{
   if(!host.current||!points.length)return;
@@ -38,7 +39,7 @@ export function PutKospiCharts({points}:{points:Point[]}){
    <div role="group" aria-label="차트 조회 기간" style={{display:'flex',flexWrap:'wrap',gap:6}}>{[['1M','1개월'],['3M','3개월'],['1Y','1년'],['5Y','5년'],['ALL','전체']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} style={{font:'inherit',fontSize:12,padding:'7px 11px',borderRadius:7,border:'1px solid #d6e1d9',background:period===value?'#215e47':'#fff',color:period===value?'#fff':'#305c4a',cursor:'pointer'}}>{label}</button>)}</div>
    <span style={{fontSize:12,color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · 마감 수급</span>
   </div>
-  {points.length?<><div ref={host} role="img" aria-label="코스피 종가와 개인·외국인 풋옵션 마감 수급 차트, 휠 확대·축소 및 하단 슬라이더로 두 차트의 날짜 범위를 함께 조절" style={{width:'100%',height:'min(65vh,620px)',minHeight:440}}/>
+  {points.length?<><div ref={host} role="img" aria-label="코스피 종가와 개인·외국인 풋옵션 마감 수급 차트, 휠 확대·축소 및 하단 슬라이더로 두 차트의 날짜 범위를 함께 조절" style={signalChartStyle}/>
    <section aria-live="polite" style={{margin:'8px 14px 16px',padding:14,border:'1px solid #d7e3db',borderRadius:10,background:'#f8fbf8',fontSize:12,color:'#52645c'}}>
     <strong style={{color:'#213f34'}}>{selected.date} · 코스피 {selected.kospi.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})}P ({signed(selected.changePct)}%)</strong>
     <div style={{display:'flex',flexWrap:'wrap',gap:12,marginTop:8}}>{(['individual','foreign'] as const).map(key=><button key={key} type="button" aria-pressed={visible[key]} onClick={()=>toggle(key)} style={{font:'inherit',border:0,background:'transparent',padding:'4px 0',color:key==='individual'?'#b96a3c':'#3275d6',cursor:'pointer',opacity:visible[key]?1:.4,textDecoration:visible[key]?'none':'line-through'}}>{key==='individual'?'개인':'외국인'} 풋 {signed(selected[key])}억원 · {visible[key]?'ON':'OFF'}</button>)}</div>
@@ -48,7 +49,7 @@ export function PutKospiCharts({points}:{points:Point[]}){
  </>;
 }
 export default function PutKospiPanel(){
- const [open,setOpen]=useState(true),[points,setPoints]=useState<Point[]>([]),[status,setStatus]=useState(''),[retry,setRetry]=useState(0);
+ const [open,setOpen]=useState(false),[points,setPoints]=useState<Point[]>([]),[status,setStatus]=useState(''),[retry,setRetry]=useState(0);
  useEffect(()=>{if(!open)return;const controller=new AbortController();const load=async()=>{try{setStatus('마감 수급을 불러오는 중…');const r=await fetch(API_URL+'/api/put-kospi-daily',{credentials:'omit',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw Error();const data=await r.json();if(data.unit!=='억원')throw Error();const checked=validatePutPoints(data.points);if(!controller.signal.aborted){setPoints(previous=>JSON.stringify(previous)===JSON.stringify(checked)?previous:checked);setStatus('');}}catch{if(!controller.signal.aborted)setStatus('마감 수급을 불러오지 못했습니다.');}};load();const timer=setInterval(load,300000);return()=>{controller.abort();clearInterval(timer);};},[open,retry]);
- return <section className="panel" style={{padding:0,overflow:'hidden'}}><button type="button" style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,padding:'18px 20px',font:'inherit',textAlign:'left',fontWeight:700,color:'var(--ink)',background:'var(--paper)',border:0,cursor:'pointer'}} aria-expanded={open} aria-controls="put-kospi-daily" onClick={()=>setOpen(v=>!v)}><span>개인·외국인 풋옵션 수급과 코스피 종가</span><span aria-hidden="true" style={{fontSize:22,color:'var(--green)',fontWeight:400,lineHeight:1}}>{open?'−':'+'}</span></button>{open&&<div id="put-kospi-daily" style={{padding:'0 12px 14px'}}>{status&&<p className="correlation-help" role="status">{status}{status.includes('못했습니다')&&<button className="text-link" onClick={()=>setRetry(v=>v+1)}>다시 시도</button>}</p>}{(!status||points.length>0)&&<PutKospiCharts points={points}/>}</div>}</section>;
+ return <SignalPanel title="개인·외국인 풋옵션 수급과 코스피 종가" id="put-kospi-daily" open={open} onToggle={()=>setOpen(v=>!v)}>{status&&<p className="muted" role="status">{status}{status.includes('못했습니다')&&<button className="text-link" onClick={()=>setRetry(v=>v+1)}>다시 시도</button>}</p>}{(!status||points.length>0)&&<PutKospiCharts points={points}/>}</SignalPanel>;
 }
