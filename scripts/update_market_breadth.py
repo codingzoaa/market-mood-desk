@@ -9,6 +9,7 @@ import io
 import json
 import sys
 import urllib.request
+import urllib.error
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -65,7 +66,7 @@ def validate_ls(payload, today):
     progress = payload.get('progress', {})
     record = payload.get('record')
     if not record or record.get('status') != 'COMPLETE': raise NotReady(f"LS close collection: {progress.get('status')} {progress.get('received',0)}/{progress.get('total',0)}")
-    if record.get('date') != today and progress.get('status') != 'MARKET_CLOSED': raise NotReady('Latest trading session has not been collected')
+    if record.get('date') != today and not (progress.get('date') == today and progress.get('status') == 'MARKET_CLOSED' and record.get('date', '') < today): raise NotReady('Latest trading session has not been collected')
     if record.get('method') != 'LS_KRX_DAILY_RAW_CLOSE_V1' or record.get('unit') != 'KRW': raise ValueError('Unverified LS source/method/units')
     seen = set(); prices = []
     for stock in record['stocks']:
@@ -144,7 +145,13 @@ def main():
     else:
         start=(datetime.now(KST).date()-timedelta(days=180)).year;frames=[];sources=[]
         for year in range(start,int(today[:4])+1):
-            frame,proof=read_marcap(year);frames.append(frame);sources.append(proof)
+            try: frame,proof=read_marcap(year)
+            except urllib.error.HTTPError as error:
+                # The new annual file may not exist on the year's first session.
+                # The previous-year source plus verified LS bars still covers SMA20.
+                if error.code == 404 and year == int(today[:4]) and frames: continue
+                raise
+            frames.append(frame);sources.append(proof)
         public=pd.concat(frames,ignore_index=True)
     output,report=refresh(data,public,payload,today);output['provenance']={'publicSources':sources,'lsFeed':API+'/api/breadth-close','lsPayloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'formula':'positive-volume raw close < calendar SMA20; no forward fill; 20/20 observations required'}
     # Repeated schedules without new values do not cause redundant data commits.

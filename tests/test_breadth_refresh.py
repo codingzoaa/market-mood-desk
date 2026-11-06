@@ -29,7 +29,7 @@ class CalendarSmaTests(unittest.TestCase):
 class RefreshGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.today=b.datetime.now(b.KST).date().isoformat()
+        cls.today=(b.datetime.now(b.KST).date()-b.timedelta(days=7)).isoformat()
         cls.days=pd.bdate_range(end=cls.today,periods=50)
         cls.today=cls.days[-1].date().isoformat()
         cls.stocks=[]
