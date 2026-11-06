@@ -44,3 +44,10 @@ test('atomic D1 history writes preserve recovered slots and newer live samples i
   assert.deepEqual(result.flowHistory,[{time:'0900',v:1},{time:'0905',v:2},{time:'0910',v:3}]);assert.equal(result.heatmap.kept,true);assert.deepEqual(result.indices.KOSPI.series,[1]);assert.equal(result.errors.flows,undefined);
  }db.close();
 });
+
+test('durable sampler schedules the next absolute 5-minute boundary, not five minutes after completion',async t=>{
+ const {CollectorAlarm}=await import('../worker/index.mjs');
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-11-06T09:04:40+09:00')});
+ const alarms=[];const coordinator=new CollectorAlarm({storage:{setAlarm:async time=>alarms.push(time),getAlarm:async()=>alarms.at(-1)||null}},{});
+ await coordinator.alarm();assert.equal(alarms[0],Date.parse('2026-11-06T09:05:00+09:00'));
+});
