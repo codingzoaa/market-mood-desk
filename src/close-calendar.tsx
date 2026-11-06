@@ -11,8 +11,8 @@ export default function CloseCalendar({snapshots=[]}:{snapshots?:Snapshot[]}){
  useEffect(()=>{
   const abort=new AbortController();
   fetch('./sector-review-status.json',{cache:'no-store',signal:abort.signal}).then(async response=>{if(!response.ok)throw Error('STATUS_UNAVAILABLE');return response.json();}).then(data=>{
-   if(!abort.signal.aborted&&typeof data?.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(data.date)&&['pending','published'].includes(data.status)&&typeof data.reason==='string'&&data.reason.length<=1000){
-    setReviewStatus({date:data.date,status:data.status,reason:data.reason,checkedAt:typeof data.checkedAt==='string'?data.checkedAt:undefined,sources:Array.isArray(data.sources)?data.sources.filter((x:unknown):x is string=>typeof x==='string'&&/^https:\\/\\//.test(x)).slice(0,5):[]});
+   if(!abort.signal.aborted&&typeof data?.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(data.date)&&['pending','published'].includes(data.status)&&typeof data.reason==='string'&&data.reason.length<=1000){
+    setReviewStatus({date:data.date,status:data.status,reason:data.reason,checkedAt:typeof data.checkedAt==='string'?data.checkedAt:undefined,sources:Array.isArray(data.sources)?data.sources.filter((x:unknown):x is string=>typeof x==='string'&&/^https:\/\//.test(x)).slice(0,5):[]});
    }
   }).catch(()=>{});
   return()=>abort.abort();
