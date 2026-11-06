@@ -10,9 +10,9 @@ export function calibratePutHistory(rows,details){
  if(overlap.length<3)throw Error('PUT_HISTORY_OVERLAP_REQUIRED');
  const groups=[['08','individual'],['17','foreign']];
  const matching=scale=>overlap.filter(r=>groups.every(([code,key])=>Math.abs(number(r['sa_'+code])*scale-ref.get(historyDate(r.date))[key])<=Math.max(2,Math.abs(ref.get(historyDate(r.date))[key])*.005)));
- const scales=[1,.01,.0001].filter(scale=>matching(scale).length>=Math.max(3,Math.ceil(overlap.length*.7))&&matching(scale).some(r=>Math.max(Math.abs(number(r.sa_08)*scale),Math.abs(number(r.sa_17)*scale))>=50));
+ const scales=[1,.01,.0001].filter(scale=>matching(scale).length>=3&&matching(scale).some(r=>Math.max(Math.abs(number(r.sa_08)*scale),Math.abs(number(r.sa_17)*scale))>=50));
  if(scales.length!==1){const e=Error('PUT_HISTORY_UNIT_UNVERIFIED');e.evidence=overlap.slice(0,12).map(r=>({date:r.date,raw:[r.sa_08,r.sa_17],reference:[ref.get(historyDate(r.date)).individual,ref.get(historyDate(r.date)).foreign]}));throw e;}
- return {factor:scales[0],dates:matching(scales[0]).map(r=>historyDate(r.date)),compared:overlap.length};
+ return {factor:scales[0],dates:matching(scales[0]).map(r=>historyDate(r.date)),compared:overlap.length,differentDates:overlap.filter(r=>!matching(scales[0]).includes(r)).map(r=>historyDate(r.date))};
 }
 export function normalizePutHistory(flowRows,priceRows,{from,to,factor}){
  if(!Array.isArray(flowRows)||!Array.isArray(priceRows)||!flowRows.length||!priceRows.length||flowRows.length>500||priceRows.length>500)throw Error('PUT_HISTORY_SHAPE');
@@ -26,14 +26,14 @@ export function historyQuarters(from,to){const parts=[];let start=from;while(sta
 export async function recoverPutHistory(env){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
  let saved=await read(env,'put-history:v1');if(saved?.status==='COMPLETE')return;
- if(saved?.revision===2&&saved?.status==='FAILED'&&Date.now()-Date.parse(saved.checkedAt)<600000)return;
+ if(saved?.revision===3&&saved?.status==='FAILED'&&Date.now()-Date.parse(saved.checkedAt)<600000)return;
  const lease=String(Date.now()+240000);await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('put-history-lease','0')").run();
  const locked=await env.DB.prepare("UPDATE state SET payload=? WHERE id='put-history-lease' AND CAST(payload AS INTEGER)<? RETURNING id").bind(lease,Date.now()).first();if(!locked)return;
  let session,stage='REFERENCE';
  try{
   const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all(),references=putDailyPoints(stored.results.flatMap(r=>{try{return [JSON.parse(r.payload)];}catch{return [];}}));
   if(references.length<3)throw Error('PUT_HISTORY_REFERENCE_REQUIRED');const to=saved?.to||references.at(-1).date,from=saved?.from||String(Number(to.slice(0,4))-5)+to.slice(4),parts=historyQuarters(from,to);
-  saved={...saved,revision:2,from,to,status:'RUNNING',checkedAt:new Date().toISOString(),points:saved?.points||[],completed:saved?.completed||[],source:'LS증권 t1665 풋옵션 금액 + t8429 코스피 종가',method:'LS_PUT_DAILY_V1'};await put(env,'put-history:v1',saved);
+  saved={...saved,revision:3,from,to,status:'RUNNING',checkedAt:new Date().toISOString(),points:saved?.points||[],completed:saved?.completed||[],source:'LS증권 t1665 풋옵션 금액 + t8429 코스피 종가',method:'LS_PUT_DAILY_V1'};await put(env,'put-history:v1',saved);
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input)=>{await pause();return tr(token,code,input,undefined,session.fetch);};
   if(!saved.calibration){stage='UNIT';const input={market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:references.at(-Math.min(10,references.length)).date.replaceAll('-',''),to_date:to.replaceAll('-',''),exchgubun:'K'};
    const result=await request('t1665',input);const rows=result.data.t1665OutBlock1;if(!Array.isArray(rows))throw Error('PUT_HISTORY_SHAPE');saved.calibration={...calibratePutHistory(rows,references),header:result.data.t1665OutBlock};await put(env,'put-history:v1',saved);
