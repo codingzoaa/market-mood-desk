@@ -65,7 +65,16 @@ test('wrong-day data never gets delivered',async()=>{
  }),/DATE_MISMATCH/);
  assert.equal(sent,false);
 });
-test('requires verified time before 16:30 KST and rejects weekend',async()=>{
- await assert.rejects(main({...env,TELEGRAM_DRY_RUN:'true'},{...dependencies,now:new Date('2026-10-28T07:20:00Z')}),/BEFORE_1630/);
+test('requires verified time before 16:10 KST and rejects weekend',async()=>{
+ await assert.rejects(main({...env,TELEGRAM_DRY_RUN:'true'},{...dependencies,now:new Date('2026-10-28T07:05:00Z')}),/BEFORE_1610/);
  await assert.rejects(main({...env,TELEGRAM_DRY_RUN:'true'},{...dependencies,now:new Date('2026-10-31T08:00:00Z')}),/WEEKEND/);
+});
+
+test('OI only appears if contract, close timestamp, and daily delta are verified',()=>{
+ const oi={futures:{source:'LS t2424',contract:'101V6000',asOf:time,openInterest:125000,change:-300}};
+ const s=render(date,{...valid,oi});
+ assert.match(s,/OI 125,000계약/);
+ assert.match(s,/전일 대비 -300계약/);
+ assert.match(render(date,{...valid,oi:{futures:{...oi.futures,asOf:'2026-10-27T06:30:00Z'}}}),/OI 확인 불가/);
+ assert.match(render(date,{...valid,oi:{futures:{...oi.futures,change:null}}}),/OI 확인 불가/);
 });
