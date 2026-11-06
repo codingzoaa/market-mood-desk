@@ -38,6 +38,17 @@ export function render(date,details) {
     const g=f.segments[market];
     ensure(g && ['individual','foreign','institution'].every(w=>valid(g[w])),'FLOW_MISSING_'+market);
   }
+  // Optional LS t2424 near-month futures OI. A missing/invalid observation must not be fabricated.
+  const oi=details.oi?.futures;
+  const oiStamp=oi?.asOf ? kstStamp(oi.asOf) : null;
+  const verifiedOi=oiStamp?.date===date && oiStamp.hhmm>='1530' &&
+    typeof oi.contract==='string' && /^[0-9A-Z]{8}$/.test(oi.contract) &&
+    valid(oi.openInterest) && Number.isInteger(oi.openInterest) && oi.openInterest>=0 &&
+    Number.isInteger(oi.change) && Math.abs(oi.change)<=1e8 &&
+    (oi.source==='LS t2424');
+  const oiDescription=verifiedOi
+    ? '근월물 '+oi.contract+' OI '+num(oi.openInterest)+'계약 (전일 대비 '+signed(oi.change)+'계약). OI만으로 신규 롱·숏 주체를 확정할 수 없음.'
+    : 'OI 확인 불가. 신규 포지션/청산 구분 불가.';
   const idx=(k,n)=>{
     const q=i[k];return k+' '+num(q.value)+' '+signed(q.changePct)+'% (상승 '+num(q.advances)+', 보합 '+num(q.unchanged)+', 하락 '+num(q.declines)+')';
   };
@@ -63,7 +74,7 @@ export function render(date,details) {
     '3. 시장 방향성 판단',
     '단기 방향성: '+direction+' (변동성 경계)',
     '① 외국인 현물: 코스피 '+flow(f.segments.KOSPI.foreign)+', 코스닥 '+flow(f.segments.KOSDAQ.foreign)+'.',
-    '② 외국인 선물: '+flow(futures)+'. OI 미확인으로 신규 포지션/청산 구분 불가.',
+    '② 외국인 선물: '+flow(futures)+'. '+oiDescription,
     '③ 외국인 옵션: 콜 '+flow(call)+', 풋 '+flow(put)+'. 헤지 및 기존 포지션 미확인으로 방향 단정 불가.',
     '',
     '※ LS증권 KRX t1511·t1601 저장자료 ('+stamp.hhmm.slice(0,2)+':'+stamp.hhmm.slice(2)+' KST 확인). 확정 여부는 거래소 별도 검증 필요.'
@@ -75,7 +86,7 @@ export async function main(env=process.env, dependencies={}) {
   ensure(env.MARKET_DETAILS_URL,'MISSING_MARKET_DETAILS_URL');
   const nowDate = dependencies.now || new Date();
   const now=formatKst(nowDate), date=datePart(now);
-  ensure(now.hour+now.minute>='1630','BEFORE_1630');
+  ensure(now.hour+now.minute>='1610','BEFORE_1610');
   ensure(!['Sat','Sun'].includes(new Intl.DateTimeFormat('en-US',{timeZone:TZ,weekday:'short'}).format(nowDate)),'WEEKEND');
   const url=new URL(env.MARKET_DETAILS_URL);
   ensure(url.protocol==='https:','HTTPS_REQUIRED');
