@@ -141,7 +141,7 @@ export default {
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
    if(path==='/api/sector-etfs')return reply(await sectorEtfPayload(env,to));
-   if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();return reply({details:detail?JSON.parse(detail.payload):null});}
+   if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();const value=detail?JSON.parse(detail.payload):null;if(value){const recovery=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('intraday-recovery:'+to).first();if(recovery)value.intradayRecovery=JSON.parse(recovery.payload);}return reply({details:value});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
    return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
@@ -152,8 +152,8 @@ export default {
   await collectDetails(env);
   // Cron performs the short, clock-aligned flow sample immediately. Long stock,
   // historical recovery and heatmap work runs in the durable alarm instead.
-  if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});return;}
-  await recoverIntradayFlows(env);await collect(env);const detailsPending=await enrichDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+  if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});return;}
+  await recoverIntradayFlows(env);await collect(env);const detailsPending=await enrichDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
@@ -168,6 +168,6 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collectDetails(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
+ async alarm(){if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
 
