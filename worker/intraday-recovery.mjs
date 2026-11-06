@@ -11,7 +11,7 @@ export function verifiedFlowScale(header,reference){
  // A zero/near-zero market cannot establish currency units unambiguously.
  if(ref.some(x=>!Number.isFinite(x))||Math.max(...ref.map(Math.abs))<100)throw Error('FLOW_HISTORY_UNIT_UNVERIFIED');
  const scales=[1,.01,.0001].filter(scale=>raw.every((v,i)=>Math.abs(v*scale-ref[i])<=Math.max(20,Math.abs(ref[i])*.02)));
- if(scales.length!==1)throw Error('FLOW_HISTORY_UNIT_UNVERIFIED');return scales[0];
+ if(scales.length!==1){const e=Error('FLOW_HISTORY_UNIT_UNVERIFIED');e.evidence={raw,reference:ref};throw e;}return scales[0];
 }
 export function historicalFlowPoints({date,observedAt,flows,indices,previous=[]}){
  const existing=new Set(previous.map(p=>p.time)),boards={};
@@ -39,7 +39,7 @@ export async function recoverIntradayFlows(env){
  const date=kst().date,row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();if(!row)return;
  const old=JSON.parse(row.payload);if(!old.flows||old.errors?.ls||old.errors?.flows)return;
  const statusId='intraday-recovery:'+date,statusRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(statusId).first(),status=statusRow?JSON.parse(statusRow.payload):{};
- if(status.checkedAt&&Date.now()-Date.parse(status.checkedAt)<600000)return;
+ if(status.checkedAt&&Date.now()-Date.parse(status.checkedAt)<(status.status==='FAILED'?30000:600000))return;
  const leaseId='intraday-recovery-lease',now=Date.now(),lease=String(now+120000);
  await env.DB.prepare('INSERT OR IGNORE INTO state(id,payload) VALUES(?,?)').bind(leaseId,'0').run();
  const lock=await env.DB.prepare('UPDATE state SET payload=? WHERE id=? AND CAST(payload AS INTEGER) < ? RETURNING id').bind(lease,leaseId,now).first();if(!lock)return;
@@ -73,6 +73,6 @@ export async function recoverIntradayFlows(env){
    UNION ALL SELECT i.value AS value,json_extract(i.value,'$.time') AS slot FROM json_each(?) i WHERE NOT EXISTS(SELECT 1 FROM json_each(state.payload,'$.flowHistory') e WHERE json_extract(e.value,'$.time')=json_extract(i.value,'$.time'))
    ORDER BY slot))),'$.intradayRecovery',json(?)) WHERE id=?`).bind(JSON.stringify(history),JSON.stringify(report),'details:'+date).run();
   await put(env,statusId,report);
- }catch(e){const report={date,status:'FAILED',checkedAt,stage,code:String(e.code||e.message||'FLOW_HISTORY_FAILED').replace(/[^A-Z0-9_]/g,'').slice(0,80)};await put(env,statusId,report);await env.DB.prepare("UPDATE state SET payload=json_set(payload,'$.intradayRecovery',json(?)) WHERE id=?").bind(JSON.stringify(report),'details:'+date).run();}
+ }catch(e){const report={date,status:'FAILED',checkedAt,stage,code:String(e.code||e.message||'FLOW_HISTORY_FAILED').replace(/[^A-Z0-9_]/g,'').slice(0,80),...(e.evidence?{evidence:e.evidence}:{})};await put(env,statusId,report);await env.DB.prepare("UPDATE state SET payload=json_set(payload,'$.intradayRecovery',json(?)) WHERE id=?").bind(JSON.stringify(report),'details:'+date).run();}
  finally{if(session)await session.close();await env.DB.prepare("UPDATE state SET payload='0' WHERE id=? AND payload=?").bind(leaseId,lease).run();}
 }
