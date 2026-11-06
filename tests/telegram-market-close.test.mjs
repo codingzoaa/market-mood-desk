@@ -17,7 +17,7 @@ test('formats five KRX segments with units, cautious positioning and no ETF item
  assert.match(s,/코스피: 개인/);
  assert.doesNotMatch(s,/ETF|상장지수펀드|금융투자 수급으로 대체/);
  assert.match(s,/상방 우위/);
- assert.match(s,/OI 미확인/);
+ assert.match(s,/OI 확인 불가/);
  assert.match(s,/확정 여부는 거래소 별도 검증 필요/);
 });
 test('rejects stale date and missing market indices',()=>{
