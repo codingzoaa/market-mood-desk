@@ -16,8 +16,9 @@ export async function collectBreadthClose(env){
    stage='TRADING_DATE';const sample=await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'});
    if(sample.data.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-','')){await put(env,key,{date,status:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return 0;}
    stage='INDEX';const index=await request('t8429',{shcode:'001',gubun:'2',qrycnt:90,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N'});const indices=(index.data.t8429OutBlock1||[]).map(r=>({date:String(r.date),close:number(r.close,1,1e7)})).sort((a,b)=>a.date.localeCompare(b.date));if(indices.at(-1)?.date!==date.replaceAll('-',''))throw Error('BREADTH_INDEX_DATE');
+   const quote=(await request('t1511',{upcode:'001'})).data.t1511OutBlock;const close=number(quote?.pricejisu,1,1e7);if(Math.abs(close-indices.at(-1).close)>.011)throw Error('BREADTH_INDEX_MISMATCH');const indexVerification={method:'T8429_VS_T1511_AFTER_CLOSE',date,close,observedAt:new Date().toISOString()};
    stage='MASTER';const master=await request('t8436',{gubun:'1'}),symbols=breadthMaster(master.data.t8436OutBlock),last=await get(env,'breadth-close:last');
-   p={date,status:'RUNNING',mode:last?.date?.replaceAll('-','')===indices.at(-2)?.date?'bulk':'seed',symbols,next:0,total:symbols.length,indices,startedAt:new Date().toISOString(),checkedAt:new Date().toISOString(),method:'LS_KRX_DAILY_RAW_CLOSE_V1'};await put(env,key,p);
+   p={date,status:'RUNNING',mode:last?.date?.replaceAll('-','')===indices.at(-2)?.date?'bulk':'seed',symbols,next:0,total:symbols.length,indices,indexVerification,startedAt:new Date().toISOString(),checkedAt:new Date().toISOString(),method:'LS_KRX_DAILY_RAW_CLOSE_V1'};await put(env,key,p);
   }
   p.status='RUNNING';delete p.code;stage=p.mode==='seed'?'SEED_HISTORY':'BULK_CLOSE';
   if(p.mode==='seed'){
@@ -41,5 +42,5 @@ export async function collectBreadthClose(env){
 export async function breadthCloseFeed(env){
  const p=await get(env,key),last=await get(env,'breadth-close:last');const progress=p?{date:p.date,status:p.status,mode:p.mode,received:p.next||0,total:p.total||0,checkedAt:p.checkedAt,stage:p.stage,code:p.code}:{status:'PENDING'};
  if(!last)return {progress,record:null};const rows=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'breadth-prices:%' ORDER BY id").all(),allowed=new Set(last.symbols),records=rows.results.flatMap(r=>{try{const x=JSON.parse(r.payload);return allowed.has(x.symbol)&&x.collectedFor===last.date?[x]:[];}catch{return [];}});
- if(records.length!==last.total)return {progress,record:null};return {progress,record:{date:last.date,status:'COMPLETE',method:last.method,mode:last.mode,unit:'KRW',source:'LS증권 KRX · t8436 시장 전체 · t8410 무수정 일봉 / t8407 마감 시세 · t8429 코스피',observedAt:last.completedAt,expected:last.total,indices:last.indices,stocks:records}};
+ if(records.length!==last.total)return {progress,record:null};return {progress,record:{date:last.date,status:'COMPLETE',method:last.method,mode:last.mode,unit:'KRW',source:'LS증권 KRX · t8436 시장 전체 · t8410 무수정 일봉 / t8407 마감 시세 · t8429 코스피',observedAt:last.completedAt,expected:last.total,indexVerification:last.indexVerification,indices:last.indices,stocks:records}};
 }
