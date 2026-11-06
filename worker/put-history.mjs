@@ -39,21 +39,21 @@ export async function loadPutDailyHistory(request,references,from,to,onProgress=
 export async function recoverPutHistory(env){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
  let saved=await read(env,'put-history:v1');if(saved?.status==='COMPLETE')return;
- if(saved?.revision===4&&saved?.status==='FAILED'&&Date.now()-Date.parse(saved.checkedAt)<600000)return;
+ if(saved?.revision===5&&saved?.status==='FAILED'&&Date.now()-Date.parse(saved.checkedAt)<600000)return;
  const lease=String(Date.now()+240000);await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('put-history-lease','0')").run();
  const locked=await env.DB.prepare("UPDATE state SET payload=? WHERE id='put-history-lease' AND CAST(payload AS INTEGER)<? RETURNING id").bind(lease,Date.now()).first();if(!locked)return;
  let session,stage='REFERENCE';
  try{
   const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all(),references=putDailyPoints(stored.results.flatMap(r=>{try{return [JSON.parse(r.payload)];}catch{return [];}}));
   if(references.length<3)throw Error('PUT_HISTORY_REFERENCE_REQUIRED');const to=saved?.to||references.at(-1).date,from=saved?.from||String(Number(to.slice(0,4))-5)+to.slice(4),parts=historyQuarters(from,to);
-  saved={...saved,revision:4,from,to,status:'RUNNING',checkedAt:new Date().toISOString(),points:saved?.points||[],completed:saved?.completed||[],source:'LS증권 t1665 풋옵션 금액 + t8429 코스피 종가',method:'LS_PUT_DAILY_V1'};await put(env,'put-history:v1',saved);
+  saved={...saved,revision:5,from,to,status:'RUNNING',checkedAt:new Date().toISOString(),points:saved?.points||[],completed:saved?.completed||[],source:'LS증권 t1665 풋옵션 금액 + t8429 코스피 종가',method:'LS_PUT_DAILY_V1'};await put(env,'put-history:v1',saved);
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input,continuation)=>{await pause();return tr(token,code,input,continuation,session.fetch);};
   if(!saved.calibration){stage='UNIT';const input={market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:references.at(-Math.min(10,references.length)).date.replaceAll('-',''),to_date:to.replaceAll('-',''),exchgubun:'K'};
    const result=await request('t1665',input);const rows=result.data.t1665OutBlock1;if(!Array.isArray(rows))throw Error('PUT_HISTORY_SHAPE');saved.calibration={...calibratePutHistory(rows,references),header:result.data.t1665OutBlock};await put(env,'put-history:v1',saved);
   }
   for(const part of parts){if(saved.completed.includes(part.from))continue;stage=part.from;await put(env,'put-history:v1',{...saved,stage});
-   let flow=await request('t1665',{market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:part.from.replaceAll('-',''),to_date:part.to.replaceAll('-',''),exchgubun:'K'});
-   let factor=saved.calibration.factor;
+   let flow=saved.fallback?{data:{t1665OutBlock1:saved.fallback.rows.filter(r=>{const d=historyDate(r.date);return d>=part.from&&d<=part.to;}),t1665OutBlock:{source:'t1617'}}}:await request('t1665',{market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:part.from.replaceAll('-',''),to_date:part.to.replaceAll('-',''),exchgubun:'K'});
+   let factor=saved.fallback?saved.fallback.calibration.factor:saved.calibration.factor;
    if(!Array.isArray(flow.data.t1665OutBlock1)||!flow.data.t1665OutBlock1.length){
     if(!saved.fallback){saved.fallback=await loadPutDailyHistory(request,references,from,to,async progress=>{saved.fallbackProgress=progress;await put(env,'put-history:v1',saved);});await put(env,'put-history:v1',saved);}
     flow={data:{t1665OutBlock1:saved.fallback.rows.filter(r=>{const d=historyDate(r.date);return d>=part.from&&d<=part.to;}),t1665OutBlock:{source:'t1617'}}};factor=saved.fallback.calibration.factor;
