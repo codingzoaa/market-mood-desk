@@ -11,11 +11,17 @@ export function putDailyPoints(details,now=new Date()){
   const ohlc=validOHLC(q.ohlc,q.value);points.set(d.date,{date:d.date,kospi:q.value,changePct:q.changePct,individual:f.individual,foreign:f.foreign,...(ohlc?{ohlc}:{}),indexAt:q.asOf,flowAt:d.flows.asOf});
  }return [...points.values()].sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
+export async function archivePutClose(env,details,now=new Date()){
+ const point=putDailyPoints([details],now)[0];if(!point)return;
+ await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind('put-close:'+point.date,JSON.stringify(point)).run();
+}
 export async function putDailyFeed(env){
  const rows=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all();
  const live=putDailyPoints(rows.results.flatMap(r=>{try{return [JSON.parse(r.payload)];}catch{return [];}}));
+ const archives=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'put-close:%' ORDER BY id DESC LIMIT 2000").all();
  const stored=await env.DB.prepare("SELECT payload FROM state WHERE id='put-history:v1'").first();let history;try{history=stored?JSON.parse(stored.payload):null;}catch{}
  const merged=new Map();if(history?.method==='LS_PUT_DAILY_V1'&&[1,.01,.0001].includes(history.calibration?.factor))for(const p of history.points||[]){if(p.date>=history.from&&p.date<=history.to&&p.date<kst().date&&[p.kospi,p.changePct,p.individual,p.foreign].every(Number.isFinite))merged.set(p.date,p);}
+ for(const r of archives.results){try{const p=JSON.parse(r.payload);if(p.date<=kst().date&&[p.kospi,p.changePct,p.individual,p.foreign].every(Number.isFinite))merged.set(p.date,p);}catch{}}
  for(const p of live)merged.set(p.date,p);const points=[...merged.values()].sort((a,b)=>a.date.localeCompare(b.date));
  return {points,unit:'억원',source:'LS증권 t1601·t1665 풋옵션 금액 순매수 / t1511·t8429 코스피 종가',closePolicy:'마감 관측 자료 및 검증된 과거 일별 조회',latestDate:points.at(-1)?.date||null,history:history?{status:history.status,from:history.from,to:history.to,count:history.points?.length||0,completed:history.completed?.length||0,stage:history.stage,probe:history.probe,code:history.code,evidence:history.evidence,calibration:history.calibration}:null};
 }

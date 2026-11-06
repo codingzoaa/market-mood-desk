@@ -1,3 +1,4 @@
+import {archivePutClose} from './put-daily.mjs';
 import {appendFlowHistory} from './flow-history.mjs';
 import {lsIndexOHLC} from './index-ohlc.mjs';
 import {createSession} from './tls.mjs';
@@ -74,6 +75,7 @@ export async function collectDetails(env){
    '$.indices.KOSPI.series',json(COALESCE(json_extract(state.payload,'$.indices.KOSPI.series'),'[]')),
    '$.indices.KOSDAQ.series',json(COALESCE(json_extract(state.payload,'$.indices.KOSDAQ.series'),'[]')))
   `).bind('details:'+date,JSON.stringify(merged),JSON.stringify(patch),points,points).run();
+  try{await archivePutClose(env,merged);}catch{/* Existing live closing observations remain available for retry. */}
   await put(env,'flow-attempt:'+date+':'+bucket.time,{date,time:bucket.time,requestedAt:details.asOf,completedAt:new Date().toISOString(),status:merged.flowHistory.some(p=>p.time===bucket.time)?'COMPLETE':'FAILED',errors:details.errors});
  }finally{await env.DB.prepare("UPDATE state SET payload='0' WHERE id='details-lease' AND payload=?").bind(lease).run();}
 }
