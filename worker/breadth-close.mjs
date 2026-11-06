@@ -24,7 +24,7 @@ export async function collectBreadthClose(env){
   if(p.mode==='seed'){
    for(let j=0;j<15&&p.next<p.total;j++){
     const symbol=p.symbols[p.next],old=await get(env,'breadth-prices:'+symbol);
-    if(old?.collectedFor!==date){const result=await request('t8410',{shcode:symbol,gubun:'2',qrycnt:65,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'});const bars=breadthBars(result.data.t8410OutBlock1||[],date);await put(env,'breadth-prices:'+symbol,{symbol,market:'KOSPI',collectedFor:date,bars});}
+    if(old?.collectedFor!==date){const result=await request('t8410',{shcode:symbol,gubun:'2',qrycnt:65,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'});const bars=breadthBars(result.data.t8410OutBlock1,date);await put(env,'breadth-prices:'+symbol,{symbol,market:'KOSPI',collectedFor:date,bars});}
     p.next++;if(p.next%5===0)await put(env,key,{...p,checkedAt:new Date().toISOString()});
    }
   }else{
@@ -36,7 +36,7 @@ export async function collectBreadthClose(env){
   if(kst().date!==date)throw Error('BREADTH_DAY_CHANGED');p.checkedAt=new Date().toISOString();
   if(p.next===p.total){p.status='COMPLETE';p.completedAt=p.checkedAt;await put(env,'breadth-close:last',p);}
   await put(env,key,p);return p.status==='COMPLETE'?0:1000;
- }catch(e){await put(env,key,{...p,date,status:'FAILED',stage,checkedAt:new Date().toISOString(),code:String(e.code||e.message).replace(/[^A-Z0-9_]/g,'').slice(0,80)});return 60000;}
+ }catch(e){await put(env,key,{...p,date,status:'FAILED',stage,checkedAt:new Date().toISOString(),code:String(e.code||e.message).replace(/[^A-Z0-9_]/g,'').slice(0,80)});return /TIMEOUT|NETWORK_FAILED|CONNECTION_FAILED/.test(String(e.code||e.message))?10000:60000;}
  finally{if(session)await session.close();await env.DB.prepare("UPDATE state SET payload='0' WHERE id='breadth-close:lease' AND payload=?").bind(lease).run();}
 }
 export async function breadthCloseFeed(env){
