@@ -1,3 +1,4 @@
+import {collectBreadthClose,breadthCloseFeed,breadthCloseWindow} from './breadth-close.mjs';
 import {recoverPutHistory} from './put-history.mjs';
 import {putDailyFeed} from './put-daily.mjs';
 import {readStockRegistry,syncStockRegistry} from './stock-registry.mjs';
@@ -98,11 +99,12 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/breadth-close')return reply(await breadthCloseFeed(env));
    if(path==='/api/put-kospi-daily')return reply(await putDailyFeed(env));
    if(path==='/api/stock-map')return reply(await readStockRegistry(env));
    if(path==='/api/pension-kospi-daily'){
@@ -151,6 +153,7 @@ export default {
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+  if(event.cron==='*/5 8-14 * * MON-FRI'){if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
   await collectDetails(env);
   // Cron performs the short, clock-aligned flow sample immediately. Long stock,
@@ -166,11 +169,12 @@ export default {
 export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
  async fetch(request,now=new Date()){
+  if(request.method==='POST'&&new URL(request.url).pathname==='/breadth'){if(!breadthCloseWindow(now))return new Response(null,{status:204});await this.state.storage.put('breadth-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method!=='POST'||new URL(request.url).pathname!=='/wake')return new Response(null,{status:405});
   if(!collectWindow(now))return new Response(null,{status:204});
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
+ async alarm(){if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
 
