@@ -128,12 +128,17 @@ def refresh(data, public, payload, today):
         restored.append(key)
     target_day=target.date().isoformat()
     if known.get(target_day,{}).get('below20Pct') is None: raise ValueError('Latest public-source breadth is missing')
-    if any(day > target_day for day in known): raise ValueError('Existing dataset extends beyond the coherent public source; review before replacing')
+    if any(day > target_day and row.get('below20Pct') is not None for day,row in known.items()): raise ValueError('Existing breadth extends beyond the coherent public source; review before replacing')
+    index_only=[]
+    for day,close in sorted(indices.items()):
+        if day > target_day:
+            known[day]={'date':day,'kospiClose':round(close,2),'below20Pct':None,'validStockCount':0,'source':'LS_INDEX_ONLY_AWAITING_CONSTITUENT_SOURCE'}
+            index_only.append(day)
     reference = daily.loc[public_end,'validStockCount']
     if known[target_day]['validStockCount'] < reference*.95: raise ValueError('Latest coverage fell unexpectedly')
     output = dict(data); output['rows'] = [known[k] for k in sorted(known)];output['endDate']=output['rows'][-1]['date']
     output.update(updatedAt=datetime.now(KST).isoformat(),source='FinanceData/marcap 종목 종가 · LS증권 코스피 지수',priceAdjustment='unadjusted',universe='원본 기준 유지: KOSPI 6자리 숫자 종목, 거래량 > 0, 20거래일 모두 유효한 종목. 보통주 전용 분류는 미검증.',excludedDates=sorted(FLAGS-set(approved)),autoUpdate='거래일 17:40 · 20:40 · 22:30 KST',validation={'methodReproduced':True,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'indexCheckedBreadthDates':approved,'stockCloseSource':'FinanceData/marcap only','sourceLagDays':(pd.Timestamp(record['date'])-target).days,'lsDate':record['date'],'lsObservedAt':record['observedAt'],'lsExpectedStocks':record['expected'],'publicThrough':public_end.date().isoformat()})
-    report={'latestDate':output['endDate'],'latest':known[target_day],'restored':restored,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'excludedDates':output['excludedDates'],'status':'provisional','lsDate':record['date']}
+    report={'latestBreadthDate':target_day,'indexOnlyDates':index_only,'latestDate':output['endDate'],'latest':known[target_day],'restored':restored,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'excludedDates':output['excludedDates'],'status':'provisional','lsDate':record['date']}
     return output,report
 
 def main():

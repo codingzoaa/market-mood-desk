@@ -42,7 +42,9 @@ class RefreshGuardTests(unittest.TestCase):
     def test_refresh_appends_only_verified_days_and_preserves_existing_rows(self):
         output,report=b.refresh(self.original,self.public,self.payload,self.today)
         self.assertEqual(output['rows'][:len(self.original['rows'])],self.original['rows'])
-        self.assertEqual(output['endDate'],self.days[-3].date().isoformat())
+        self.assertEqual(output['endDate'],self.today)
+        self.assertEqual(report['latestBreadthDate'],self.days[-3].date().isoformat())
+        self.assertTrue(all(row['below20Pct'] is None for row in output['rows'][-2:]))
         self.assertEqual(len(report['restored']),2)
         self.assertEqual(report['matchedSessions'],report['comparedSessions'])
     def test_unexplained_historical_change_blocks_publication(self):
