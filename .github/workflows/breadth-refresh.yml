@@ -1,0 +1,94 @@
+name: Refresh verified KOSPI breadth
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/breadth-refresh.yml', 'scripts/update_market_breadth.py']
+  workflow_dispatch:
+  schedule:
+    - cron: '40 8,11 * * 1-5'
+    - cron: '30 13 * * 1-5'
+permissions:
+  contents: write
+concurrency:
+  group: breadth-daily-sync
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    outputs:
+      changed: ${{ steps.publish.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pandas==2.2.3 pyarrow==26.0.1
+      - run: python -m unittest discover -s tests -p 'test_breadth_refresh.py'
+      - name: Wait for complete post-close source and validate the original calculation
+        shell: bash
+        run: |
+          for attempt in $(seq 1 80); do
+            set +e
+            python scripts/update_market_breadth.py
+            result=$?
+            set -e
+            if [ "$result" = 0 ]; then exit 0; fi
+            if [ "$result" != 2 ]; then exit "$result"; fi
+            sleep 30
+          done
+          echo 'No complete verified source yet; existing chart preserved.'
+          exit 1
+      - name: Publish verified data
+        id: publish
+        run: |
+          if git diff --quiet -- public/market-breadth.json; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/market-breadth.json
+          git commit -m 'data: refresh verified post-close KOSPI breadth'
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: breadth-refresh-report
+          path: work/breadth-refresh-report.json
+          if-no-files-found: ignore
+          retention-days: 7
+  deploy:
+    if: needs.refresh.outputs.changed == 'true'
+    needs: refresh
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deployment
