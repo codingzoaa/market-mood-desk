@@ -49,12 +49,12 @@ export async function recoverIntradayFlows(env){
   session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(c,b,cont)=>tr(token,c,b,cont,fetcher);
   const flows={},indices={};
   for(const [b,market,upcode] of [['KOSPI','1','001'],['KOSDAQ','3','301']]){
-   stage='HISTORY_'+b;await pause();const reference=rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data);const rows=[];let cursor='',continuation,header,scale,complete=false;const seen=new Set();
+   stage='HISTORY_'+b;await put(env,statusId,{date,status:'RUNNING',checkedAt,stage});await pause();const reference=rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data);const rows=[];let cursor='',continuation,header,scale,complete=false;const seen=new Set();
    for(let page=0;page<20;page++){
     const r=await request('t1602',{market,upcode,gubun1:'2',gubun2:'0',cts_time:cursor||' ',cts_idx:0,cnt:100,gubun3:'',exchgubun:'K'},continuation);
     if(!Array.isArray(r.data.t1602OutBlock1))throw Error('FLOW_HISTORY_SHAPE');
     if(page===0){header=r.data.t1602OutBlock;scale=verifiedFlowScale(header,reference[b]);}
-    rows.push(...r.data.t1602OutBlock1);const next=String(r.data.t1602OutBlock?.cts_time||'').trim();
+    rows.push(...r.data.t1602OutBlock1);await put(env,statusId,{date,status:'RUNNING',checkedAt,stage,page:page+1,rows:rows.length});const next=String(r.data.t1602OutBlock?.cts_time||'').trim();
     if(!next||!r.data.t1602OutBlock1.length||sourceTime(next)<='090000'){complete=true;break;}
     if(seen.has(next))throw Error('FLOW_HISTORY_CURSOR');seen.add(next);cursor=next;continuation=r.continuation;await pause();
    }
