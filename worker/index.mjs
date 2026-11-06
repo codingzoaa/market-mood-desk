@@ -2,7 +2,8 @@ import {readStockRegistry,syncStockRegistry} from './stock-registry.mjs';
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
-import {collectDetails} from './details.mjs';
+import {collectDetails,enrichDetails} from './details.mjs';
+import {recoverIntradayFlows} from './intraday-recovery.mjs';
 import {pensionDailyFeed} from './pension-signal.mjs';
 import {recoverPensionAfterClose,composeRecoveredPension} from './pension-evening-recovery.mjs';
 import {createSession} from './tls.mjs';
@@ -148,7 +149,11 @@ export default {
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
-  await collect(env);const detailsPending=await collectDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+  await collectDetails(env);
+  // Cron performs the short, clock-aligned flow sample immediately. Long stock,
+  // historical recovery and heatmap work runs in the durable alarm instead.
+  if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});return;}
+  await recoverIntradayFlows(env);await collect(env);const detailsPending=await enrichDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('krx-close-1530-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
@@ -163,5 +168,6 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){await collect(this.env);const detailsPending=await collectDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
+ async alarm(){await collectDetails(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow())await this.state.storage.setAlarm(Date.now()+1500);}
 }
+
