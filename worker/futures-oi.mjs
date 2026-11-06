@@ -1,7 +1,7 @@
 // LS t2424 daily OI normalizer (configured near-month KOSPI200 futures contract).
 // No inference of investor position direction from aggregate OI.
 export function normalizeFuturesOi(data,date,contract,asOf){
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !/^[0-9A-Z]{8}$/.test(contract))throw new Error('OI_CONTRACT_INVALID');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^[0-9A-Z]{8}$/.test(contract))throw new Error('OI_CONTRACT_INVALID');
  const rows=data?.t2424OutBlock1;
  if(!Array.isArray(rows) || rows.length<2 || rows.length>1000)throw new Error('OI_ROWS_INVALID');
  const normalized=rows.map(r=>{
