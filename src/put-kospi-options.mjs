@@ -12,7 +12,7 @@ export function putShadeBands(points){const bands=[];let start=null;for(let i=0;
 const fmt=(v,d=2)=>v.toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
 export function putKospiOption(points,period='5Y',selected={}){
  const first=periodStartIndex(points,period),start=first/Math.max(1,points.length-1)*100,bounds=putVisibleBounds(points,start,100,selected),byDate=new Map(points.map(p=>[p.date,p]));
- const axis={type:'category',boundaryGap:true,data:points.map(p=>p.date),axisLabel:{color:'#697b71',hideOverlap:true},axisLine:{lineStyle:{color:'#c9d5cd'}},axisTick:{show:false}};
+ const axis={type:'category',boundaryGap:true,data:points.map(p=>p.date),axisLabel:{color:'#697b71',hideOverlap:true},axisLine:{lineStyle:{color:'#c9d5cd'}},axisTick:{show:false,interval:0}};
  const zoom={xAxisIndex:[0,1],filterMode:'none',start,end:100,minValueSpan:Math.min(5,Math.max(0,points.length-1))};
  return {
   animation:false,color:['#2e7860','#df8250','#3275d6'],
