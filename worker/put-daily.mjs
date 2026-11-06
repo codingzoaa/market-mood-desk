@@ -16,10 +16,10 @@ export async function archivePutClose(env,details,now=new Date()){
  await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind('put-close:'+point.date,JSON.stringify(point)).run();
 }
 export async function putDailyFeed(env){
- const rows=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all();
+ const rows=await env.DB.prepare("SELECT json_object('date',json_extract(payload,'$.date'),'errors',json_extract(payload,'$.errors'),'indices',json_object('KOSPI',json_object('value',json_extract(payload,'$.indices.KOSPI.value'),'changePct',json_extract(payload,'$.indices.KOSPI.changePct'),'ohlc',json_extract(payload,'$.indices.KOSPI.ohlc'),'asOf',json_extract(payload,'$.indices.KOSPI.asOf'))),'flows',json_object('asOf',json_extract(payload,'$.flows.asOf'),'unit',json_extract(payload,'$.flows.unit'),'segments',json_object('PUT',json_extract(payload,'$.flows.segments.PUT')))) AS payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all();
  const live=putDailyPoints(rows.results.flatMap(r=>{try{return [JSON.parse(r.payload)];}catch{return [];}}));
  const archives=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'put-close:%' ORDER BY id DESC LIMIT 2000").all();
- const stored=await env.DB.prepare("SELECT payload FROM state WHERE id='put-history:v1'").first();let history;try{history=stored?JSON.parse(stored.payload):null;}catch{}
+ const stored=await env.DB.prepare("SELECT json_remove(payload,'$.fallback.rows') AS payload FROM state WHERE id='put-history:v1'").first();let history;try{history=stored?JSON.parse(stored.payload):null;}catch{}
  const merged=new Map();if(history?.method==='LS_PUT_DAILY_V1'&&[1,.01,.0001].includes(history.calibration?.factor))for(const p of history.points||[]){if(p.date>=history.from&&p.date<=history.to&&p.date<kst().date&&[p.kospi,p.changePct,p.individual,p.foreign].every(Number.isFinite))merged.set(p.date,p);}
  for(const r of archives.results){try{const p=JSON.parse(r.payload);if(p.date<=kst().date&&[p.kospi,p.changePct,p.individual,p.foreign].every(Number.isFinite)){if(!merged.has(p.date))merged.set(p.date,p);}}catch{}}
  for(const p of live)if(!merged.has(p.date))merged.set(p.date,p);const points=[...merged.values()].sort((a,b)=>a.date.localeCompare(b.date));
