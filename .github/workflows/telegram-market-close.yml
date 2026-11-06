@@ -1,12 +1,10 @@
-name: Telegram Market Close (KRX)
+name: Telegram Market Close (16:10 KST)
 on:
   schedule:
-    # KST 17:30 initial, 17:45/18:00/18:15/18:30 retries. All times explicit UTC.
-    - cron: '30 8 * * 1-5'
-    - cron: '45 8 * * 1-5'
-    - cron: '0 9 * * 1-5'
-    - cron: '15 9 * * 1-5'
-    - cron: '30 9 * * 1-5'
+    # KST 16:10 initial; 16:25/16:40 retries for delayed close data. Explicit UTC.
+    - cron: '10 7 * * 1-5'
+    - cron: '25 7 * * 1-5'
+    - cron: '40 7 * * 1-5'
   workflow_dispatch:
     inputs:
       deliver:
