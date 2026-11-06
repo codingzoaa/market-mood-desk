@@ -11,6 +11,7 @@ export type BreadthDataset = {
   updatedAt?: string;
   autoUpdate?: string;
   methodReproduced?: boolean;
+  sourceLagDays?: number;
 };
 
 const validDate = (d: unknown): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d));
@@ -32,6 +33,6 @@ export async function loadMarketBreadth(url: string, signal?: AbortSignal): Prom
   rows.sort((a,b)=>a.date.localeCompare(b.date));
   if (rows.some((x,i)=>i>0 && x.date===rows[i-1].date)) throw new Error('중복된 거래일');
   const validation = p.validation && typeof p.validation === 'object' ? p.validation as Record<string, unknown> : {};
-  return {excludedDates:Array.isArray(p.excludedDates) ? p.excludedDates.filter(validDate) : undefined,source:typeof p.source==='string'?p.source:undefined,updatedAt:typeof p.updatedAt==='string'?p.updatedAt:undefined,autoUpdate:typeof p.autoUpdate==='string'?p.autoUpdate:undefined,methodReproduced:validation.methodReproduced===true,schemaVersion:1,status:p.status as BreadthDataset['status'],startDate:String(p.startDate),endDate:String(p.endDate),rows};
+  return {sourceLagDays:Number.isInteger(validation.sourceLagDays) && Number(validation.sourceLagDays)>=0 ? Number(validation.sourceLagDays) : undefined,excludedDates:Array.isArray(p.excludedDates) ? p.excludedDates.filter(validDate) : undefined,source:typeof p.source==='string'?p.source:undefined,updatedAt:typeof p.updatedAt==='string'?p.updatedAt:undefined,autoUpdate:typeof p.autoUpdate==='string'?p.autoUpdate:undefined,methodReproduced:validation.methodReproduced===true,schemaVersion:1,status:p.status as BreadthDataset['status'],startDate:String(p.startDate),endDate:String(p.endDate),rows};
 }
 

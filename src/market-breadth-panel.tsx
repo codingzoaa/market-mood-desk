@@ -39,6 +39,7 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
           <span>{data.startDate} ~ {data.endDate}</span>
           <span>{data.rows.length.toLocaleString('ko-KR')}거래일</span>
           <span>하락비율 마지막 유효일 {lastValid ?? '없음'}</span>
+          {!!data.sourceLagDays && <span>종목 원자료 공개 시차 {data.sourceLagDays}일</span>}
         </div>
         {error && <p className="muted" role="status">새 자료 확인에 실패해 마지막 정상 자료를 표시합니다.</p>}
         {data.source && <p className="muted" style={{fontSize:11,padding:'0 12px 8px'}}>출처: {data.source} · {data.autoUpdate}{data.updatedAt && ` · 갱신 ${new Date(data.updatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`}</p>}
