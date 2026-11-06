@@ -1,3 +1,4 @@
+import PutKospiPanel from './put-kospi-panel';
 import CloseCalendar from './close-calendar';
 import StockSectorMap from './stock-sector-map';
 import {SectorEtfPanels} from './sector-etfs';
@@ -8,8 +9,7 @@ import FullscreenPanel from './fullscreen-panel';
 import {MarketCards,HeatmapPanel,InvestorPanel} from './market-panels';
 import {demoMarketDetails,type Board} from './market-details';
 import Connection from './connection';
-import { liveMarketDetails, API_URL } from './live';
-import {stockMapThemes,type StockMapEntry} from './stock-map';
+import { liveMarketDetails } from './live';
 import { localApi as api } from './storage';
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -24,15 +24,13 @@ function DownloadFile(name:string,content:string,type='application/json'){const 
 export default function Desk({initialSnapshots=[],initialView='overview',initialDemo=false}:{initialSnapshots?:Snapshot[];initialView?:View;initialDemo?:boolean}) {
  const today=dayKey();const examples=useMemo(()=>demoSnapshots(today).map(s=>({...s,details:demoMarketDetails(s)})),[today]);
  const [snapshots,setSnapshots]=useState<Snapshot[]>(initialSnapshots),[demo,setDemo]=useState(initialDemo),[loading,setLoading]=useState(true),[view,setView]=useState<View>(initialView),[selected,setSelected]=useState(initialSnapshots.at(-1)?.date||examples.at(-1)?.date||today),[end,setEnd]=useState(today),[topN,setTopN]=useState(50),[market,setMarket]=useState('ALL'),[theme,setTheme]=useState('ALL'),[search,setSearch]=useState(''),[sort,setSort]=useState('turnover'),[watchOnly,setWatchOnly]=useState(false),[watchlist,setWatchlist]=useState<string[]>([]),[demoWatch,setDemoWatch]=useState<string[]>(['000660']),[toast,setToast]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[detail,setDetail]=useState<Stock|null>(null),[preview,setPreview]=useState<Snapshot[]|null>(null),[overwrite,setOverwrite]=useState(false),[note,setNote]=useState(''),[connection,setConnection]=useState<any>(null),[feed,setFeed]=useState<any>(null),[clock,setClock]=useState(Date.now());
- const [discoveredMap,setDiscoveredMap]=useState<StockMapEntry[]>([]);
- useEffect(()=>{if(demo)return;let cancelled=false;const load=async()=>{try{const response=await fetch(API_URL+'/api/stock-map',{credentials:'omit',cache:'no-store'});if(!response.ok)return;const data=await response.json();if(!cancelled&&data?.version===1&&Array.isArray(data.entries)&&data.entries.length<=5000)setDiscoveredMap(data.entries);}catch{/* Preserve curated taxonomy if the LS registry endpoint is unavailable. */}};load();const timer=setInterval(load,300000);return()=>{cancelled=true;clearInterval(timer);};},[demo]);
  const [marketDetail,setMarketDetail]=useState<{date:string;details:any;failed:boolean}|null>(null);
  useEffect(()=>{if(demo)return;const abort=new AbortController();liveMarketDetails(selected,abort.signal).then(details=>{if(!abort.signal.aborted)setMarketDetail({date:selected,details,failed:false});}).catch(()=>{if(!abort.signal.aborted)setMarketDetail(old=>old?.date===selected?{...old,failed:true}:{date:selected,details:null,failed:true});});return()=>abort.abort();},[demo,selected,clock]);
 
  const [expanded,setExpanded]=useState<'heatmap'|'flows'|null>(null),[stockMode,setStockMode]=useState<'all'|'strong'>('all');
  const [heatBoard,setHeatBoard]=useState<Board>('KOSPI');
  const file=useRef<HTMLInputElement>(null),toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null),manualMode=useRef(false),activeImport=useRef(false),serverLatest=useRef(initialSnapshots.at(-1)?.date);
- const active=(demo?examples:snapshots).map(s=>({...s,stocks:stockMapThemes(s.stocks,discoveredMap)}));const dates=active.map(s=>s.date).sort();const snap=active.find(s=>s.date===selected);const stocks=gainers(snap?.stocks||[],topN,market,snap?.etfs);const sectors=rankSectors(stocks);const stars=demo?demoWatch:watchlist;
+ const active=demo?examples:snapshots;const dates=active.map(s=>s.date).sort();const snap=active.find(s=>s.date===selected);const stocks=gainers(snap?.stocks||[],topN,market,snap?.etfs);const sectors=rankSectors(stocks);const stars=demo?demoWatch:watchlist;
  const panelSnap=snap&&marketDetail?.date===selected&&!demo?{...snap,...(marketDetail.details?{details:marketDetail.details}:{})}:snap;
  function notify(text:string){setToast(text);if(toastTimer.current)clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(''),4500);}
  async function reload(first=false){setLoading(true);setError('');try{const data=await api('/api/dashboard'+(end!==today?'?date='+encodeURIComponent(end):''));setSnapshots(data.snapshots);setWatchlist(data.watchlist);setFeed(data.feed);setClock(Date.now());const oldLatest=serverLatest.current,nextLatest=data.snapshots.map((s:Snapshot)=>s.date).sort().at(-1);if(!first&&nextLatest)setSelected(prev=>!oldLatest||prev===oldLatest?nextLatest:prev);serverLatest.current=nextLatest;if(first&&!manualMode.current){setDemo(initialDemo);setSelected(data.snapshots.map((s:Snapshot)=>s.date).sort().at(-1)||examples.at(-1)?.date||today);}}catch(e){setFeed((prev:any)=>({...prev,failed:true}));setError(e instanceof Error?e.message:'데이터를 불러오지 못했습니다.');}finally{setLoading(false);}}
@@ -96,6 +94,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='signals'&&<>
   <MarketBreadthPanel url="./market-breadth.json" />
   <KospiPensionSignalPanel url="./kospi-pension-rsi.json" />
+  <PutKospiPanel/>
   <Correlation/>
 </>}
     {view==='sectors'&&<>
@@ -107,7 +106,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      {stockTable()}{etfPanels()}
     </>}
     {view==='calendar'&&<CloseCalendar snapshots={snapshots}/>} 
-    {view==='stockmap'&&<StockSectorMap discovered={discoveredMap}/>}
+    {view==='stockmap'&&<StockSectorMap/>}
     {view==='data'&&dataPage()}
     {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>KRX · 16:10까지 수집 · KST</span></footer>}
    </main>
