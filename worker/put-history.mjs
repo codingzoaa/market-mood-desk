@@ -42,10 +42,11 @@ export async function recoverPutHistory(env){
    const flow=await request('t1665',{market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:part.from.replaceAll('-',''),to_date:part.to.replaceAll('-',''),exchgubun:'K'});
    const sdate=new Date(Date.parse(part.from+'T00:00:00Z')-14*86400000).toISOString().slice(0,10).replaceAll('-','');
    const price=await request('t8429',{shcode:'001',gubun:'2',qrycnt:500,sdate,edate:part.to.replaceAll('-',''),cts_date:'',comp_yn:'N'});
+   saved.probe={flowCount:flow.data.t1665OutBlock1?.length,priceCount:price.data.t8429OutBlock1?.length,flowFirst:flow.data.t1665OutBlock1?.[0]?.date,flowLast:flow.data.t1665OutBlock1?.at(-1)?.date,priceFirst:price.data.t8429OutBlock1?.[0]?.date,priceLast:price.data.t8429OutBlock1?.at(-1)?.date,header:flow.data.t1665OutBlock};
    const rows=normalizePutHistory(flow.data.t1665OutBlock1,price.data.t8429OutBlock1,{...part,factor:saved.calibration.factor});
    const data=new Map(saved.points.map(p=>[p.date,p]));for(const p of rows)data.set(p.date,p);saved.points=[...data.values()].sort((a,b)=>a.date.localeCompare(b.date));saved.completed.push(part.from);saved.stage=stage;await put(env,'put-history:v1',saved);
   }
-  saved.status='COMPLETE';saved.completedAt=new Date().toISOString();await put(env,'put-history:v1',saved);
+  delete saved.code;delete saved.evidence;saved.status='COMPLETE';saved.completedAt=new Date().toISOString();await put(env,'put-history:v1',saved);
  }catch(e){saved={...saved,status:'FAILED',stage,checkedAt:new Date().toISOString(),code:String(e.code||e.message).replace(/[^A-Z0-9_]/g,'').slice(0,80),...(e.evidence?{evidence:e.evidence}:{})};await put(env,'put-history:v1',saved);}
  finally{if(session)await session.close();await env.DB.prepare("UPDATE state SET payload='0' WHERE id='put-history-lease' AND payload=?").bind(lease).run();}
 }
