@@ -22,15 +22,15 @@ export async function collectBreadthClose(env){
   }
   p.status='RUNNING';delete p.code;stage=p.mode==='seed'?'SEED_HISTORY':'BULK_CLOSE';
   if(p.mode==='seed'){
-   for(let j=0;j<45&&p.next<p.total;j++){
+   for(let j=0;j<15&&p.next<p.total;j++){
     const symbol=p.symbols[p.next],old=await get(env,'breadth-prices:'+symbol);
     if(old?.collectedFor!==date){const result=await request('t8410',{shcode:symbol,gubun:'2',qrycnt:65,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'});const bars=breadthBars(result.data.t8410OutBlock1||[],date);await put(env,'breadth-prices:'+symbol,{symbol,market:'KOSPI',collectedFor:date,bars});}
     p.next++;if(p.next%5===0)await put(env,key,{...p,checkedAt:new Date().toISOString()});
    }
   }else{
    for(let j=0;j<5&&p.next<p.total;j++){
-    const symbols=p.symbols.slice(p.next,p.next+50),previous={};for(const symbol of symbols)previous[symbol]=await get(env,'breadth-prices:'+symbol);
-    const result=await request('t8407',{nrec:symbols.length,shcode:symbols.join('')});for(const item of appendBreadthQuotes(previous,result.data.t8407OutBlock1,symbols,date))await put(env,'breadth-prices:'+item.symbol,item);p.next+=symbols.length;await put(env,key,{...p,checkedAt:new Date().toISOString()});
+    const symbols=p.symbols.slice(p.next,p.next+50),previous={};const saved=await env.DB.prepare('SELECT payload FROM state WHERE id IN ('+symbols.map(()=>'?').join(',')+')').bind(...symbols.map(symbol=>'breadth-prices:'+symbol)).all();for(const row of saved.results){const value=JSON.parse(row.payload);previous[value.symbol]=value;}
+    const result=await request('t8407',{nrec:symbols.length,shcode:symbols.join('')}),items=appendBreadthQuotes(previous,result.data.t8407OutBlock1,symbols,date);await env.DB.prepare('INSERT INTO state(id,payload) VALUES '+items.map(()=>'(?,?)').join(',')+' ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(...items.flatMap(item=>['breadth-prices:'+item.symbol,JSON.stringify(item)])).run();p.next+=symbols.length;await put(env,key,{...p,checkedAt:new Date().toISOString()});
    }
   }
   if(kst().date!==date)throw Error('BREADTH_DAY_CHANGED');p.checkedAt=new Date().toISOString();
