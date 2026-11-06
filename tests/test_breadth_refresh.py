@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import copy
 import pandas as pd
 spec=importlib.util.spec_from_file_location('breadth',Path(__file__).parents[1]/'scripts/update_market_breadth.py')
 b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
@@ -51,5 +52,11 @@ class RefreshGuardTests(unittest.TestCase):
     def test_wrong_closing_index_blocks_publication(self):
         bad={**self.payload,'record':{**self.payload['record'],'indexVerification':{**self.payload['record']['indexVerification'],'close':4990}}}
         with self.assertRaisesRegex(ValueError,'closing value'): b.validate_ls(bad,self.today)
+
+    def test_ls_history_must_match_the_latest_public_source_session(self):
+        bad=copy.deepcopy(self.payload)
+        bad['record']['stocks'][0]['bars'][-3]['close']=1
+        with self.assertRaisesRegex(ValueError,'latest public-source session'):
+            b.refresh(self.original,self.public,bad,self.today)
 
 if __name__=='__main__': unittest.main()

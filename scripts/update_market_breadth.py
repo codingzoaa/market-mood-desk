@@ -127,6 +127,7 @@ def refresh(data, public, payload, today):
         if not 600 <= n <= 1200: raise ValueError(f'Constituent coverage unavailable for {key}: {n}')
         known[key] = {'date':key,'kospiClose':round(indices[key],2),'below20Pct':round(float(row['below20Pct']),4),'validStockCount':n,'belowStockCount':below,'source':'FinanceData/marcap' if day <= public_end else 'LS_KRX_DAILY'}
         restored.append(key)
+    if public_end.date().isoformat() not in approved: raise ValueError('LS raw-price/volume calculation disagrees with the latest public-source session')
     if known.get(record['date'],{}).get('below20Pct') is None: raise ValueError('Latest breadth is missing')
     reference = daily.loc[public_end,'validStockCount']
     if known[record['date']]['validStockCount'] < reference*.95: raise ValueError('Latest coverage fell unexpectedly')
