@@ -155,8 +155,8 @@ export default {
   await collectDetails(env);
   // Cron performs the short, clock-aligned flow sample immediately. Long stock,
   // historical recovery and heatmap work runs in the durable alarm instead.
-  if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});return;}
-  await recoverIntradayFlows(env);await collect(env);const detailsPending=await enrichDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
+  if(env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});return;}
+  await recoverIntradayFlows(env);await collect(env);const detailsPending=await enrichDetails(env);const etfsPending=await safeCollectSectorEtfs(env);if((detailsPending||etfsPending)&&env.COLLECTOR&&collectWindow()){const id=env.COLLECTOR.idFromName('clock-aligned-flow-v3');await env.COLLECTOR.get(id).fetch('https://collector.internal/wake',{method:'POST'});}})());}
 };
 
 // The coordinator stores only alarm scheduling. Quote data and both leases stay in D1.
