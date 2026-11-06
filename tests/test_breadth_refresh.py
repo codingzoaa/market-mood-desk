@@ -38,11 +38,11 @@ class RefreshGuardTests(unittest.TestCase):
             cls.stocks.append({'symbol':str(i+1).zfill(6),'market':'KOSPI','collectedFor':cls.today,'bars':[{'date':d.strftime('%Y%m%d'),'close':100+j,'volume':10} for j,d in enumerate(cls.days)]})
         cls.payload={'progress':{'status':'COMPLETE'},'record':{'status':'COMPLETE','date':cls.today,'method':'LS_KRX_DAILY_RAW_CLOSE_V1','unit':'KRW','expected':700,'observedAt':cls.today+'T16:40:00+09:00','indexVerification':{'method':'T8429_VS_T1511_AFTER_CLOSE','date':cls.today,'close':5000},'indices':[{'date':d.strftime('%Y%m%d'),'close':5000} for d in cls.days],'stocks':cls.stocks}}
         cls.public=pd.DataFrame([{'Date':d,'Code':s['symbol'],'Market':'KOSPI','Close':100+j,'Volume':10} for s in cls.stocks for j,d in enumerate(cls.days[:-2])])
-        cls.original={'schemaVersion':1,'status':'provisional','startDate':cls.days[19].date().isoformat(),'endDate':cls.days[-3].date().isoformat(),'rows':[{'date':d.date().isoformat(),'kospiClose':5000,'below20Pct':0,'validStockCount':700} for d in cls.days[19:-2]]}
+        cls.original={'schemaVersion':1,'status':'provisional','startDate':cls.days[19].date().isoformat(),'endDate':cls.days[-5].date().isoformat(),'rows':[{'date':d.date().isoformat(),'kospiClose':5000,'below20Pct':0,'validStockCount':700} for d in cls.days[19:-4]]}
     def test_refresh_appends_only_verified_days_and_preserves_existing_rows(self):
         output,report=b.refresh(self.original,self.public,self.payload,self.today)
         self.assertEqual(output['rows'][:len(self.original['rows'])],self.original['rows'])
-        self.assertEqual(output['endDate'],self.today)
+        self.assertEqual(output['endDate'],self.days[-3].date().isoformat())
         self.assertEqual(len(report['restored']),2)
         self.assertEqual(report['matchedSessions'],report['comparedSessions'])
     def test_unexplained_historical_change_blocks_publication(self):
@@ -53,10 +53,11 @@ class RefreshGuardTests(unittest.TestCase):
         bad={**self.payload,'record':{**self.payload['record'],'indexVerification':{**self.payload['record']['indexVerification'],'close':4990}}}
         with self.assertRaisesRegex(ValueError,'closing value'): b.validate_ls(bad,self.today)
 
-    def test_ls_history_must_match_the_latest_public_source_session(self):
+    def test_different_vendor_stock_closes_are_never_spliced(self):
         bad=copy.deepcopy(self.payload)
         bad['record']['stocks'][0]['bars'][-3]['close']=1
-        with self.assertRaisesRegex(ValueError,'latest public-source session'):
-            b.refresh(self.original,self.public,bad,self.today)
+        changed,_=b.refresh(self.original,self.public,bad,self.today)
+        original,_=b.refresh(self.original,self.public,self.payload,self.today)
+        self.assertEqual(changed['rows'],original['rows'])
 
 if __name__=='__main__': unittest.main()

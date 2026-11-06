@@ -98,14 +98,13 @@ def refresh(data, public, payload, today):
     record, ls, indices = validate_ls(payload, today)
     public = clean_prices(public)
     public_end = public['Date'].max()
-    target = pd.Timestamp(record['date'])
+    target = min(pd.Timestamp(record['date']), public_end)
     calendar = sorted(set(public['Date']) | {pd.Timestamp(d) for d in indices})
     calendar = [d for d in calendar if d <= target]
-    # Original data source wins where it already exists; LS supplies genuinely
-    # missing recent sessions with real daily volumes, never inferred volumes.
-    combined = pd.concat([public, ls[ls['Date'] > public_end]], ignore_index=True)
+    # Keep one constituent price source over every SMA window. LS supplies only
+    # independently checked index closes; its differing stock closes are not spliced.
+    combined = public
     daily = calculate_daily(combined, calendar)
-    shadow = calculate_daily(ls, [pd.Timestamp(d) for d in sorted(indices)])
     known = {r['date']:dict(r) for r in data['rows']}
     if len(known) != len(data['rows']): raise ValueError('Duplicate existing sessions')
     compared = matched = index_checks = 0
@@ -121,19 +120,20 @@ def refresh(data, public, payload, today):
     restored = []; approved = []
     for day, row in daily.iterrows():
         key = day.date().isoformat()
-        if day in shadow.index and row['validStockCount'] >= 600 and int(shadow.loc[day,'validStockCount']) == int(row['validStockCount']) and abs(float(shadow.loc[day,'below20Pct'])-float(row['below20Pct'])) < .00011: approved.append(key)
+        if row['validStockCount'] >= 600 and key in indices: approved.append(key)
         if key not in indices or key < data['startDate'] or key in known and known[key].get('below20Pct') is not None: continue
         n = int(row['validStockCount']); below = int(row['belowStockCount'])
         if not 600 <= n <= 1200: raise ValueError(f'Constituent coverage unavailable for {key}: {n}')
         known[key] = {'date':key,'kospiClose':round(indices[key],2),'below20Pct':round(float(row['below20Pct']),4),'validStockCount':n,'belowStockCount':below,'source':'FinanceData/marcap' if day <= public_end else 'LS_KRX_DAILY'}
         restored.append(key)
-    if public_end.date().isoformat() not in approved: raise ValueError('LS raw-price/volume calculation disagrees with the latest public-source session')
-    if known.get(record['date'],{}).get('below20Pct') is None: raise ValueError('Latest breadth is missing')
+    target_day=target.date().isoformat()
+    if known.get(target_day,{}).get('below20Pct') is None: raise ValueError('Latest public-source breadth is missing')
+    if any(day > target_day for day in known): raise ValueError('Existing dataset extends beyond the coherent public source; review before replacing')
     reference = daily.loc[public_end,'validStockCount']
-    if known[record['date']]['validStockCount'] < reference*.95: raise ValueError('Latest coverage fell unexpectedly')
+    if known[target_day]['validStockCount'] < reference*.95: raise ValueError('Latest coverage fell unexpectedly')
     output = dict(data); output['rows'] = [known[k] for k in sorted(known)];output['endDate']=output['rows'][-1]['date']
-    output.update(updatedAt=datetime.now(KST).isoformat(),source='FinanceData/marcap · LS증권 KRX 마감 일봉',priceAdjustment='unadjusted',universe='원본 기준 유지: KOSPI 6자리 숫자 종목, 거래량 > 0, 20거래일 모두 유효한 종목. 보통주 전용 분류는 미검증.',excludedDates=sorted(FLAGS-set(approved)),autoUpdate='거래일 17:40 · 20:40 · 22:30 KST',validation={'methodReproduced':True,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'crossCheckedBreadthDates':approved,'lsDate':record['date'],'lsObservedAt':record['observedAt'],'lsExpectedStocks':record['expected'],'publicThrough':public_end.date().isoformat()})
-    report={'latestDate':output['endDate'],'latest':known[record['date']],'restored':restored,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'excludedDates':output['excludedDates'],'status':'provisional','lsDate':record['date']}
+    output.update(updatedAt=datetime.now(KST).isoformat(),source='FinanceData/marcap 종목 종가 · LS증권 코스피 지수',priceAdjustment='unadjusted',universe='원본 기준 유지: KOSPI 6자리 숫자 종목, 거래량 > 0, 20거래일 모두 유효한 종목. 보통주 전용 분류는 미검증.',excludedDates=sorted(FLAGS-set(approved)),autoUpdate='거래일 17:40 · 20:40 · 22:30 KST',validation={'methodReproduced':True,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'indexCheckedBreadthDates':approved,'stockCloseSource':'FinanceData/marcap only','sourceLagDays':(pd.Timestamp(record['date'])-target).days,'lsDate':record['date'],'lsObservedAt':record['observedAt'],'lsExpectedStocks':record['expected'],'publicThrough':public_end.date().isoformat()})
+    report={'latestDate':output['endDate'],'latest':known[target_day],'restored':restored,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'excludedDates':output['excludedDates'],'status':'provisional','lsDate':record['date']}
     return output,report
 
 def main():
@@ -154,7 +154,7 @@ def main():
                 raise
             frames.append(frame);sources.append(proof)
         public=pd.concat(frames,ignore_index=True)
-    output,report=refresh(data,public,payload,today);output['provenance']={'publicSources':sources,'lsFeed':API+'/api/breadth-close','lsPayloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'formula':'positive-volume raw close < calendar SMA20; no forward fill; 20/20 observations required'}
+    output,report=refresh(data,public,payload,today);output['provenance']={'publicSources':sources,'lsFeed':API+'/api/breadth-close','lsPayloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'formula':'FinanceData/marcap positive-volume raw close < calendar SMA20; no cross-vendor price splicing; no forward fill; 20/20 observations required'}
     # Repeated schedules without new values do not cause redundant data commits.
     old_rows=data['rows'];changed=old_rows!=output['rows'] or data.get('validation')!=output['validation'] or data.get('excludedDates')!=output['excludedDates'] or data.get('autoUpdate')!=output['autoUpdate']
     if changed: Path(a.output).write_text(json.dumps(output,ensure_ascii=False,separators=(',',':')))
