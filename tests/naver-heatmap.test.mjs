@@ -48,3 +48,12 @@ test('after-hours Naver alarms use their own state and never call LS or alter fl
  const previous=globalThis.fetch;globalThis.fetch=async()=>{throw Error('no upstream expected for fresh map')};
  try{const response=await coordinator.fetch(new Request('https://collector.internal/naver',{method:'POST'}),now);assert.equal(response.status,202);assert.equal(flags.get('naver-only'),true);await coordinator.alarm();assert.equal(env.values.get('details:'+date),before);}finally{globalThis.fetch=previous;}
 });
+test('verified deployment snapshot serves the requested date and persists through the existing binding only',async t=>{
+ const fs=await import('node:fs/promises');const header=JSON.parse(await fs.readFile('src/data/naver-heatmap-baseline.json','utf8'));
+ t.mock.timers.enable({apis:['Date'],now:Date.parse(header.asOf)+1000});const env=database();
+ const loaded=await readNaverHeatmap(env,header.date);assert.ok(loaded.stocks.length>=2000);assert.equal(loaded.asOf,header.asOf);
+ assert.equal(await readNaverHeatmap(env,'2020-01-01'),null);
+ const {safeCollectNaverHeatmap}=await import('../worker/naver-heatmap.mjs');await safeCollectNaverHeatmap(env);
+ const saved=JSON.parse(env.values.get('naver-heatmap:'+header.date));assert.equal(saved.asOf,header.asOf);assert.equal(saved.stocks.length,loaded.stocks.length);
+ assert.deepEqual([...env.values.keys()].sort(),['naver-heatmap:'+header.date,'naver-heatmap-status'].sort());
+});

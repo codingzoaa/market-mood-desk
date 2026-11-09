@@ -1,3 +1,4 @@
+import bundled from '../src/data/naver-heatmap-baseline.json' with {type:'json'};
 import {kst} from './ls.mjs';
 export const NAVER_HEATMAP_REVISION='naver-industries-v2-krx-v1';
 const ROOT='https://stock.naver.com';
@@ -26,9 +27,24 @@ export function naverHeatStock(row,sector){
 }
 async function read(env,key){const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();return row?JSON.parse(row.payload):null;}
 async function write(env,key,data){await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify(data)).run();}
+let decodedBaseline;
+async function bundledHeatmap(date){
+ if(bundled.date!==date||Date.parse(bundled.asOf)>Date.now()+60000)return null;
+ decodedBaseline??=(async()=>{
+  const bytes=Uint8Array.from(atob(bundled.gzipBase64),x=>x.charCodeAt(0));
+  const text=await new Response(new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'))).text();
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+  if([...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('')!==bundled.sha256)throw Error('NAVER_BASELINE_HASH');
+  const data=JSON.parse(text);validateHeatmapCoverage(data.stocks,data.industryCount);
+  if(data.date!==bundled.date||data.asOf!==bundled.asOf||data.revision!==NAVER_HEATMAP_REVISION)throw Error('NAVER_BASELINE_ID');
+  return data;
+ })().catch(()=>null);
+ return decodedBaseline;
+}
 export async function readNaverHeatmap(env,date){
- const data=await read(env,'naver-heatmap:'+date);
- return data?.date===date&&data.revision===NAVER_HEATMAP_REVISION&&Array.isArray(data.stocks)?data:null;
+ const data=await read(env,'naver-heatmap:'+date),baseline=await bundledHeatmap(date);
+ const saved=data?.date===date&&data.revision===NAVER_HEATMAP_REVISION&&Array.isArray(data.stocks)?data:null;
+ return [saved,baseline].filter(Boolean).sort((a,b)=>Date.parse(b.asOf)-Date.parse(a.asOf))[0]||null;
 }
 export function validateHeatmapCoverage(stocks,categories,{minimumStocks=2000}={}){
  if(categories<50||categories>120||stocks.length<minimumStocks||stocks.length>6000)throw Error('NAVER_COVERAGE');
@@ -74,12 +90,16 @@ export async function collectNaverHeatmap(env,date,{fetcher=naverJson,now=new Da
  await env.DB.prepare('DELETE FROM state WHERE id=?').bind(key).run();
  return {complete:true,heatmap,requests};
 }
+// The scheduled GitHub collector validates the source and publishes the complete
+// compressed snapshot through the existing Worker deploy permission. This
+// coordinator persists it via its existing D1 binding; no broader token needed.
 export async function safeCollectNaverHeatmap(env,now=new Date()){
  if(!naverHeatmapWindow(now))return false;
- const date=kst(now).date;
- try{
-  const result=await collectNaverHeatmap(env,date,{now});
-  if(result.complete)await write(env,'naver-heatmap-status',{date,asOf:now.toISOString(),error:null});
-  return !result.complete;
- }catch(error){await write(env,'naver-heatmap-status',{date,asOf:now.toISOString(),error:/^(?:NAVER|HEATMAP)_[A-Z0-9_]+$/.test(error.message)?error.message:'NAVER_COLLECTION_FAILED'});return false;}
+ const date=kst(now).date,baseline=await bundledHeatmap(date);if(!baseline)return false;
+ const session=await env.DB.prepare('SELECT date FROM snapshots WHERE date=?').bind(date).first();if(session?.date!==date)return false;
+ const saved=await read(env,'naver-heatmap:'+date);
+ if(!saved?.asOf||Date.parse(saved.asOf)<Date.parse(baseline.asOf))await write(env,'naver-heatmap:'+date,baseline);
+ const status=await read(env,'naver-heatmap-status');
+ if(!status?.asOf||Date.parse(status.asOf)<=Date.parse(baseline.asOf)||status.error)await write(env,'naver-heatmap-status',{date,asOf:now.toISOString(),error:null});
+ return false;
 }
