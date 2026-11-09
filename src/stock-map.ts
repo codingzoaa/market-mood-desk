@@ -10,6 +10,8 @@ export type StockMapEntry={
  themes:string[];
  breadth:boolean;
  updatedAt?:string;
+ reviewRequired?:boolean;
+ verification?:{status:'verified'|'pending';checkedAt:string;sourceUrl:string;method?:string;reason?:string;industry?:string};
 };
 
 const GROUPS:Record<string,string[]>={

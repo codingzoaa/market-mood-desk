@@ -5,6 +5,7 @@ on:
     paths:
       - 'worker/**'
       - 'src/data/stock-map.json'
+      - 'src/data/stock-map-verified.json'
       - '.github/workflows/deploy-ls-worker.yml'
   workflow_dispatch:
 permissions:
