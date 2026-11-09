@@ -1,0 +1,70 @@
+name: Temporary sector publishing E2E permission smoke
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/sector-pipeline-e2e-smoke.yml']
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+jobs:
+  smoke:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/sector-pipeline-permission-smoke-20261109' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Use Actions token to create real PR, check CI, merge and deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="automation/sector-pipeline-ci-smoke-20261109"
+          DOC="docs/sector-calendar-pipeline-smoke-20261109.md"
+          if [[ "$(gh pr list --state open --head "$BRANCH" --json number --jq 'length')" != "0" ]]; then
+            echo "SMOKE_OPEN_PR_EXISTS"
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          mkdir -p docs
+          printf 'Verified GitHub Actions PR -> separate CI -> protected merge -> Pages deploy on 2026-11-09.\nThis document contains no secrets, market data, or site behavior changes.\n' > "$DOC"
+          git add "$DOC"
+          git commit -m 'docs: record verified sector-calendar pipeline release smoke'
+          git push --set-upstream origin "$BRANCH"
+          SHA="$(git rev-parse HEAD)"
+          PR="$(gh pr create --base main --head "$BRANCH" --title 'test: verify automated sector-calendar PR CI and Pages pipeline' --body 'One-time, docs-only, GITHUB_TOKEN-created PR to exercise the same PR, independent CI, protected merge and Pages deploy sequence required for daily strong-sector calendar publishing. No changes to market data or logic.')"
+          echo "SMOKE_PR_CREATED $PR"
+          [[ "$(gh pr diff "$PR" --name-only)" == "$DOC" ]] || { echo "SMOKE_UNEXPECTED_FILES";exit 1; }
+          gh workflow run pages.yml --ref "$BRANCH"
+          CI=""
+          for i in $(seq 1 45); do
+            CI="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$SHA\")][0].databaseId // empty")"
+            [[ -n "$CI" ]] && break
+            sleep 3
+          done
+          [[ -n "$CI" ]] || { echo 'SMOKE_CI_RUN_MISSING';exit 1; }
+          echo "SMOKE_PR_CI $CI"
+          gh run watch "$CI" --exit-status
+          gh pr view "$PR" --json mergeable --jq .mergeable | grep -qx MERGEABLE
+          gh pr merge "$PR" --merge --delete-branch
+          git fetch origin main
+          MERGED="$(git rev-parse origin/main)"
+          echo "SMOKE_MERGED sha=$MERGED"
+          gh workflow run pages.yml --ref main
+          DEPLOY=""
+          for i in $(seq 1 45); do
+            DEPLOY="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty")"
+            [[ -n "$DEPLOY" ]] && break
+            sleep 3
+          done
+          [[ -n "$DEPLOY" ]] || { echo 'SMOKE_DEPLOY_RUN_MISSING';exit 1; }
+          echo "SMOKE_PAGES_RUN $DEPLOY"
+          gh run watch "$DEPLOY" --exit-status
+          COUNT="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEPLOY/jobs" --jq '[.jobs[] | select(.name=="deploy" and .conclusion=="success")] | length')"
+          [[ "$COUNT" == "1" ]] || { echo 'SMOKE_DEPLOY_JOB_NOT_SUCCESS';exit 1; }
+          echo "SECTOR_PIPELINE_END_TO_END_OK sha=$MERGED"
