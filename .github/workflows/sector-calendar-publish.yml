@@ -11,6 +11,7 @@ on:
     paths:
       - '.github/workflows/sector-calendar-publish.yml'
       - 'scripts/publish-sector-calendar.mjs'
+      - 'tests/close-calendar.test.mjs'
 permissions:
   contents: write
   pull-requests: write
