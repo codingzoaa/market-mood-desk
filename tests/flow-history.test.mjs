@@ -4,7 +4,8 @@ import {appendFlowHistory} from '../worker/flow-history.mjs';
 import {flowSeries} from '../src/flow-series.ts';
 import {validateDetails,demoMarketDetails} from '../src/market-details.ts';
 import {demoSnapshots,dayKey,shiftDay} from '../src/market.ts';
-const date=shiftDay(dayKey(),-1);
+let date=shiftDay(dayKey(),-1);
+while([0,6].includes(new Date(date+'T12:00:00Z').getUTCDay()))date=shiftDay(date,-1);
 function details(time='09:05:12',value=100){const asOf=date+'T'+time+'+09:00';return {date,asOf,errors:{},indices:Object.fromEntries(['KOSPI','KOSDAQ'].map(b=>[b,{asOf,changePct:1}])),flows:{asOf,segments:Object.fromEntries(['KOSPI','KOSDAQ'].map(b=>[b,{individual:value,foreign:-value}]))}};}
 test('history buckets deduplicate, survive failures, reject stale indices and stay in trade date',()=>{
  const first=appendFlowHistory([],details());assert.equal(first[0].time,'0905');
