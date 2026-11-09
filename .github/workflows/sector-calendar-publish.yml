@@ -80,7 +80,7 @@ jobs:
           gh workflow run pages.yml --ref "$BRANCH"
           CI_RUN=""
           for i in $(seq 1 35); do
-            CI_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$COMMIT\")][0].databaseId // empty")"
+            CI_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$COMMIT\")][0].databaseId // empty" 2>/dev/null || true)"
             [[ -n "$CI_RUN" ]] && break
             sleep 3
           done
@@ -99,7 +99,7 @@ jobs:
           gh workflow run pages.yml --ref main
           DEPLOY_RUN=""
           for i in $(seq 1 35); do
-            DEPLOY_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty")"
+            DEPLOY_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty" 2>/dev/null || true)"
             [[ -n "$DEPLOY_RUN" ]] && break
             sleep 3
           done
