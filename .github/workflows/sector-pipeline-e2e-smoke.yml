@@ -24,26 +24,28 @@ jobs:
           set -euo pipefail
           BRANCH="automation/sector-pipeline-ci-smoke-20261109"
           DOC="docs/sector-calendar-pipeline-smoke-20261109.md"
-          if [[ "$(gh pr list --state open --head "$BRANCH" --json number --jq 'length')" != "0" ]]; then
-            echo "SMOKE_OPEN_PR_EXISTS"
-            exit 1
+          PR="$(gh pr list --state open --head "$BRANCH" --json url --jq '.[0].url // empty')"
+          if [[ -n "$PR" ]]; then
+            echo "SMOKE_RESUMING_EXISTING_ACTIONS_PR $PR"
+            SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" --jq .object.sha)"
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git switch -c "$BRANCH"
+            mkdir -p docs
+            printf 'Verified GitHub Actions PR -> separate CI -> protected merge -> Pages deploy on 2026-11-09.\nThis document contains no secrets, market data, or site behavior changes.\n' > "$DOC"
+            git add "$DOC"
+            git commit -m 'docs: record verified sector-calendar pipeline release smoke'
+            git push --set-upstream origin "$BRANCH"
+            SHA="$(git rev-parse HEAD)"
+            PR="$(gh pr create --base main --head "$BRANCH" --title 'test: verify automated sector-calendar PR CI and Pages pipeline' --body 'One-time, docs-only, GITHUB_TOKEN-created PR to exercise the same PR, independent CI, protected merge and Pages deploy sequence required for daily strong-sector calendar publishing. No changes to market data or logic.')"
+            echo "SMOKE_PR_CREATED $PR"
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c "$BRANCH"
-          mkdir -p docs
-          printf 'Verified GitHub Actions PR -> separate CI -> protected merge -> Pages deploy on 2026-11-09.\nThis document contains no secrets, market data, or site behavior changes.\n' > "$DOC"
-          git add "$DOC"
-          git commit -m 'docs: record verified sector-calendar pipeline release smoke'
-          git push --set-upstream origin "$BRANCH"
-          SHA="$(git rev-parse HEAD)"
-          PR="$(gh pr create --base main --head "$BRANCH" --title 'test: verify automated sector-calendar PR CI and Pages pipeline' --body 'One-time, docs-only, GITHUB_TOKEN-created PR to exercise the same PR, independent CI, protected merge and Pages deploy sequence required for daily strong-sector calendar publishing. No changes to market data or logic.')"
-          echo "SMOKE_PR_CREATED $PR"
           [[ "$(gh pr diff "$PR" --name-only)" == "$DOC" ]] || { echo "SMOKE_UNEXPECTED_FILES";exit 1; }
           gh workflow run pages.yml --ref "$BRANCH"
           CI=""
           for i in $(seq 1 45); do
-            CI="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$SHA\")][0].databaseId // empty")"
+            CI="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$SHA\")][0].databaseId // empty" 2>/dev/null || true)"
             [[ -n "$CI" ]] && break
             sleep 3
           done
@@ -58,7 +60,7 @@ jobs:
           gh workflow run pages.yml --ref main
           DEPLOY=""
           for i in $(seq 1 45); do
-            DEPLOY="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty")"
+            DEPLOY="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty" 2>/dev/null || true)"
             [[ -n "$DEPLOY" ]] && break
             sleep 3
           done
