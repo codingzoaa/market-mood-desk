@@ -1,3 +1,4 @@
+import {safeCollectNaverHeatmap,readNaverHeatmap,naverHeatmapWindow} from './naver-heatmap.mjs';
 import {collectBreadthClose,breadthCloseFeed,breadthCloseWindow} from './breadth-close.mjs';
 import {recoverPutHistory} from './put-history.mjs';
 import {putDailyFeed} from './put-daily.mjs';
@@ -147,7 +148,19 @@ export default {
    const to=new URL(request.url).searchParams.get('date')||kst().date;
    if(!/^\d{4}-\d{2}-\d{2}$/.test(to)||!Number.isFinite(Date.parse(to+'T12:00:00Z'))||new Date(to+'T12:00:00Z').toISOString().slice(0,10)!==to||to>kst().date)return reply({error:'INVALID_DATE'},400);
    if(path==='/api/sector-etfs')return reply(await sectorEtfPayload(env,to));
-   if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();const value=detail?JSON.parse(detail.payload):null;if(value){const recovery=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('intraday-recovery:'+to).first();if(recovery)value.intradayRecovery=JSON.parse(recovery.payload);}return reply({details:value});}
+   if(path==='/api/market-details'){
+    const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();
+    const naver=await readNaverHeatmap(env,to);
+    const value=detail?JSON.parse(detail.payload):naver?{date:to,asOf:naver.asOf,indices:{},errors:{}}:null;
+    if(value){
+     if(naver){value.heatmap=naver;if(value.errors)delete value.errors.heatmap;}
+     const heatStatus=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('naver-heatmap-status').first();
+     const status=heatStatus?JSON.parse(heatStatus.payload):null;
+     if(status?.date===to&&status.error)value.errors={...value.errors,heatmap:status.error};
+     const recovery=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('intraday-recovery:'+to).first();if(recovery)value.intradayRecovery=JSON.parse(recovery.payload);
+    }
+    return reply({details:value});
+   }
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
    const registry=await readStockRegistry(env).catch(()=>({entries:[]}));
@@ -155,6 +168,7 @@ export default {
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+  if(event.cron==='*/5 0-11 * * MON-FRI'){if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}return;}
   if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
   await collectDetails(env);
@@ -171,12 +185,13 @@ export default {
 export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
  async fetch(request,now=new Date()){
+  if(request.method==='POST'&&new URL(request.url).pathname==='/naver'){if(!naverHeatmapWindow(now))return new Response(null,{status:204});await this.state.storage.put('naver-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/breadth'){if(!breadthCloseWindow(now))return new Response(null,{status:204});await this.state.storage.put('breadth-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method!=='POST'||new URL(request.url).pathname!=='/wake')return new Response(null,{status:405});
   if(!collectWindow(now))return new Response(null,{status:204});
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
+ async alarm(){if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
 

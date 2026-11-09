@@ -1,0 +1,14 @@
+# Naver industry heatmap and stock-map disclosures
+
+The KOSPI/KOSDAQ fullscreen industry heatmap uses Naver's own industry membership and KRX price-change/market-cap values. It is independent of the curated stock-sector map. The former `/api/domestic/market/upjong/list` endpoint returned HTTP404 on 2026-11-09; it is replaced by the paths observed in the current public Naver industry page's JavaScript:
+
+- `/api/stockSecurity/rankings/v2/domestic/industries?sortType=changeRate&sortDirection=desc&size=100&period=daily`
+- `/api/domestic/market/upjong/{code}/stocklist?sortType=marketCap&sortDirection=desc&size=100&cursor=...`
+
+Only `row.krx.changeRate` and `row.krx.marketCap` (won) are used, even when an `nxt` object is also present. Funds and KONEX are excluded. Missing/unusable KRX quotes are omitted; no values are fabricated. Full collection requires all category cursors to terminate, unique stock codes, at least50 industries, at least2,000 stocks and adequate coverage of both markets. It publishes no partial map. On the first live validation, 79 industries yielded 940 KOSPI and1,831 KOSDAQ securities (2,771 total).
+
+`worker/naver-heatmap.mjs` owns the parser, bounded20-request batches, durable progress, date validation and complete daily snapshot. A dedicated instance of the existing Durable Object continues unfinished batches. The independent Naver cron runs every5minutes during weekdays09:00–20:00KST (the cron can invoke later but the guard performs no work after20:00). It never opens LS sessions or changes existing LS schedules, quotes or investor flows. The source category response must belong to the current KST date. `asOf` is the actual retrieval time, not a claimed official closing timestamp. The short aggregation interval is retained as `startedAt`. This is a current-source collection, not an invented historical backfill.
+
+Daily complete maps are stored under `naver-heatmap:YYYY-MM-DD`. `/api/market-details` reads only the requested day's record and combines it with LS details without writing or waking a collector. On a later collection error, the previous complete map is kept and the UI shows a delay notice. The source-backed bootstrap workflow runs on relevant code changes/manual dispatch, validates all data and writes only the isolated daily heatmap/status keys with an asOf guard against older concurrent writes. It never overwrites the LS details payload. Network/parser/coverage failures stop publication.
+
+The curated sector map's grouped view has independent accessible disclosure buttons for each major sector and subsector. A major section can close/reopen while retaining each child's state. Search opens matching sections. Stock cards and list rows show stock identity and investment themes without Breadth inclusion/exclusion badges. Internal Breadth membership and its scoring universe are unchanged.

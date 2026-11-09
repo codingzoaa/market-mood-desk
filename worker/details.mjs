@@ -1,4 +1,4 @@
-import {normalizeFuturesOi} from './futures-oi.mjs';
+import {collectNaverHeatmap} from './naver-heatmap.mjs';
 import {archivePutClose} from './put-daily.mjs';
 import {appendFlowHistory} from './flow-history.mjs';
 import {lsIndexOHLC} from './index-ohlc.mjs';
@@ -43,7 +43,7 @@ export async function collectDetails(env){
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('details-lease','0')").run();
  const lease=String(now+120000),lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='details-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first();if(!lock)return;
  let session;
- const details={date,collectorRevision:'clock-aligned-flow-v1',asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:{...(old.indices||{})},...(old.flows?{flows:old.flows}:{}),...(old.oi?{oi:old.oi}:{}),errors:{}};
+ const details={date,collectorRevision:'clock-aligned-flow-v1',asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:{...(old.indices||{})},...(old.flows?{flows:old.flows}:{}),errors:{}};
  try{
   session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(code,body)=>tr(token,code,body,undefined,fetcher);
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
@@ -53,16 +53,6 @@ export async function collectDetails(env){
    await pause();
   }
   try{details.flows={asOf:details.asOf,unit:'억원',source:'LS증권 KRX · t1601 금액 순매수',segments:rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data)};}catch(e){details.errors.flows=e instanceof LSFailure?e.code:String(e.message).slice(0,80);}
-  // Optional OI: disabled unless the actual 8-character near-month KOSPI200 contract is configured.
-  // Never reuse an old-contract observation when the futures contract rolls.
-  if(typeof env.LS_KOSPI200_FUTURES_CODE==='string' && /^[0-9A-Z]{8}$/.test(env.LS_KOSPI200_FUTURES_CODE)){
-   try{
-    await pause();
-    const result=await request('t2424',{focode:env.LS_KOSPI200_FUTURES_CODE,bdgubun:'2',nmin:0,tcgubun:'0',cnt:12});
-    details.oi={futures:normalizeFuturesOi(result.data,date,env.LS_KOSPI200_FUTURES_CODE,details.asOf)};
-   }catch(e){details.errors.oi=e instanceof LSFailure?e.code:String(e.message).slice(0,80);delete details.oi;}
-  }
-
  }catch(e){details.errors.ls=e instanceof LSFailure?e.code:String(e.message).slice(0,80);}
  finally{if(session)await session.close();}
  try{
@@ -107,7 +97,6 @@ export async function enrichDetails(env){
   }
  }catch(e){errors.enrichment=e.code||String(e.message).slice(0,80);}finally{if(session)await session.close();}
  try{
-  try{patch.heatmap=await collectHeatmap(env,date);}catch(e){errors.heatmap=String(e.message).slice(0,80);}
   if(!collectWindow())return;
   // JSON path updates preserve a newer core collection and its history.
   const paths=[],values=[];
@@ -133,50 +122,8 @@ export function heatStock(row,market,sector){
  if(marketCap<=0||marketCap>1e17||changePct< -100||changePct>10000)throw new Error('HEATMAP_RANGE');
  return {symbol,name,market,sector,changePct,marketCap};
 }
-export async function collectHeatmap(env,date,fetcher=naverMarket){
- const cached=await env.DB.prepare("SELECT payload FROM state WHERE id='naver-industries'").first();
- let membership=cached?JSON.parse(cached.payload):null;
- if(!membership||Date.now()-Date.parse(membership.asOf)>86400000){
-  const saved=await env.DB.prepare("SELECT payload FROM state WHERE id='naver-industry-progress'").first();
-  let progress=saved?JSON.parse(saved.payload):null;
-  if(!progress||progress.date!==date){
-   const categories=[],ids=new Set();let finished=false;
-   for(let page=0;page<20;page++){
-    const rows=await fetcher('/upjong/list?startIdx='+page+'&pageSize=100&sortType=changeRate');if(!Array.isArray(rows))throw new Error('INDUSTRY_SHAPE');
-    if(!rows.length){finished=true;break;}
-    for(const row of rows){const id=String(row.no);if(!/^\d{1,5}$/.test(id)||ids.has(id)||typeof row.name!=='string'||!row.name.trim()||row.name.length>60)throw new Error('INDUSTRY_ID');if(row.thistime&&String(row.thistime).slice(0,8)!==date.replaceAll('-',''))throw new Error('INDUSTRY_DATE');ids.add(id);categories.push({id,name:row.name});}
-   }
-   if(!finished||!categories.length)throw new Error('INDUSTRY_INCOMPLETE');
-   progress={date,categories,byCode:{},category:0,market:0,cursor:''};
-  }
-  let requests=0;
-  while(progress.category<progress.categories.length){
-   const category=progress.categories[progress.category],market=['KOSPI','KOSDAQ'][progress.market];
-   const params=new URLSearchParams({marketType:market,sortType:'tradingVolume',sortDirection:'desc',size:'100',...(progress.cursor?{cursor:progress.cursor}:{})});
-   const data=await fetcher('/upjong/'+category.id+'/stocklist?'+params);requests++;
-   if(!Array.isArray(data.items)||typeof data.hasNext!=='boolean')throw new Error('MEMBERS_SHAPE');
-   for(const row of data.items){if(!/^[0-9A-Z]{6}$/.test(row.itemCode)||progress.byCode[row.itemCode])throw new Error('MEMBERS_DUPLICATE');progress.byCode[row.itemCode]={sector:category.name,market};}
-   if(data.hasNext){if(typeof data.cursor!=='string'||!data.cursor||data.cursor===progress.cursor)throw new Error('MEMBERS_CURSOR');progress.cursor=data.cursor;}
-   else{progress.cursor='';progress.market++;if(progress.market===2){progress.market=0;progress.category++;}}
-   if(requests>=24&&progress.category<progress.categories.length){await put(env,'naver-industry-progress',progress);throw new Error('CLASSIFICATION_LOADING');}
-   await new Promise(r=>setTimeout(r,350));
-  }
-  const byCode=progress.byCode;
-  membership={asOf:new Date().toISOString(),byCode};await put(env,'naver-industries',membership);await env.DB.prepare("DELETE FROM state WHERE id='naver-industry-progress'").run();throw new Error('CLASSIFICATION_LOADING');
- }
- const stocks=[],seen=new Set();
- for(const market of ['KOSPI','KOSDAQ']){
-  let ended=false;
-  for(let page=0;page<200;page++){
-   const rows=await fetcher('/stock/default?tradeType=KRX&marketType='+market+'&orderType=marketSum&startIdx='+page+'&pageSize=200');
-   if(!Array.isArray(rows))throw new Error('QUOTES_SHAPE');if(!rows.length){ended=true;break;}
-   for(const row of rows){const symbol=row.itemcode;if(seen.has(symbol))throw new Error('QUOTES_DUPLICATE');seen.add(symbol);const group=membership.byCode[symbol];if(group&&group.market!==market)throw new Error('QUOTES_MARKET');stocks.push(heatStock(row,market,group?.sector||'업종 미분류'));}
-   await new Promise(r=>setTimeout(r,350));
-  }
-  if(!ended)throw new Error('QUOTES_INCOMPLETE');
- }
- if(!stocks.length||stocks.length>6000)throw new Error('QUOTES_COUNT');
- return {asOf:new Date().toISOString(),source:'네이버 증권 KRX · 네이버 업종 · 수집 시각 기준',stocks};
+export async function collectHeatmap(env,date){
+ const result=await collectNaverHeatmap(env,date);
+ if(!result.complete)throw Error('CLASSIFICATION_LOADING');
+ return result.heatmap;
 }
-
-

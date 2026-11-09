@@ -52,6 +52,13 @@ test('automatic live data, header date and intraday flows, workspace separation 
   assert.equal(document.querySelector('.day-leaders'),null);assert.equal(document.querySelector('.note-panel'),null);assert.ok(document.querySelectorAll('.close-sector').length>=1&&document.querySelectorAll('.close-sector').length<=5);assert.equal(document.querySelector('.correlation-panel'),null);
   await click(document.querySelector('nav a[href="#stockmap"]'));assert.equal(document.querySelector('h1').textContent,'종목 섹터맵');assert.ok(document.querySelector('.sector-map-page'));assert.ok(document.querySelector('.sector-map-table'));assert.match(document.querySelector('.sector-map-page').textContent,/SK하이닉스/);
   await click(button('섹터별 보기'));assert.ok(document.querySelector('.sector-group-list'));assert.match(document.querySelector('.sector-group-list').textContent,/반도체/);
+  assert.doesNotMatch(document.querySelector('.sector-map-page').textContent,/Breadth|제외/);
+  const major=document.querySelector('[aria-label="2차전지 대분류 접기"]');assert.ok(major);const majorPanel=document.getElementById(major.getAttribute('aria-controls'));
+  const minor=document.querySelector('[aria-label="2차전지 2차전지 셀 세부섹터 접기"]');assert.ok(minor);const minorPanel=document.getElementById(minor.getAttribute('aria-controls'));
+  await click(minor);assert.equal(minor.getAttribute('aria-expanded'),'false');assert.equal(minorPanel.hidden,true);assert.equal(majorPanel.hidden,false);
+  await click(major);assert.equal(majorPanel.hidden,true);await click(major);assert.equal(majorPanel.hidden,false);assert.equal(minorPanel.hidden,true);
+  await click(minor);assert.equal(minorPanel.hidden,false);
+
   await click(document.querySelector('nav a[href="#signals"]'));assert.equal(document.querySelector('h1').textContent,'시장 신호');assert.ok(document.querySelector('.correlation-panel'));assert.equal(document.querySelector('.calendar-day-detail'),null);
   await click(document.querySelector('[aria-label="데이터 관리"]'));assert.match(document.body.textContent,/5分|5분/);assert.equal(document.querySelector('input[type=password]'),null);
  }finally{await act(async()=>root.unmount());globalThis.fetch=previous;}

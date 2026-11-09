@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {validateDetails,tileLayout,demoMarketDetails,heatColor} from '../src/market-details.ts';
 import {dayKey,shiftDay,demoSnapshots,validateSnapshot} from '../src/market.ts';
-import {indexQuote,indexSeries,rawFlows,heatStock,collectHeatmap} from '../worker/details.mjs';
+import {indexQuote,indexSeries,rawFlows,heatStock} from '../worker/details.mjs';
 const date=shiftDay(dayKey(),-1),snapshot=demoSnapshots(date).at(-1),valid=demoMarketDetails(snapshot);
 test('new market fields survive validation; dates, units and duplicate symbols are rejected',()=>{
  const checked=validateSnapshot({...snapshot,details:valid});assert.equal(checked.details.flows.unit,'억원');assert.equal(checked.details.heatmap.stocks.length,snapshot.stocks.length);
@@ -22,11 +22,4 @@ test('LS breadth and intraday chart use source counts and current trade-day rows
  assert.throws(()=>indexSeries([{date:'20261016',time:'100000',close:3}],'2026-10-19'));
  const data=Object.fromEntries(Array.from({length:5},(_,i)=>['t1601OutBlock'+(i+1),{svolume_17:-500,svolume_18:700,svolume_08:-200,svolume_01:25,svolume_06:123}]));assert.equal(rawFlows(data).PUT.foreign,-500);assert.equal(rawFlows(data).KOSPI.pension,123);delete data.t1601OutBlock4;assert.throws(()=>rawFlows(data));
  assert.throws(()=>heatStock({itemcode:'005930',itemname:'삼성전자',marketSum:'',prevChangeRate:'1'},'KOSPI','반도체'));
-});
-test('Naver pagination must terminate, classify each market and reject duplicate quotes',async()=>{
- const store=new Map([['naver-industries',JSON.stringify({asOf:new Date().toISOString(),byCode:{'005930':{sector:'반도체',market:'KOSPI'},'247540':{sector:'전기제품',market:'KOSDAQ'}}})]]);
- const env={DB:{prepare(){return {bind(){return this;},async first(){return {payload:store.get('naver-industries')};}};}}};
- const fetcher=async path=>{const p=new URL('https://example.test'+path).searchParams;if(p.get('startIdx')!=='0')return [];return [{itemcode:p.get('marketType')==='KOSPI'?'005930':'247540',itemname:'테스트',marketSum:'100,000',prevChangeRate:'-2.1'}];};
- const result=await collectHeatmap(env,date,fetcher);assert.equal(result.stocks.length,2);assert.equal(result.stocks[0].sector,'반도체');assert.equal(result.stocks[1].market,'KOSDAQ');assert.equal(result.stocks[0].changePct,-2.1);
- await assert.rejects(collectHeatmap(env,date,async()=>[{itemcode:'005930',itemname:'테스트',marketSum:'10',prevChangeRate:'1'}]),/DUPLICATE/);
 });

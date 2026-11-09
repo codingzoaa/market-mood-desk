@@ -1,7 +1,7 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useId,useMemo,useState} from 'react';
 import {API_URL} from './live';
-import {Search,Layers3,ListFilter,CheckCircle2} from 'lucide-react';
+import {Search,Layers3,ListFilter,ChevronDown} from 'lucide-react';
 import {combinedStockMap,STOCK_MAP,type StockMapEntry} from './stock-map';
 
 type Mode='stocks'|'sectors';
@@ -32,7 +32,10 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
  const [query,setQuery]=useState('');
  const [sector,setSector]=useState('ALL');
  const [subSector,setSubSector]=useState('ALL');
- const [breadthOnly,setBreadthOnly]=useState(false);
+ const groupId=useId();
+ const [closedSectors,setClosedSectors]=useState<Set<string>>(()=>new Set());
+ const [closedSubs,setClosedSubs]=useState<Set<string>>(()=>new Set());
+ const toggle=(setter:React.Dispatch<React.SetStateAction<Set<string>>>,key:string)=>setter(old=>{const next=new Set(old);next.has(key)?next.delete(key):next.add(key);return next;});
 
  const sectors=useMemo(()=>uniq(registry.map(x=>x.sector)),[registry]);
  const subSectors=useMemo(()=>uniq(registry.filter(x=>sector==='ALL'||x.sector===sector).map(x=>x.subSector)),[sector,registry]);
@@ -41,11 +44,10 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
   return registry.filter(x=>{
    if(sector!=='ALL'&&x.sector!==sector)return false;
    if(subSector!=='ALL'&&x.subSector!==subSector)return false;
-   if(breadthOnly&&!x.breadth)return false;
    if(!q)return true;
    return normalize([x.name,x.symbol,x.market,x.sector,x.subSector,...x.themes].join(' ')).includes(q);
   }).sort((a,b)=>a.sector.localeCompare(b.sector,'ko')||a.subSector.localeCompare(b.subSector,'ko')||a.name.localeCompare(b.name,'ko'));
- },[query,sector,subSector,breadthOnly,registry]);
+ },[query,sector,subSector,registry]);
 
  const grouped=useMemo(()=>{
   const map=new Map<string,Map<string,StockMapEntry[]>>();
@@ -73,26 +75,32 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
     <button className={mode==='sectors'?'active':''} aria-pressed={mode==='sectors'} onClick={()=>setMode('sectors')}><Layers3 size={13}/>섹터별 보기</button>
    </div>
    <div className="sector-map-filter-row">
-    <div className="search"><Search size={16}/><input aria-label="섹터맵 검색" placeholder="종목명 · 코드 · 섹터 · 테마 검색" value={query} onChange={e=>setQuery(e.target.value)}/></div>
+    <div className="search"><Search size={16}/><input aria-label="섹터맵 검색" placeholder="종목명 · 코드 · 섹터 · 테마 검색" value={query} onChange={e=>{setQuery(e.target.value);setClosedSectors(new Set());setClosedSubs(new Set());}}/></div>
     <select aria-label="대분류 선택" value={sector} onChange={e=>resetSub(e.target.value)}><option value="ALL">전체 대분류</option>{sectors.map(x=><option key={x} value={x}>{x}</option>)}</select>
     <select aria-label="세부섹터 선택" value={subSector} onChange={e=>setSubSector(e.target.value)}><option value="ALL">전체 세부섹터</option>{subSectors.map(x=><option key={x} value={x}>{x}</option>)}</select>
-    <label className="sector-map-check"><input type="checkbox" checked={breadthOnly} onChange={e=>setBreadthOnly(e.target.checked)}/><span>Breadth 구성만</span></label>
+    
    </div>
   </div>
 
   {mode==='stocks'?<div className="panel sector-map-table-panel">
-   <div className="table-scroll"><table className="sector-map-table"><thead><tr><th>종목</th><th>대분류</th><th>세부섹터</th><th>투자 테마</th><th>Breadth</th></tr></thead><tbody>{filtered.map(item=><tr key={item.symbol}>
+   <div className="table-scroll"><table className="sector-map-table"><thead><tr><th>종목</th><th>대분류</th><th>세부섹터</th><th>투자 테마</th></tr></thead><tbody>{filtered.map(item=><tr key={item.symbol}>
     <td><div className="sector-stock-name"><strong>{item.name}</strong><small>{item.symbol} · {item.market}</small></div></td>
     <td><span className="sector-chip">{item.sector}</span>{item.verification?.status==='verified'&&<small style={{display:'block',marginTop:4,fontSize:9}}><a title={`공식 업종: ${item.verification.industry||'확인'} · 사업·제품 기반 분류`} href="https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage" target="_blank" rel="noopener noreferrer">분류 근거</a></small>}{businessSource(item.verification?.businessSourceUrl)&&<small style={{display:'block',marginTop:4,fontSize:9}}><a href={businessSource(item.verification?.businessSourceUrl)!} target="_blank" rel="noopener noreferrer" title={item.verification?.businessReviewedAt?`사업 확인 ${item.verification.businessReviewedAt}`:undefined}>기업 사업소개</a></small>}{item.reviewRequired&&<small style={{display:'block',marginTop:4,fontSize:9}}>분류 검토 대기</small>}</td>
     <td><strong className="sector-subsector">{item.subSector}</strong></td>
     <td><div className="theme-tags">{item.themes.length?item.themes.map(t=><span key={t}>{t}</span>):<span>미분류</span>}</div></td>
-    <td>{item.breadth?<span className="breadth-ok"><CheckCircle2 size={14}/>포함</span>:<span className="muted">제외</span>}</td>
    </tr>)}</tbody></table></div>
    {!filtered.length&&<p className="sector-map-empty">조건에 맞는 종목이 없습니다.</p>}
   </div>:<div className="sector-group-list">
-   {grouped.map(([sectorName,subs])=><section className="panel sector-group" key={sectorName}><div className="sector-group-head"><div><span className="eyebrow">SECTOR</span><h3>{sectorName}</h3></div><span>{[...subs.values()].reduce((n,x)=>n+x.length,0)}종목</span></div>
-    <div className="sector-subgroups">{[...subs.entries()].map(([sub,items])=><div className="sector-subgroup" key={sub}><div className="sector-subgroup-title"><strong>{sub}</strong><span>{items.length}종목</span></div><div className="sector-member-grid">{items.map(item=><article key={item.symbol}><div><strong>{item.name}</strong><small>{item.symbol} · {item.market}</small></div><div className="theme-tags">{item.themes.slice(0,3).map(t=><span key={t}>{t}</span>)}</div><span className={item.breadth?'breadth-ok':'muted'}>{item.breadth?<><CheckCircle2 size={13}/>Breadth</>:'제외'}</span></article>)}</div></div>)}</div>
-   </section>)}
+   {grouped.map(([sectorName,subs])=>{
+    const closed=closedSectors.has(sectorName),sectorId=groupId+'-sector-'+encodeURIComponent(sectorName);
+    return <section className="panel sector-group" key={sectorName}>
+     <div className="sector-group-head"><h3><button className="sector-toggle" aria-expanded={!closed} aria-controls={sectorId} aria-label={`${sectorName} 대분류 ${closed?'펼치기':'접기'}`} onClick={()=>toggle(setClosedSectors,sectorName)}><span><span className="eyebrow">SECTOR</span><strong>{sectorName}</strong></span><span className="sector-toggle-meta">{[...subs.values()].reduce((n,x)=>n+x.length,0)}종목<ChevronDown size={17} className={closed?'is-closed':''}/></span></button></h3></div>
+     <div id={sectorId} className="sector-subgroups" hidden={closed}>{[...subs.entries()].map(([sub,items])=>{
+      const key=JSON.stringify([sectorName,sub]),subClosed=closedSubs.has(key),subId=groupId+'-sub-'+encodeURIComponent(key);
+      return <div className="sector-subgroup" key={sub}><h4 className="sector-subgroup-title"><button className="sector-toggle" aria-expanded={!subClosed} aria-controls={subId} aria-label={`${sectorName} ${sub} 세부섹터 ${subClosed?'펼치기':'접기'}`} onClick={()=>toggle(setClosedSubs,key)}><strong>{sub}</strong><span className="sector-toggle-meta">{items.length}종목<ChevronDown size={15} className={subClosed?'is-closed':''}/></span></button></h4><div id={subId} className="sector-member-grid" hidden={subClosed}>{items.map(item=><article key={item.symbol}><div><strong>{item.name}</strong><small>{item.symbol} · {item.market}</small></div><div className="theme-tags">{item.themes.slice(0,3).map(t=><span key={t}>{t}</span>)}</div></article>)}</div></div>;
+     })}</div>
+    </section>;
+   })}
    {!grouped.length&&<section className="panel sector-map-empty">조건에 맞는 섹터가 없습니다.</section>}
   </div>}
  </section>;
