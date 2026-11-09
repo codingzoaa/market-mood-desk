@@ -9,6 +9,6 @@
   "d1_databases": [{ "binding": "DB", "database_name": "market-note-ls", "database_id": "1fed3957-6d66-4ee4-8e46-835153d7b8e6" }],
   "durable_objects": {"bindings": [{"name":"COLLECTOR","class_name":"CollectorAlarm"}]},
   "migrations": [{"tag":"collector-alarm-v1","new_sqlite_classes":["CollectorAlarm"]}],
-  "triggers": { "crons": ["*/5 0-6 * * MON-FRI", "*/5 7 * * MON-FRI", "*/5 8-14 * * MON-FRI"] }
+  "triggers": { "crons": ["*/5 0-6 * * MON-FRI", "*/5 7 * * MON-FRI", "*/5 8-14 * * MON-FRI", "10,40 7-9 * * MON-FRI", "10 10 * * MON-FRI"] }
 }
 

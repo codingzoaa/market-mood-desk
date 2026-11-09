@@ -2,22 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-test('two independent Telegram briefings retry every 30 minutes from 16:10 to 19:10 KST',()=>{
- const y=readFileSync('.github/workflows/telegram-market-close.yml','utf8');
- assert.ok(y.includes("cron: '10,40 7-9 * * 1-5'"));
- assert.ok(y.includes("cron: '10 10 * * 1-5'"));
- for(const part of [
-  'kind: close','kind: sector',
-  'scripts/telegram-market-close.mjs',
-  'scripts/telegram-sector-briefing.mjs',
-  'telegram-delivered-v2-',
-  "steps.once.outputs.cache-hit != 'true'",
-  "steps.send.outcome == 'success'",
-  'telegram-delivery-status.mjs',
-  "github.event.schedule == '10 10 * * 1-5'"
- ])assert.ok(y.includes(part),part);
- assert.ok(!y.includes("cron: '25 7 * * 1-5'"));
- assert.ok(!y.includes('Notify Telegram after successful report acceptance'));
- assert.ok(!y.includes('DELIVERY_STATUS: success'));
- assert.ok(y.includes('DELIVERY_STATUS: failure'));
+test('Cloudflare owns scheduled dual briefings and Github does not schedule delivery',()=>{
+ const yaml=readFileSync('.github/workflows/telegram-market-close.yml','utf8');
+ const config=JSON.parse(readFileSync('worker/wrangler.jsonc','utf8'));
+ const src=readFileSync('worker/index.mjs','utf8');
+ assert.ok(!yaml.includes('  schedule:'));
+ assert.ok(yaml.includes('  workflow_dispatch:'));
+ assert.ok(config.triggers.crons.includes('10,40 7-9 * * MON-FRI'));
+ assert.ok(config.triggers.crons.includes('10 10 * * MON-FRI'));
+ assert.ok(src.includes('deliverScheduled(event,env)'));
+ assert.ok(src.includes('DELIVERY_CRONS.includes(event.cron)'));
+ assert.ok(!src.includes('Notify Telegram after successful'));
+});
+test('Cloudflare deploy provisions Telegram secrets without printing values',()=>{
+ const yaml=readFileSync('.github/workflows/deploy-ls-worker.yml','utf8');
+ assert.ok(yaml.includes('TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}'));
+ assert.ok(yaml.includes('TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}'));
+ assert.ok(yaml.includes("'--secrets-file',path"));
+ assert.ok(yaml.includes('rmSync(dir,{recursive:true,force:true})'));
 });

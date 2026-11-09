@@ -25,9 +25,14 @@ jobs:
         working-directory: worker
         env:
           RAW_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RAW_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          RAW_TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           node --input-type=module <<'JS'
           import {spawnSync} from 'node:child_process';
+          import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+          import {tmpdir} from 'node:os';
+          import {join} from 'node:path';
           const raw=process.env.RAW_CLOUDFLARE_TOKEN||'';
           let token=raw.trim().replace(/^["']|["']$/g,'').trim();
           token=token.replace(/^Bearer\s+/i,'').trim();
@@ -64,9 +69,18 @@ jobs:
           console.log('CLOUDFLARE_TOKEN_ACTIVE; deploying Worker.');
           const env={...process.env,CLOUDFLARE_API_TOKEN:token};
           delete env.RAW_CLOUDFLARE_TOKEN;
-          const child=spawnSync('npx',['--yes','wrangler@4','deploy','--config','wrangler.jsonc'],{cwd:process.cwd(),env,stdio:'inherit'});
-          if(child.error)console.error('WRANGLER_EXECUTION_FAILED '+child.error.name);
-          process.exit(child.status??1);
+          const bot=process.env.RAW_TELEGRAM_BOT_TOKEN||'';
+          const chat=process.env.RAW_TELEGRAM_CHAT_ID||'';
+          if(!bot||!chat){console.error('TELEGRAM_GITHUB_SECRETS_MISSING; refusing incomplete Cloudflare Cron deployment');process.exit(1);}
+          const dir=mkdtempSync(join(tmpdir(),'market-note-secrets-'));
+          const path=join(dir,'secrets.json');
+          try{
+            writeFileSync(path,JSON.stringify({TELEGRAM_BOT_TOKEN:bot,TELEGRAM_CHAT_ID:chat}),{mode:0o600});
+            delete env.RAW_TELEGRAM_BOT_TOKEN;delete env.RAW_TELEGRAM_CHAT_ID;
+            const child=spawnSync('npx',['--yes','wrangler@4','deploy','--config','wrangler.jsonc','--secrets-file',path],{cwd:process.cwd(),env,stdio:'inherit'});
+            if(child.error)console.error('WRANGLER_EXECUTION_FAILED '+child.error.name);
+            process.exitCode=child.status??1;
+          }finally{rmSync(dir,{recursive:true,force:true});}
           JS
 
       - name: Verify deployed LS pension endpoint without exposing credentials
