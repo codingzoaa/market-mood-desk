@@ -1,0 +1,56 @@
+name: One-time dual Telegram delivery verification 2026-11-09
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/telegram-dual-live-once-20261109.yml'
+permissions:
+  contents: read
+jobs:
+  send:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/telegram-dual-live-20261109' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: close
+            title: 장 마감·수급
+            entrypoint: scripts/telegram-market-close.mjs
+          - kind: sector
+            title: 강세·이슈 섹터
+            entrypoint: scripts/telegram-sector-briefing.mjs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Permit only the requested KST trading day
+        run: test "$(TZ=Asia/Seoul date +%F)" = "2026-11-09" || { echo 'OUTSIDE_APPROVED_DAY'; exit 1; }
+      - name: Send today's verified briefing to Telegram
+        id: send
+        env:
+          MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
+          MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node ${{ matrix.entrypoint }}
+      - name: Report Telegram API success
+        if: ${{ steps.send.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPORT_TITLE: ${{ matrix.title }}
+          REPORT_DATE: '2026-11-09'
+          DELIVERY_STATUS: success
+        run: node scripts/telegram-delivery-status.mjs
+      - name: Record result
+        if: ${{ always() }}
+        env:
+          REPORT_KIND: ${{ matrix.kind }}
+          SEND_RESULT: ${{ steps.send.outcome }}
+        run: |
+          echo "2026-11-09 ${REPORT_KIND}: ${SEND_RESULT:-not_run}" >> "$GITHUB_STEP_SUMMARY"
+          echo "API accepted != device receipt" >> "$GITHUB_STEP_SUMMARY"
