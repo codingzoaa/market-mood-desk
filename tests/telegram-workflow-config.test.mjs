@@ -17,4 +17,7 @@ test('two independent Telegram briefings retry every 30 minutes from 16:10 to 19
   "github.event.schedule == '10 10 * * 1-5'"
  ])assert.ok(y.includes(part),part);
  assert.ok(!y.includes("cron: '25 7 * * 1-5'"));
+ assert.ok(!y.includes('Notify Telegram after successful report acceptance'));
+ assert.ok(!y.includes('DELIVERY_STATUS: success'));
+ assert.ok(y.includes('DELIVERY_STATUS: failure'));
 });
