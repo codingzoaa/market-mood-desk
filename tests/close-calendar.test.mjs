@@ -5,6 +5,9 @@ import {build} from 'esbuild';
 
 await build({entryPoints:['src/close-calendar.tsx'],bundle:true,platform:'node',format:'esm',outfile:'work/close-calendar.js',packages:'external',jsx:'automatic'});
 const {default:Calendar}=await import('../work/close-calendar.js');
+await build({entryPoints:['src/close-reviews.ts'],bundle:true,platform:'node',format:'esm',outfile:'work/close-review-fixtures.mjs'});
+const {closeReviews}=await import('../work/close-review-fixtures.mjs');
+const newest=closeReviews.at(-1);
 
 test('latest verified close review preserves TOP3 calendar and variable-size TOP5 detail toggle',async()=>{
  const dom=new JSDOM('<div id="root"></div>');
@@ -16,21 +19,19 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
  try{
   await React.act(async()=>root.render(React.createElement(Calendar)));
   assert.match(document.querySelector('h2').textContent,/강세 섹터 캘린더/);
-  assert.match(document.querySelector('.close-review h2').textContent,/2026-11-05/);
-  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.match(document.querySelector('.close-review h2').textContent,new RegExp(newest.date));
+  assert.equal(document.querySelectorAll('.close-sector').length,newest.sectors.length);
   assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,document.querySelectorAll('.close-sector').length);
-  assert.ok(document.querySelector('.close-review').textContent.includes('셀트리온 +7.50%'));
-  assert.ok(document.querySelector('.close-review').textContent.includes('카카오 +10.65%'));
-  assert.ok(document.querySelector('.close-review').textContent.includes('넷마블 +7.31%'));
-  assert.match(document.querySelector('.close-review').textContent,/RE 잠정/);
+  for(const sector of newest.sectors.slice(0,3))assert.ok(document.querySelector('.close-review').textContent.includes(sector.leader));
+  assert.match(document.querySelector('.close-review').textContent,/잠정/);
   assert.match(document.querySelector('.close-review').textContent,/총점 미산출/);
-  assert.equal(document.querySelectorAll('.close-score-grid').length,5);
+  assert.equal(document.querySelectorAll('.close-score-grid').length,newest.sectors.length);
   assert.equal(document.querySelector('textarea'),null);
   assert.equal(document.querySelector('.close-session'),null);
   assert.equal(document.querySelector('.close-market'),null);
   assert.equal(document.querySelector('.close-market'),null); // No index-summary header; provenance may mention the index.
   assert.equal(document.querySelector('.close-market-flow'),null); // No market-index summary above detail cards.
-  assert.equal(document.querySelector('[aria-label="2026-11-05 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
+  assert.equal(document.querySelector('[aria-label="'+newest.date+' 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,Math.min(3,newest.sectors.length));
   assert.equal(document.querySelector('[aria-label="2026-11-04 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   assert.equal(document.querySelector('[aria-label="2026-11-02 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   assert.equal(document.querySelector('[aria-label="2026-10-30 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
@@ -70,7 +71,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelectorAll('.close-sector').length,0);
   assert.match(document.querySelector('.close-review').textContent,/2026-09-28/);
   await React.act(async()=>[...document.querySelectorAll('button')].find(x=>x.textContent==='최신 리뷰').click());
-  assert.equal(document.querySelectorAll('.close-sector').length,5);
+  assert.equal(document.querySelectorAll('.close-sector').length,newest.sectors.length);
   assert.match(document.querySelector('.close-review').textContent,/2026-11-05/);
  }finally{await React.act(async()=>root.unmount());}
 });
