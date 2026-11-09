@@ -8,10 +8,12 @@ test('Cloudflare owns scheduled dual briefings and Github does not schedule deli
  const src=readFileSync('worker/index.mjs','utf8');
  assert.ok(!yaml.includes('  schedule:'));
  assert.ok(yaml.includes('  workflow_dispatch:'));
- assert.ok(config.triggers.crons.includes('10,40 7-9 * * MON-FRI'));
- assert.ok(config.triggers.crons.includes('10 10 * * MON-FRI'));
+ assert.ok(config.triggers.crons.includes('*/5 7 * * MON-FRI'));
+ assert.ok(config.triggers.crons.includes('*/5 8-14 * * MON-FRI'));
+ assert.equal(config.triggers.crons.length,3);
  assert.ok(src.includes('deliverScheduled(event,env)'));
  assert.ok(src.includes('DELIVERY_CRONS.includes(event.cron)'));
+ assert.ok(src.includes('ctx.waitUntil(deliverScheduled(event,env))'));
  assert.ok(!src.includes('Notify Telegram after successful'));
 });
 test('Cloudflare deploy provisions Telegram secrets without printing values',()=>{
