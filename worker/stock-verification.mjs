@@ -1,3 +1,4 @@
+import {businessTaxonomy,TAXONOMY_VERSION,ISSUER_ALIASES,SHARE_LINKS} from './stock-taxonomy.mjs';
 // Business classifications only: never infer an investment theme from a name,
 // price change, or a loosely matched theme word.
 export const KIND_SOURCE='https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13';
@@ -23,38 +24,23 @@ export function parseKindCompanies(html,{minRows=2000}={}){
  if(out.length<minRows||out.length>6000||minRows>=2000&&(out.filter(x=>x.market==='KOSPI').length<500||out.filter(x=>x.market==='KOSDAQ').length<1000))throw Error('KIND_COVERAGE_INCOMPLETE');
  return out;
 }
-export function officialSector(issuer){
- const i=issuer.industry,p=issuer.products;
- if(/기타 금융업/.test(i)&&/^(?:비금융)?지주회사$/.test(p.replace(/\s/g,'')))return '지주사';
- const rules=[
-  [/반도체 제조|전자 집적회로 제조/,'반도체'],
-  [/컴퓨터 프로그래밍|시스템 통합|소프트웨어 개발/,'IT서비스'],
-  [/포털|인터넷 정보매개/,'인터넷'],
-  [/일차전지|이차전지 제조/,'2차전지'],
-  [/자동차|트레일러/,'자동차'],
-  [/선박 및 보트 건조|선박 건조/,'조선'],
-  [/운송업|운송관련|운송 관련|보관 및 창고/,'운송'],
-  [/화장품 제조/,'화장품'],
-  [/전동기|발전기 및 전기|전기 변환|전기 공급 및 제어/,'전력기기'],
-  [/목적용 기계 제조/,'기계'],
-  [/전자부품 제조/,'전자부품'],
-  [/통신 및 방송 장비/,'통신장비'],
-  [/의약품 제조|기초 의약물질|생물학적 제제/,'바이오'],
-  [/은행 및 저축기관|금융 지원 서비스|금융 및 보험 관련 서비스/,'금융·증권'],
-  [/보험업|재 보험업/,'보험'],
-  [/기초 화학물질|합성고무|화학제품 제조/,'화학']
- ];
- const matches=[...new Set(rules.filter(([re])=>re.test(i)).map(([,sector])=>sector))];
- if(matches.length>1)return null;
- if(matches.length===1)return matches[0];
- if(/^(?:기타|그 외)|분류|금융업$/.test(i)||i.length>40)return null;
- return i; // Exact exchange industry, rather than a guessed theme.
+export const officialSector=issuer=>businessTaxonomy(issuer)?.sector||null;
+export function resolveListedIssuer(stock,byIssuer){
+ const direct=byIssuer.get(stock.symbol);if(direct)return direct;
+ const link=SHARE_LINKS[stock.symbol];
+ if(!link||stock.name!==link.name||stock.market!==link.market)return undefined;
+ const issuer=byIssuer.get(link.issuerSymbol);
+ return issuer?.name===link.issuerName&&issuer.market===link.market?{...issuer,shareLink:link}:undefined;
 }
 export function verifyKindIdentity(stock,issuer,checkedAt){
  const verifiedDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(checkedAt));
  const reject=reason=>({symbol:stock.symbol,name:stock.name,market:stock.market,updatedAt:verifiedDay,sector:'분류 대기',subSector:'분류 대기',themes:[],breadth:false,reviewRequired:true,verification:{status:'pending',method:VERIFICATION_METHOD,reason,checkedAt,sourceUrl:KIND_SOURCE,...(issuer?{industry:issuer.industry,products:issuer.products}: {})}});
  if(!issuer)return reject('NO_OFFICIAL_ISSUER');
- if(stock.symbol!==issuer.symbol||stock.market!==issuer.market||identityName(stock.name)!==identityName(issuer.name))return reject('ISSUER_IDENTITY_MISMATCH');
- const sector=officialSector(issuer);if(!sector)return reject('INDUSTRY_REQUIRES_REVIEW');
- return {symbol:stock.symbol,name:stock.name,market:stock.market,sector,subSector:issuer.industry,themes:[sector],breadth:false,reviewRequired:false,source:'KRX KIND · 코드·시장·회사명·공식 업종 확인',updatedAt:verifiedDay,verification:{status:'verified',method:VERIFICATION_METHOD,checkedAt,sourceUrl:KIND_SOURCE,issuerName:issuer.name,industry:issuer.industry,products:issuer.products}};
+ const alias=ISSUER_ALIASES[stock.symbol],share=issuer.shareLink;
+ const aliasMatch=alias&&alias.market===stock.market&&identityName(alias.quote)===identityName(stock.name)&&identityName(alias.issuer)===identityName(issuer.name);
+ const shareMatch=share&&SHARE_LINKS[stock.symbol]===share&&stock.name===share.name&&issuer.symbol===share.issuerSymbol&&issuer.name===share.issuerName;
+ if((stock.symbol!==issuer.symbol&&!shareMatch)||stock.market!==issuer.market||(!aliasMatch&&!shareMatch&&identityName(stock.name)!==identityName(issuer.name)))return reject('ISSUER_IDENTITY_MISMATCH');
+ const classification=shareMatch?{sector:'반도체',subSector:'메모리 반도체',themes:['DRAM','NAND'],ruleId:'verified-preferred-share'}:businessTaxonomy(issuer);if(!classification)return reject('INDUSTRY_REQUIRES_REVIEW');
+ const {sector,subSector,themes,ruleId}=classification;
+ return {symbol:stock.symbol,name:stock.name,market:stock.market,sector,subSector,themes,breadth:false,reviewRequired:false,source:'KRX KIND · 기존 섹터맵 체계로 사업·제품 분류',updatedAt:verifiedDay,verification:{status:'verified',method:VERIFICATION_METHOD,checkedAt,sourceUrl:KIND_SOURCE,issuerName:issuer.name,industry:issuer.industry,products:issuer.products,taxonomyVersion:TAXONOMY_VERSION,ruleId,...(classification.sourceUrl?{businessSourceUrl:classification.sourceUrl,businessReviewedAt:classification.businessReviewedAt}:{}),...(shareMatch?{shareSourceUrl:share.sourceUrl,issuerSymbol:issuer.symbol}:{}),...(aliasMatch?{identityAlias:true}:{})}};
 }

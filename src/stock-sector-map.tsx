@@ -2,12 +2,15 @@
 import {useEffect,useMemo,useState} from 'react';
 import {API_URL} from './live';
 import {Search,Layers3,ListFilter,CheckCircle2} from 'lucide-react';
-import {combinedStockMap,type StockMapEntry} from './stock-map';
+import {combinedStockMap,STOCK_MAP,type StockMapEntry} from './stock-map';
 
 type Mode='stocks'|'sectors';
 
 const uniq=(xs:string[])=>[...new Set(xs)].sort((a,b)=>a.localeCompare(b,'ko'));
 const normalize=(v:string)=>v.trim().toLowerCase();
+const businessSources=new Set(['www.samsungcnt.com','www.sk-inc.co.kr','seojinsystem.net','www.lunit.io','www.sketernix.com','lsholdings.co.kr','www.oci-holdings.co.kr','www.lginnotek.com']);
+function businessSource(url?:string){try{const u=new URL(url||'');return u.protocol==='https:'&&businessSources.has(u.hostname)?u.href:null;}catch{return null;}}
+
 
 export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntry[]}){
  const [remote,setRemote]=useState<StockMapEntry[]>([]),[registryError,setRegistryError]=useState(false),[checkedAt,setCheckedAt]=useState('');
@@ -59,11 +62,11 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
 
  return <section className="sector-map-page" aria-label="종목 섹터맵">
   <div className="sector-map-summary">
-   <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>고정 분류와 수집 종목의 거래소 공식 업종을 함께 확인합니다. 코드·시장·회사명이 일치하고 업종이 명확한 경우에만 자동 확정합니다.</p></div>
+   <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>기존 {STOCK_MAP.length}종목의 분류 체계를 기준으로 대분류 · 세부섹터 · 투자 테마를 정리합니다. 추가 종목은 거래소 사업·제품과 기업 공식 자료를 확인해 같은 체계에 연결합니다.</p></div>
    <div className="sector-map-count"><strong>{filtered.length}</strong><span>/ {registry.length} 종목</span></div>
   </div>
 
-  <p className="muted" role="status" style={{fontSize:11,margin:'0 0 14px'}}>공식 업종 자동 확인 {autoVerified}종목 · 검토 대기 {pending}종목{checkedAt&&Number.isFinite(Date.parse(checkedAt))&&` · 확인 ${new Date(checkedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`}{registryError&&' · 자동 분류 연결 지연, 마지막 정상 분류 표시'}</p>
+  <p className="muted" role="status" style={{fontSize:11,margin:'0 0 14px'}}>기존 분류 {STOCK_MAP.length}종목 · 동일 체계 추가 분류 {autoVerified}종목 · 검토 대기 {pending}종목{checkedAt&&Number.isFinite(Date.parse(checkedAt))&&` · 확인 ${new Date(checkedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`}{registryError&&' · 자동 분류 연결 지연, 마지막 정상 분류 표시'}</p>
   <div className="panel sector-map-controls">
    <div className="stock-scope-tabs" aria-label="섹터맵 보기 방식">
     <button className={mode==='stocks'?'active':''} aria-pressed={mode==='stocks'} onClick={()=>setMode('stocks')}><ListFilter size={13}/>종목별 보기</button>
@@ -78,9 +81,9 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
   </div>
 
   {mode==='stocks'?<div className="panel sector-map-table-panel">
-   <div className="table-scroll"><table className="sector-map-table"><thead><tr><th>종목</th><th>대분류</th><th>세부섹터</th><th>테마</th><th>Breadth</th></tr></thead><tbody>{filtered.map(item=><tr key={item.symbol}>
+   <div className="table-scroll"><table className="sector-map-table"><thead><tr><th>종목</th><th>대분류</th><th>세부섹터</th><th>투자 테마</th><th>Breadth</th></tr></thead><tbody>{filtered.map(item=><tr key={item.symbol}>
     <td><div className="sector-stock-name"><strong>{item.name}</strong><small>{item.symbol} · {item.market}</small></div></td>
-    <td><span className="sector-chip">{item.sector}</span>{item.verification?.status==='verified'&&<small style={{display:'block',marginTop:4,fontSize:9}}><a href="https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage" target="_blank" rel="noopener noreferrer">거래소 업종 확인</a></small>}{item.reviewRequired&&<small style={{display:'block',marginTop:4,fontSize:9}}>자동 확정 보류</small>}</td>
+    <td><span className="sector-chip">{item.sector}</span>{item.verification?.status==='verified'&&<small style={{display:'block',marginTop:4,fontSize:9}}><a title={`공식 업종: ${item.verification.industry||'확인'} · 사업·제품 기반 분류`} href="https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage" target="_blank" rel="noopener noreferrer">분류 근거</a></small>}{businessSource(item.verification?.businessSourceUrl)&&<small style={{display:'block',marginTop:4,fontSize:9}}><a href={businessSource(item.verification?.businessSourceUrl)!} target="_blank" rel="noopener noreferrer" title={item.verification?.businessReviewedAt?`사업 확인 ${item.verification.businessReviewedAt}`:undefined}>기업 사업소개</a></small>}{item.reviewRequired&&<small style={{display:'block',marginTop:4,fontSize:9}}>분류 검토 대기</small>}</td>
     <td><strong className="sector-subsector">{item.subSector}</strong></td>
     <td><div className="theme-tags">{item.themes.length?item.themes.map(t=><span key={t}>{t}</span>):<span>미분류</span>}</div></td>
     <td>{item.breadth?<span className="breadth-ok"><CheckCircle2 size={14}/>포함</span>:<span className="muted">제외</span>}</td>

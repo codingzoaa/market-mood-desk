@@ -7,6 +7,7 @@ on:
       - '.github/workflows/stock-classification.yml'
       - 'scripts/verify_stock_sectors.mjs'
       - 'worker/stock-verification.mjs'
+      - 'worker/stock-taxonomy.mjs'
       - 'worker/stock-registry.mjs'
       - 'src/data/stock-map.json'
   schedule:

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-import {KIND_SOURCE,VERIFICATION_METHOD,parseKindCompanies,sectorCandidate,verifyKindIdentity} from '../worker/stock-verification.mjs';
+import {KIND_SOURCE,VERIFICATION_METHOD,parseKindCompanies,sectorCandidate,verifyKindIdentity,resolveListedIssuer} from '../worker/stock-verification.mjs';
 const ROOT=path.resolve(import.meta.dirname,'..'),API='https://market-note-ls-api.kby0991.workers.dev';
 const kstDay=d=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
 const args=Object.fromEntries(process.argv.slice(2).reduce((a,v,i,list)=>{if(v.startsWith('--'))a.push([v.slice(2),list[i+1]]);return a},[]));
@@ -19,7 +19,7 @@ export function verifyRegistry({dashboard,registry,catalog,previous,issuers,chec
  // as permanently classified. Curated entries remain entirely outside this job.
  for(const x of [...(previous.entries||[]),...(registry.entries||[]),...latest.stocks])if(sectorCandidate(x)&&!curated.has(x.symbol))queue.set(x.symbol,{symbol:x.symbol,name:x.name,market:x.market});
  if(queue.size>5000)throw Error('CLASSIFICATION_QUEUE_TOO_LARGE');
- const entries=[...queue.values()].sort((a,b)=>a.symbol.localeCompare(b.symbol)).map(stock=>verifyKindIdentity(stock,byIssuer.get(stock.symbol),checkedAt));
+ const entries=[...queue.values()].sort((a,b)=>a.symbol.localeCompare(b.symbol)).map(stock=>verifyKindIdentity(stock,resolveListedIssuer(stock,byIssuer),checkedAt));
  const verified=entries.filter(x=>x.verification.status==='verified').length;
  const semantic=v=>JSON.stringify((v.entries||[]).map(x=>({symbol:x.symbol,name:x.name,market:x.market,sector:x.sector,subSector:x.subSector,themes:x.themes,breadth:x.breadth,reviewRequired:x.reviewRequired,verification:{...x.verification,checkedAt:undefined}})));
  const changed=previous.checkedDate!==today||semantic(previous)!==semantic({entries});

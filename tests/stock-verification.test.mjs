@@ -19,9 +19,9 @@ test('three identity fields must agree; names are normalized without borrowing c
 });
 test('ambiguous industries remain pending; broad official industries never create speculative trading themes',()=>{
  assert.equal(officialSector({...issuer(),industry:'기타 전문 도매업',products:'건설, 도소매, 의복'}),null);
- assert.equal(officialSector({...issuer(),industry:'소프트웨어 개발 및 자동차 제조업'}),null);
+ assert.equal(officialSector({...issuer(),industry:'소프트웨어 개발 및 자동차 제조업',products:'확인되지 않은 사업'}),null);
  assert.equal(officialSector({...issuer(),industry:'기타 금융업',products:'지주회사'}),'지주사');
- const x=verifyKindIdentity(quote(),{...issuer(),industry:'기타 전문 도매업'},now);assert.equal(x.verification.status,'pending');assert.deepEqual(x.themes,[]);assert.ok(!('price' in x));
+ const x=verifyKindIdentity(quote(),{...issuer(),industry:'기타 전문 도매업',products:'확인되지 않은 사업'},now);assert.equal(x.verification.status,'pending');assert.deepEqual(x.themes,[]);assert.ok(!('price' in x));
 });
 test('funds, leveraged instruments and SPACs are excluded from the classification queue',()=>{
  for(const name of ['KODEX 200','TIGER 반도체','TIME 미국AI','테스트 ETN','테스트 인버스','테스트스팩1호'])assert.equal(sectorCandidate(quote('123456',name)),false);
