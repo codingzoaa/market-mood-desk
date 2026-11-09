@@ -82,16 +82,6 @@ jobs:
         with:
           path: .telegram-once/${{ matrix.kind }}
           key: telegram-delivered-v2-${{ matrix.kind }}-${{ steps.day.outputs.key }}
-      - name: Notify Telegram after successful report acceptance
-        if: ${{ steps.send.outcome == 'success' }}
-        continue-on-error: true
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          REPORT_TITLE: ${{ matrix.title }}
-          REPORT_DATE: ${{ steps.day.outputs.key }}
-          DELIVERY_STATUS: success
-        run: node scripts/telegram-delivery-status.mjs
       - name: Final failure alert (after 19:10 KST attempt)
         if: ${{ failure() && github.event_name == 'schedule' && github.event.schedule == '10 10 * * 1-5' }}
         continue-on-error: true
