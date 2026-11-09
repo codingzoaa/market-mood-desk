@@ -1,9 +1,6 @@
 name: Telegram Dual Briefings (16:10 KST, 30-minute retries)
+# Cron delivery is managed by Cloudflare Worker. GitHub allows manual validation only.
 on:
-  schedule:
-    # KST 16:10, 16:40, 17:10, 17:40, 18:10, 18:40, 19:10
-    - cron: '10,40 7-9 * * 1-5'
-    - cron: '10 10 * * 1-5'
   workflow_dispatch:
     inputs:
       deliver:
