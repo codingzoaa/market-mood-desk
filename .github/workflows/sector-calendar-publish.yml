@@ -1,0 +1,111 @@
+name: Publish verified sector calendar at 17 KST
+on:
+  schedule:
+    # GitHub cron uses UTC. Korea 17:00 / 17:30 / 18:00.
+    - cron: '0 8 * * 1-5'
+    - cron: '30 8 * * 1-5'
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sector-calendar-publish.yml'
+      - 'scripts/publish-sector-calendar.mjs'
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: verified-sector-calendar-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Generate same-day evidence-gated editorial review
+        id: review
+        run: |
+          set -euo pipefail
+          REVIEW_DATE="$(TZ=Asia/Seoul date +%F)"
+          echo "date=$REVIEW_DATE" >> "$GITHUB_OUTPUT"
+          node scripts/publish-sector-calendar.mjs
+          git add public/sector-review-status.json src/close-reviews.ts src/close-review-20*.ts
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "SECTOR_NO_REVIEW_CHANGE date=$REVIEW_DATE"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Validate candidate with full test, type check and build
+        if: steps.review.outputs.changed == 'true'
+        run: |
+          npm ci
+          npm test
+          npx tsc --noEmit
+          npm run build
+      - name: Create PR, verify CI, merge and deploy existing Pages
+        if: steps.review.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_DATE: ${{ steps.review.outputs.date }}
+        run: |
+          set -euo pipefail
+          BRANCH="automation/verified-sector-calendar-${REVIEW_DATE}"
+          # Existing pending PRs are not overwritten or bypassed.
+          if [[ "$(gh pr list --state open --head "$BRANCH" --json number --jq 'length')" != "0" ]]; then
+            echo "SECTOR_PR_ALREADY_OPEN branch=$BRANCH"
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          git commit -m "data: verify sector calendar $REVIEW_DATE"
+          git push --set-upstream origin "$BRANCH"
+          COMMIT="$(git rev-parse HEAD)"
+          PR="$(gh pr create --base main --head "$BRANCH" --title "data: verified sector calendar $REVIEW_DATE" --body "Evidence-gated 17:00 KST editorial calendar update. Same-day LS regular-session stocks and timestamped trusted press headlines required. Missing data remains pending; no synthetic score or sector count. Requires successful dispatched Pages CI before merging and Pages deployment afterwards.")"
+          echo "SECTOR_PR_CREATED $PR"
+          # PRs written with GITHUB_TOKEN do not trigger pull_request workflows.
+          # Dispatch the existing Pages workflow explicitly against the PR branch
+          # to run npm tests + TypeScript + build as a separate CI run.
+          gh workflow run pages.yml --ref "$BRANCH"
+          CI_RUN=""
+          for i in $(seq 1 35); do
+            CI_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch "$BRANCH" --limit 20 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$COMMIT\")][0].databaseId // empty")"
+            [[ -n "$CI_RUN" ]] && break
+            sleep 3
+          done
+          [[ -n "$CI_RUN" ]] || { echo 'SECTOR_PR_CI_MISSING';exit 1; }
+          echo "SECTOR_PR_CI_RUN $CI_RUN"
+          gh run watch "$CI_RUN" --exit-status
+          # Guard against concurrent main updates and accidental unverified changes.
+          git fetch origin main
+          gh pr view "$PR" --json mergeable --jq .mergeable | grep -qx MERGEABLE
+          gh pr merge "$PR" --merge --delete-branch
+          git fetch origin main
+          MERGED="$(git rev-parse origin/main)"
+          echo "SECTOR_PR_MERGED sha=$MERGED"
+          # Merges performed using GITHUB_TOKEN suppress normal push workflows.
+          # Explicitly dispatch Pages and block until its deploy job completes.
+          gh workflow run pages.yml --ref main
+          DEPLOY_RUN=""
+          for i in $(seq 1 35); do
+            DEPLOY_RUN="$(gh run list --workflow pages.yml --event workflow_dispatch --branch main --limit 25 --json databaseId,headSha --jq "[.[] | select(.headSha==\"$MERGED\")][0].databaseId // empty")"
+            [[ -n "$DEPLOY_RUN" ]] && break
+            sleep 3
+          done
+          [[ -n "$DEPLOY_RUN" ]] || { echo 'SECTOR_PAGES_RUN_MISSING';exit 1; }
+          echo "SECTOR_PAGES_RUN $DEPLOY_RUN"
+          gh run watch "$DEPLOY_RUN" --exit-status
+          # Check that deployment was not skipped (successful build alone is insufficient).
+          JOB_STATUS="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEPLOY_RUN/jobs" --jq '[.jobs[] | select(.name=="deploy" and .conclusion=="success")] | length')"
+          [[ "$JOB_STATUS" == "1" ]] || { echo 'SECTOR_PAGES_DEPLOY_NOT_CONFIRMED';exit 1; }
+          echo "SECTOR_PAGES_DEPLOYED date=$REVIEW_DATE sha=$MERGED url=https://codingzoaa.github.io/market-mood-desk/#calendar"
