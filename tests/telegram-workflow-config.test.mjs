@@ -2,11 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-test('Telegram close cron starts at 16:10 KST and retries 16:25/16:40',()=>{
- const yaml=readFileSync('.github/workflows/telegram-market-close.yml','utf8');
- for(const tick of ['10 7','25 7','40 7'])
-   assert.ok(yaml.includes("cron: '"+tick+" * * 1-5'"));
- assert.doesNotMatch(yaml,/cron: '30 8 \\* \\* 1-5'/);
- assert.match(yaml,/MARKET_DETAILS_URL: https:\/\/market-note-ls-api\.kby0991\.workers\.dev\/api\/market-details/);
- assert.ok(yaml.includes('telegram-market-close-v1-${{ steps.day.outputs.key }}'));
+test('two independent Telegram briefings retry every 30 minutes from 16:10 to 19:10 KST',()=>{
+ const y=readFileSync('.github/workflows/telegram-market-close.yml','utf8');
+ assert.match(y,/cron: '10,40 7-9 \\* \\* 1-5'/);
+ assert.match(y,/cron: '10 10 \\* \\* 1-5'/);
+ assert.match(y,/kind: close/);
+ assert.match(y,/kind: sector/);
+ assert.match(y,/scripts\/telegram-market-close\.mjs/);
+ assert.match(y,/scripts\/telegram-sector-briefing\.mjs/);
+ assert.match(y,/telegram-delivered-v2-\$\{\{ matrix\.kind \}\}/);
+ assert.match(y,/steps\.once\.outputs\.cache-hit != 'true'/);
+ assert.match(y,/steps\.send\.outcome == 'success'/);
+ assert.match(y,/Telegram-delivery-status|telegram-delivery-status/);
+ assert.match(y,/github\.event\.schedule == '10 10 \* \* 1-5'/);
+ assert.doesNotMatch(y,/cron: '25 7/);
 });
