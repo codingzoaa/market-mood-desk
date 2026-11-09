@@ -12,8 +12,10 @@ test('Cloudflare scheduled times use UTC 07:10 / 07:40 and block dawn or weekend
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T07:40:00Z')),true);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T10:10:00Z')),true);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T02:10:00Z')),false);
- assert.equal(allowedDelivery({cron:'*/5 7 * * MON-FRI'},new Date('2026-11-10T07:10:00Z')),false);
+ assert.equal(allowedDelivery({cron:'*/5 0-6 * * MON-FRI'},new Date('2026-11-10T07:10:00Z')),false);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-14T07:10:00Z')),false);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T08:15:00Z')),false);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T10:40:00Z')),false);
 });
 test('close briefing validates current-day five LS segments and excludes ETF',()=>{
  const s=formatClose(day,close);
