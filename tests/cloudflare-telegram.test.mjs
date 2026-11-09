@@ -15,7 +15,7 @@ test('Cloudflare scheduled times use UTC 07:10 / 07:40 and block dawn or weekend
  assert.equal(allowedDelivery({cron:'*/5 7 * * MON-FRI'},new Date('2026-11-10T07:10:00Z')),false);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-14T07:10:00Z')),false);
 });
-test('close briefing validates current day's five LS segments and excludes ETF',()=>{
+test('close briefing validates current-day five LS segments and excludes ETF',()=>{
  const s=formatClose(day,close);
  assert.match(s,/외국인/);assert.match(s,/KOSPI/);assert.match(s,/FUTURES/);
  assert.doesNotMatch(s,/ETF 수급/);
