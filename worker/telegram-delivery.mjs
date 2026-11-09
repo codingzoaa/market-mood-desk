@@ -1,7 +1,7 @@
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import {kst} from './ls.mjs';
 
-export const DELIVERY_CRONS=['10,40 7-9 * * MON-FRI','10 10 * * MON-FRI'];
+export const DELIVERY_CRONS=['*/5 7 * * MON-FRI','*/5 8-14 * * MON-FRI'];
 const assert=(ok,code)=>{if(!ok)throw Error(code);};
 const num=n=>Number(n).toLocaleString('ko-KR',{maximumFractionDigits:2});
 const valid=n=>typeof n==='number'&&Number.isFinite(n);
@@ -11,7 +11,7 @@ const sanitize=e=>String(e?.message||e).replace(/https?:\/\/\S+/g,'[source]').re
 
 export function allowedDelivery(event,now=new Date()){
  const k=kst(now);
- return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&slotMinutes(k.time)>=970&&slotMinutes(k.time)<=1165;
+ return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&['10','40'].includes(k.time.slice(2))&&slotMinutes(k.time)>=970&&slotMinutes(k.time)<=1150;
 }
 export function formatClose(date,d){
  assert(d?.date===date,'CLOSE_DATE_MISMATCH');
