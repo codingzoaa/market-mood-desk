@@ -1,3 +1,4 @@
+import {deliverScheduled,DELIVERY_CRONS} from './telegram-delivery.mjs';
 import {safeCollectNaverHeatmap,readNaverHeatmap,naverHeatmapWindow} from './naver-heatmap.mjs';
 import {collectBreadthClose,breadthCloseFeed,breadthCloseWindow} from './breadth-close.mjs';
 import {recoverPutHistory} from './put-history.mjs';
@@ -168,6 +169,8 @@ export default {
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+  // Cloudflare Cron replaces GitHub schedules for Telegram delivery. Do not start LS collectors on these events.
+  if(DELIVERY_CRONS.includes(event.cron)){await deliverScheduled(event,env);return;}
   // Reuse existing cron slots; the Naver-only coordinator never starts LS work.
   if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}
   if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
