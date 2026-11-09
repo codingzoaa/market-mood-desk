@@ -39,6 +39,8 @@ export function validateHeatmapCoverage(stocks,categories,{minimumStocks=2000}={
 // subrequest limit. Progress is durable; only a complete, checked map publishes.
 export async function collectNaverHeatmap(env,date,{fetcher=naverJson,now=new Date(),requestLimit=20,minimumStocks=2000}={}){
  if(!DAY.test(date)||date!==kst(now).date)throw Error('NAVER_CURRENT_DATE_ONLY');
+ const session=await env.DB.prepare('SELECT date FROM snapshots WHERE date=?').bind(date).first();
+ if(session?.date!==date)throw Error('NAVER_TRADING_DAY_UNVERIFIED');
  const bucket=Math.floor(now.getTime()/300000),key='naver-heatmap-progress-v2';
  const old=await readNaverHeatmap(env,date);
  if(old&&Math.floor(Date.parse(old.asOf)/300000)>=bucket)return {complete:true,heatmap:old,skipped:true};

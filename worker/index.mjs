@@ -168,7 +168,8 @@ export default {
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
-  if(event.cron==='*/5 0-11 * * MON-FRI'){if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}return;}
+  // Reuse existing cron slots; the Naver-only coordinator never starts LS work.
+  if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}
   if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
   await collectDetails(env);

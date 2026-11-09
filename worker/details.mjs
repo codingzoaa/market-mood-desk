@@ -1,4 +1,5 @@
 import {collectNaverHeatmap} from './naver-heatmap.mjs';
+import {normalizeFuturesOi} from './futures-oi.mjs';
 import {archivePutClose} from './put-daily.mjs';
 import {appendFlowHistory} from './flow-history.mjs';
 import {lsIndexOHLC} from './index-ohlc.mjs';
@@ -43,7 +44,7 @@ export async function collectDetails(env){
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('details-lease','0')").run();
  const lease=String(now+120000),lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='details-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first();if(!lock)return;
  let session;
- const details={date,collectorRevision:'clock-aligned-flow-v1',asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:{...(old.indices||{})},...(old.flows?{flows:old.flows}:{}),errors:{}};
+ const details={date,collectorRevision:'clock-aligned-flow-v1',asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:{...(old.indices||{})},...(old.flows?{flows:old.flows}:{}),...(old.oi?{oi:old.oi}:{}),errors:{}};
  try{
   session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(code,body)=>tr(token,code,body,undefined,fetcher);
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
@@ -53,6 +54,16 @@ export async function collectDetails(env){
    await pause();
   }
   try{details.flows={asOf:details.asOf,unit:'억원',source:'LS증권 KRX · t1601 금액 순매수',segments:rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data)};}catch(e){details.errors.flows=e instanceof LSFailure?e.code:String(e.message).slice(0,80);}
+  // Optional OI: disabled unless the actual 8-character near-month KOSPI200 contract is configured.
+  // Never reuse an old-contract observation when the futures contract rolls.
+  if(typeof env.LS_KOSPI200_FUTURES_CODE==='string' && /^[0-9A-Z]{8}$/.test(env.LS_KOSPI200_FUTURES_CODE)){
+   try{
+    await pause();
+    const result=await request('t2424',{focode:env.LS_KOSPI200_FUTURES_CODE,bdgubun:'2',nmin:0,tcgubun:'0',cnt:12});
+    details.oi={futures:normalizeFuturesOi(result.data,date,env.LS_KOSPI200_FUTURES_CODE,details.asOf)};
+   }catch(e){details.errors.oi=e instanceof LSFailure?e.code:String(e.message).slice(0,80);delete details.oi;}
+  }
+
  }catch(e){details.errors.ls=e instanceof LSFailure?e.code:String(e.message).slice(0,80);}
  finally{if(session)await session.close();}
  try{

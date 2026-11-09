@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {collectNaverHeatmap,naverHeatStock,naverHeatmapWindow,naverJson,readNaverHeatmap} from '../worker/naver-heatmap.mjs';
 const date='2026-11-09',at=new Date(date+'T10:00:00+09:00');
 const row=(symbol='005930',market='KOSPI')=>({itemCode:symbol,itemName:symbol==='005930'?'삼성전자':'테스트',marketType:market,stockEndType:'stock',krx:{marketCap:'100000000000',changeRate:'-2.1'},nxt:{marketCap:'999999',changeRate:'8.8'}});
-function database(){const values=new Map();return {values,DB:{prepare(sql){let args;return {bind(...v){args=v;return this},async first(){return values.has(args[0])?{payload:values.get(args[0])}:null},async run(){if(sql.startsWith('DELETE'))values.delete(args[0]);else values.set(args[0],args[1]);return {success:true}}}}}};}
+function database(){const values=new Map();return {values,DB:{prepare(sql){let args;return {bind(...v){args=v;return this},async first(){if(sql.startsWith('SELECT date FROM snapshots'))return {date};return values.has(args[0])?{payload:values.get(args[0])}:null},async run(){if(sql.startsWith('DELETE'))values.delete(args[0]);else values.set(args[0],args[1]);return {success:true}}}}}};}
 const listing=()=>({hasNext:false,items:Array.from({length:50},(_,i)=>({code:String(i+1),name:'업종'+i,updatedAt:at.toISOString()}))});
 const source=async path=>path.includes('rankings')?listing():{hasNext:false,items:path.includes('/upjong/1/')?[row(),row('247540','KOSDAQ')]:[]};
 test('new Naver schema uses KRX prices and market-cap won values, excluding NXT, funds and KONEX',()=>{
