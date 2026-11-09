@@ -48,6 +48,13 @@ jobs:
         with:
           path: .telegram-once/${{ matrix.kind }}
           key: telegram-delivered-v2-${{ matrix.kind }}-${{ steps.day.outputs.key }}
+      - name: Restore legacy market-close delivery marker
+        if: ${{ matrix.kind == 'close' && (github.event_name == 'schedule' || inputs.deliver == true) }}
+        id: legacy
+        uses: actions/cache/restore@v4
+        with:
+          path: .telegram-once
+          key: telegram-market-close-v1-${{ steps.day.outputs.key }}
       - name: Validate today's data without Telegram
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.deliver != true }}
         env:
@@ -57,7 +64,7 @@ jobs:
         run: node ${{ matrix.entrypoint }}
       - name: Send verified briefing to Telegram
         id: send
-        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' && steps.legacy.outputs.cache-hit != 'true' }}
         env:
           MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
           MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
@@ -102,9 +109,11 @@ jobs:
           REPORT_DATE: ${{ steps.day.outputs.key }}
           SEND_RESULT: ${{ steps.send.outcome }}
           CACHE_HIT: ${{ steps.once.outputs.cache-hit }}
+          LEGACY_HIT: ${{ steps.legacy.outputs.cache-hit }}
         run: |
           echo "### ${REPORT_DATE} ${REPORT_KIND} Telegram delivery" >> "$GITHUB_STEP_SUMMARY"
           echo "- Telegram send step: ${SEND_RESULT:-skipped}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Previously delivered: ${CACHE_HIT:-false}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Previously delivered under new key: ${CACHE_HIT:-false}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Legacy market close marker: ${LEGACY_HIT:-false}" >> "$GITHUB_STEP_SUMMARY"
           echo "- If this run failed, next scheduled attempt is 30 minutes later (through 19:10 KST)." >> "$GITHUB_STEP_SUMMARY"
           echo "- A successful API response is not proof of receipt on the user's device." >> "$GITHUB_STEP_SUMMARY"
