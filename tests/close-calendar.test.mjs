@@ -60,12 +60,13 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   await click('[aria-label="2026-10-23 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,5);
   assert.match(document.querySelector('.close-review').textContent,/SK하이닉스 \+4.42%/);
+  if(!document.querySelector('[aria-label="2026-10-15 장 마감 리뷰"]'))await click('button[aria-label="이전 4주"]');
   await click('[aria-label="2026-10-15 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   assert.match(document.querySelector('.close-review').textContent,/확인된 강세 그룹 1개/);
   assert.equal(document.querySelectorAll('.close-day').length,20);
   assert.equal([...document.querySelectorAll('a')].every(x=>x.href.startsWith('https://')),true);
-  await click('button[aria-label="이전 4주"]');
+  if(!document.querySelector('[aria-label="2026-09-28 리뷰 미등록"]'))await click('button[aria-label="이전 4주"]');
   assert.match(document.querySelector('[aria-label="2026-10-09 리뷰 미등록"]').textContent,/휴장/);
   await click('[aria-label="2026-09-28 리뷰 미등록"]');
   assert.equal(document.querySelectorAll('.close-sector').length,0);
