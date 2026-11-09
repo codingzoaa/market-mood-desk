@@ -156,7 +156,7 @@ export default {
      if(naver){value.heatmap=naver;if(value.errors)delete value.errors.heatmap;}
      const heatStatus=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('naver-heatmap-status').first();
      const status=heatStatus?JSON.parse(heatStatus.payload):null;
-     if(status?.date===to&&status.error&&(!naver||Date.parse(status.asOf)>Date.parse(naver.asOf)+600000))value.errors={...value.errors,heatmap:status.error};
+     if(status?.date===to&&status.pipeline==='github-verified-v1'&&status.error&&(!naver||Date.parse(status.asOf)>Date.parse(naver.asOf)+600000))value.errors={...value.errors,heatmap:status.error};
      const recovery=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('intraday-recovery:'+to).first();if(recovery)value.intradayRecovery=JSON.parse(recovery.payload);
     }
     return reply({details:value});

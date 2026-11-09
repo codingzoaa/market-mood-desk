@@ -100,6 +100,6 @@ export async function safeCollectNaverHeatmap(env,now=new Date()){
  const saved=await read(env,'naver-heatmap:'+date);
  if(!saved?.asOf||Date.parse(saved.asOf)<Date.parse(baseline.asOf))await write(env,'naver-heatmap:'+date,baseline);
  const status=await read(env,'naver-heatmap-status');
- if(!status?.asOf||Date.parse(status.asOf)<=Date.parse(baseline.asOf)||status.error)await write(env,'naver-heatmap-status',{date,asOf:now.toISOString(),error:null});
+ if(!status?.asOf||Date.parse(status.asOf)<=Date.parse(baseline.asOf)||status.error)await write(env,'naver-heatmap-status',{date,asOf:now.toISOString(),error:null,pipeline:'github-verified-v1'});
  return false;
 }
