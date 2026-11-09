@@ -6,6 +6,11 @@ on:
     - cron: '30 8 * * 1-5'
     - cron: '0 9 * * 1-5'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sector-calendar-publish.yml'
+      - 'scripts/publish-sector-calendar.mjs'
 permissions:
   contents: write
   pull-requests: write
@@ -55,7 +60,6 @@ jobs:
         run: |
           set -euo pipefail
           BRANCH="automation/verified-sector-calendar-${REVIEW_DATE}"
-          SHA="$(git rev-parse HEAD)"
           # Existing pending PRs are not overwritten or bypassed.
           if [[ "$(gh pr list --state open --head "$BRANCH" --json number --jq 'length')" != "0" ]]; then
             echo "SECTOR_PR_ALREADY_OPEN branch=$BRANCH"
