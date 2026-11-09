@@ -1,14 +1,13 @@
-name: Telegram Market Close (16:10 KST)
+name: Telegram Dual Briefings (16:10 KST, 30-minute retries)
 on:
   schedule:
-    # KST 16:10 initial; 16:25/16:40 retries for delayed close data. Explicit UTC.
-    - cron: '10 7 * * 1-5'
-    - cron: '25 7 * * 1-5'
-    - cron: '40 7 * * 1-5'
+    # KST 16:10, 16:40, 17:10, 17:40, 18:10, 18:40, 19:10
+    - cron: '10,40 7-9 * * 1-5'
+    - cron: '10 10 * * 1-5'
   workflow_dispatch:
     inputs:
       deliver:
-        description: 'Send a real Telegram message (unchecked = read-only data validation)'
+        description: 'Real Telegram delivery (false: validate only)'
         type: boolean
         required: true
         default: false
@@ -16,57 +15,96 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: telegram-market-close
-  cancel-in-progress: false
-
 jobs:
   send:
-    # Scheduled delivery is active by default; explicitly set TELEGRAM_PAUSED=true to pause.
     if: ${{ github.event_name == 'workflow_dispatch' || vars.TELEGRAM_PAUSED != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: close
+            title: 장 마감·수급
+            entrypoint: scripts/telegram-market-close.mjs
+          - kind: sector
+            title: 강세·이슈 섹터
+            entrypoint: scripts/telegram-sector-briefing.mjs
+    concurrency:
+      group: telegram-delivery-${{ matrix.kind }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Log trigger and KST time
-        run: echo "TELEGRAM_SCHEDULE_TRIGGER event=${{ github.event_name }} utc=$(date -u +%FT%TZ) kst=$(TZ=Asia/Seoul date +%FT%T%z)"
-      - name: Calculate delivery date (KST)
+      - name: Calculate KST date
         id: day
         run: echo "key=$(TZ=Asia/Seoul date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-      - name: Check market close data without sending
+      - name: Restore this briefing's successful-delivery marker
+        id: once
+        if: ${{ github.event_name == 'schedule' || inputs.deliver == true }}
+        uses: actions/cache/restore@v4
+        with:
+          path: .telegram-once/${{ matrix.kind }}
+          key: telegram-delivered-v2-${{ matrix.kind }}-${{ steps.day.outputs.key }}
+      - name: Validate today's data without Telegram
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.deliver != true }}
         env:
           MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
+          MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
           TELEGRAM_DRY_RUN: 'true'
-        run: node scripts/telegram-market-close.mjs
-      - name: Restore previous successful delivery marker
-        if: ${{ github.event_name == 'schedule' || inputs.deliver == true }}
-        id: once
-        uses: actions/cache/restore@v4
-        with:
-          path: .telegram-once
-          key: telegram-market-close-v1-${{ steps.day.outputs.key }}
-      - name: Send verified market close
+        run: node ${{ matrix.entrypoint }}
+      - name: Send verified briefing to Telegram
+        id: send
         if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
         env:
           MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
+          MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: node scripts/telegram-market-close.mjs
-      - name: Create delivered marker
-        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+        run: node ${{ matrix.entrypoint }}
+      - name: Save success marker
+        if: ${{ steps.send.outcome == 'success' }}
         run: |
-          mkdir -p .telegram-once
-          echo "${{ steps.day.outputs.key }}" > .telegram-once/date
-      - name: Save delivered marker to prevent repeat sends
-        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit != 'true' }}
+          mkdir -p ".telegram-once/${{ matrix.kind }}"
+          echo "${{ steps.day.outputs.key }}" > ".telegram-once/${{ matrix.kind }}/date"
+      - name: Prevent duplicate success delivery
+        if: ${{ steps.send.outcome == 'success' }}
         uses: actions/cache/save@v4
         with:
-          path: .telegram-once
-          key: telegram-market-close-v1-${{ steps.day.outputs.key }}
-      - name: Already delivered
-        if: ${{ (github.event_name == 'schedule' || inputs.deliver == true) && steps.once.outputs.cache-hit == 'true' }}
-        run: echo 'ALREADY_DELIVERED_KST_DAY; duplicate send skipped'
+          path: .telegram-once/${{ matrix.kind }}
+          key: telegram-delivered-v2-${{ matrix.kind }}-${{ steps.day.outputs.key }}
+      - name: Notify Telegram after successful report acceptance
+        if: ${{ steps.send.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPORT_TITLE: ${{ matrix.title }}
+          REPORT_DATE: ${{ steps.day.outputs.key }}
+          DELIVERY_STATUS: success
+        run: node scripts/telegram-delivery-status.mjs
+      - name: Final failure alert (after 19:10 KST attempt)
+        if: ${{ failure() && github.event_name == 'schedule' && github.event.schedule == '10 10 * * 1-5' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPORT_TITLE: ${{ matrix.title }}
+          REPORT_DATE: ${{ steps.day.outputs.key }}
+          DELIVERY_STATUS: failure
+        run: node scripts/telegram-delivery-status.mjs
+      - name: Record outcome in run summary
+        if: ${{ always() }}
+        env:
+          REPORT_KIND: ${{ matrix.kind }}
+          REPORT_DATE: ${{ steps.day.outputs.key }}
+          SEND_RESULT: ${{ steps.send.outcome }}
+          CACHE_HIT: ${{ steps.once.outputs.cache-hit }}
+        run: |
+          echo "### ${REPORT_DATE} ${REPORT_KIND} Telegram delivery" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Telegram send step: ${SEND_RESULT:-skipped}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Previously delivered: ${CACHE_HIT:-false}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- If this run failed, next scheduled attempt is 30 minutes later (through 19:10 KST)." >> "$GITHUB_STEP_SUMMARY"
+          echo "- A successful API response is not proof of receipt on the user's device." >> "$GITHUB_STEP_SUMMARY"
