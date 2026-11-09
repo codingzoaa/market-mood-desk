@@ -102,11 +102,22 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/telegram-delivery-status'){
+    const date=new URL(request.url).searchParams.get('date')||kst().date;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>kst().date)return reply({error:'INVALID_DATE'},400);
+    const reports={};
+    for(const kind of ['close','sector']){
+     const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('telegram:v3:'+date+':'+kind).first();
+     const state=row?.payload?JSON.parse(row.payload):null;
+     reports[kind]=state?{status:state.status,attempts:state.attempts||0,at:state.at||null,error:state.error||null}:{status:'not_attempted',attempts:0,at:null,error:null};
+    }
+    return reply({date,reports,source:'Cloudflare D1 / Telegram API'});
+   }
    if(path==='/api/breadth-close')return reply(await breadthCloseFeed(env));
    if(path==='/api/put-kospi-daily')return reply(await putDailyFeed(env));
    if(path==='/api/stock-map')return reply(await readStockRegistry(env));
