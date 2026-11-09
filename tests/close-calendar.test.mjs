@@ -73,6 +73,6 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.match(document.querySelector('.close-review').textContent,/2026-09-28/);
   await React.act(async()=>[...document.querySelectorAll('button')].find(x=>x.textContent==='최신 리뷰').click());
   assert.equal(document.querySelectorAll('.close-sector').length,newest.sectors.length);
-  assert.match(document.querySelector('.close-review').textContent,/2026-11-05/);
+  assert.match(document.querySelector('.close-review').textContent,new RegExp(newest.date));
  }finally{await React.act(async()=>root.unmount());}
 });
