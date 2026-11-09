@@ -2,9 +2,24 @@ import catalog from '../src/data/stock-map.json' with {type:'json'};
 // Persist LS-discovered stock classifications in public market D1, not the browser.
 // Curated registry is authoritative; LS labels never overwrite its classifications.
 const CURATED=new Set(catalog.map(x=>x.symbol));
+const CATALOG_BY_CODE=new Map(catalog.map(x=>[x.symbol,x]));
 const RESERVED=/^(?:KODEX|TIGER|ACE|RISE|PLUS|SOL|HANARO|KOSEF|ARIRANG|KBSTAR|KINDEX|TIMEFOLIO|ETF|ETN)/i;
 const valid=s=>s&&/^\d{6}$/.test(s.symbol)&&['KOSPI','KOSDAQ'].includes(s.market)&&typeof s.name==='string'&&s.name.length<=80;
 const key='stock-map:registry';
+// Restore missing quote classifications from the same registry used by the
+// sector map. Never alter quotes or replace existing historical LS theme tags.
+export function attachStockSectors(snapshot,registry={entries:[]}){
+ if(!Array.isArray(snapshot?.stocks))return snapshot;
+ const discovered=new Map((Array.isArray(registry?.entries)?registry.entries:[]).filter(valid).map(x=>[x.symbol,x]));
+ return {...snapshot,stocks:snapshot.stocks.map(stock=>{
+  if(Array.isArray(stock.themes)&&stock.themes.length||stock.instrumentType==='ETF'||stock.instrumentType==='ETN'||RESERVED.test(stock.name||''))return stock;
+  const curated=CATALOG_BY_CODE.get(stock.symbol),entry=curated||discovered.get(stock.symbol);
+  if(!entry||entry.market!==stock.market||!curated&&entry.reviewRequired===true||typeof entry.sector!=='string')return stock;
+  const sector=entry.sector.trim();
+  if(!sector||sector.length>40||/분류\s*대기|검토|미분류/.test(sector))return stock;
+  return {...stock,themes:[sector]};
+ })};
+}
 export function inferCuratedSector(tags){
  const clean=[...new Set(tags.filter(t=>typeof t==='string'&&t.trim()).map(t=>t.trim()))].slice(0,12);
  const matched=catalog.filter(x=>clean.some(t=>x.sector===t||x.subSector===t||x.themes.includes(t)));

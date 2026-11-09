@@ -1844,5 +1844,53 @@
     ],
     "breadth": true,
     "updatedAt": "2026-10-27"
+  },
+  {
+    "symbol": "180640",
+    "name": "한진칼",
+    "market": "KOSPI",
+    "sector": "운송",
+    "subSector": "항공지주",
+    "themes": [
+      "항공",
+      "지주회사"
+    ],
+    "breadth": false,
+    "updatedAt": "2026-11-09",
+    "sourceUrls": [
+      "https://kind.krx.co.kr/external/2026/08/14/002342/20260814008128/11012.htm"
+    ]
+  },
+  {
+    "symbol": "003010",
+    "name": "혜인",
+    "market": "KOSPI",
+    "sector": "기계",
+    "subSector": "건설기계·동력장비",
+    "themes": [
+      "건설기계",
+      "발전기"
+    ],
+    "breadth": false,
+    "updatedAt": "2026-11-09",
+    "sourceUrls": [
+      "https://www.haein.com/kr/company/company/intro.php"
+    ]
+  },
+  {
+    "symbol": "267850",
+    "name": "아시아나IDT",
+    "market": "KOSPI",
+    "sector": "IT서비스",
+    "subSector": "시스템통합·IT아웃소싱",
+    "themes": [
+      "IT서비스",
+      "시스템통합"
+    ],
+    "breadth": false,
+    "updatedAt": "2026-11-09",
+    "sourceUrls": [
+      "https://www.asianaidt.com/pages/ko/company/overview?menu1=1000&menu2=1100"
+    ]
   }
 ]

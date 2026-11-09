@@ -12,7 +12,7 @@ const details=stocks=>({date,asOf:date+'T15:35:00+09:00',indices:{},errors:{},he
 test('curated stock map has unique codes, single score subsector and expanded industries',()=>{
  assert.ok(STOCK_MAP.length>=142);
  assert.equal(new Set(STOCK_MAP.map(x=>x.symbol)).size,STOCK_MAP.length);
- assert.ok(STOCK_MAP.every(x=>/^\d{6}$/.test(x.symbol)&&x.subSector&&x.sector&&x.breadth===true));
+ assert.ok(STOCK_MAP.every(x=>/^\d{6}$/.test(x.symbol)&&x.subSector&&x.sector&&typeof x.breadth==='boolean'));
  for(const sector of ['반도체','2차전지','로봇','전력기기','바이오','조선','방산','자동차','원전','화장품','건설·EPC','금융·증권','우주항공','사이버보안'])assert.ok(STOCK_MAP.some(x=>x.sector===sector));
  for(const group of ['메모리 반도체','PCB·반도체 기판','반도체 장비·테스트','2차전지 셀·소재','로봇·자동화','전력기기·전력망','AI 데이터센터·전력 인프라','제약·바이오','조선·기자재','방산','자동차','원전','화장품','건설·EPC','금융·증권','우주항공','사이버보안'])assert.ok(BREADTH_GROUPS[group]);
 });
@@ -50,4 +50,10 @@ test('second expansion has stable breadth universes',()=>{
  for(const [sector,count] of Object.entries(expected))assert.equal(STOCK_MAP.filter(x=>x.sector===sector&&x.breadth).length,count);
  assert.equal(STOCK_MAP.find(x=>x.symbol==='010120').subSector,'AI데이터센터 배전·전력제어');
  assert.equal(STOCK_MAP.some(x=>x.symbol==='078350'&&x.sector==='우주항공'),false);
+});
+
+test('quote-repair classifications do not expand any Breadth universe',()=>{
+ for(const symbol of ['180640','003010','267850']){
+  const entry=STOCK_MAP.find(x=>x.symbol===symbol);assert.ok(entry);assert.equal(entry.breadth,false);
+ }
 });

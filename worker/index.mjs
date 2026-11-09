@@ -1,7 +1,7 @@
 import {collectBreadthClose,breadthCloseFeed,breadthCloseWindow} from './breadth-close.mjs';
 import {recoverPutHistory} from './put-history.mjs';
 import {putDailyFeed} from './put-daily.mjs';
-import {readStockRegistry,syncStockRegistry} from './stock-registry.mjs';
+import {readStockRegistry,syncStockRegistry,attachStockSectors} from './stock-registry.mjs';
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
@@ -60,7 +60,8 @@ export async function collect(env){
   assertCollectionWindow();
   stage='STORE';
   const asOf=new Date(now).toISOString();
-  const snapshot={date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 섹터맵 분류 별도 확인',stocks,etfs,metrics,note:''};
+  const registry=await readStockRegistry(env).catch(()=>({entries:[]}));
+  const snapshot=attachStockSectors({date:end.date,asOf,source:'LS증권 KRX · 시장별 거래대금 최대100개 수집 · 섹터맵 분류 연결',stocks,etfs,metrics,note:''},registry);
   await env.DB.batch([env.DB.prepare('INSERT INTO snapshots(date,payload,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at').bind(snapshot.date,JSON.stringify(snapshot),new Date().toISOString()),env.DB.prepare("DELETE FROM snapshots WHERE date < date('now','-365 day')")]);
   await state(env,'sync',{checkedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),error:null,message:'LS증권 KRX · 5분 수집 · 16:10까지 수집 · 시장별 최대100개'});
   // Non-destructive LS top-100 registry enrichment. Failed classification never rolls back verified quotes.
@@ -149,7 +150,8 @@ export default {
    if(path==='/api/market-details'){const detail=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+to).first();const value=detail?JSON.parse(detail.payload):null;if(value){const recovery=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('intraday-recovery:'+to).first();if(recovery)value.intradayRecovery=JSON.parse(recovery.payload);}return reply({details:value});}
    const from=new Date(Date.parse(to+'T12:00:00Z')-27*86400000).toISOString().slice(0,10);
    const rows=await env.DB.prepare('SELECT payload FROM snapshots WHERE date>=? AND date<=? ORDER BY date').bind(from,to).all();
-   return reply({schemaVersion:2,snapshots:rows.results.map(x=>JSON.parse(x.payload)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
+   const registry=await readStockRegistry(env).catch(()=>({entries:[]}));
+   return reply({schemaVersion:2,snapshots:rows.results.map(x=>attachStockSectors(JSON.parse(x.payload),registry)),feed:{configured:true,failed:!!sync.error,lastSuccessAt:sync.lastSuccessAt||null,checkedAt:sync.checkedAt||null,error:sync.error||null,message:sync.message||'첫 시세 수집 대기 · 평일 장중 최대5분 간격'}});
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
