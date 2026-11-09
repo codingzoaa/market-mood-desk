@@ -7,6 +7,7 @@ on:
       - '.github/workflows/stock-classification.yml'
       - 'scripts/verify_stock_sectors.mjs'
       - 'worker/stock-verification.mjs'
+      - 'worker/stock-registry.mjs'
       - 'src/data/stock-map.json'
   schedule:
     - cron: '10 0-11 * * 1-5'

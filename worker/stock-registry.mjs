@@ -61,7 +61,7 @@ export async function syncStockRegistry(env,snapshot,request,wait){
  const now=Date.now();
  const missing=top100Missing(snapshot.stocks,snapshot.etfs||[],registry.entries).filter(stock=>{const prior=registry.entries.find(x=>x.symbol===stock.symbol);return !prior?.nextRetryAt||Date.parse(prior.nextRetryAt)<=now;}).slice(0,10);
  if(!missing.length)return {added:0};
- let failures=0;
+ let failures=0,added=0,updated=0;
  for(const stock of missing){
   try{
    await wait(1100);
@@ -70,7 +70,7 @@ export async function syncStockRegistry(env,snapshot,request,wait){
    const tags=data.t1532OutBlock.map(x=>x.tmname).filter(x=>typeof x==='string'&&x.trim()&&x.length<=60);
    const classification=inferCuratedSector(tags),pending=pendingSector(classification.sector);
    const entry={symbol:stock.symbol,name:stock.name,market:stock.market,...classification,breadth:false,updatedAt:snapshot.date,source:'LS t1532 · 섹터맵 규칙',reviewRequired:pending,lastAttemptAt:new Date(now).toISOString(),...(pending?{nextRetryAt:new Date(now+86400000).toISOString()}: {})};
-   const index=registry.entries.findIndex(x=>x.symbol===stock.symbol);if(index<0)registry.entries.push(entry);else registry.entries[index]=entry;
+   const index=registry.entries.findIndex(x=>x.symbol===stock.symbol);if(index<0){registry.entries.push(entry);added++;}else{registry.entries[index]=entry;updated++;}
   }catch{if(++failures>=3)break;}
  }
  if(registry.entries.length>5000)registry.entries=registry.entries.slice(-5000);
@@ -79,5 +79,5 @@ export async function syncStockRegistry(env,snapshot,request,wait){
   const dynamic=registry.entries.filter(x=>x.verification?.method!==VERIFICATION_METHOD||x.lastAttemptAt);
   await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify({...registry,entries:dynamic})).run();
  }
- return {added:registry.entries.length};
+ return {added,updated};
 }

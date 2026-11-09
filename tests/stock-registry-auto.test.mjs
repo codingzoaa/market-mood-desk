@@ -34,11 +34,14 @@ test('new top100 candidates are classified once and persisted independently of b
  const request=async()=>({data:{t1532OutBlock:[{tmname:'확인되지 않은 테마'}]}});
  await syncStockRegistry(env,{date:'2026-11-05',stocks:[quote],etfs:[]},request,async()=>{});
  const value=await readStockRegistry(env);
- assert.equal(value.entries.length,1);
- assert.equal(value.entries[0].breadth,false);
- assert.equal(value.entries[0].sector,'분류 대기');
+ const added=value.entries.filter(x=>x.symbol===quote.symbol);
+ assert.equal(added.length,1);
+ assert.equal(added[0].breadth,false);
+ assert.equal(added[0].sector,'분류 대기');
+ assert.equal(value.verification.method,'KRX_KIND_IDENTITY_INDUSTRY_V1');
+ assert.equal(new Set(value.entries.map(x=>x.symbol)).size,value.entries.length);
  await syncStockRegistry(env,{date:'2026-11-06',stocks:[quote],etfs:[]},async()=>{throw Error('duplicate re-fetch');},async()=>{});
- assert.equal((await readStockRegistry(env)).entries.length,1);
+ assert.equal((await readStockRegistry(env)).entries.filter(x=>x.symbol===quote.symbol).length,1);
 });
 test('Worker entry bundles with curated JSON for Cloudflare; no legacy theme cache read',async()=>{
  const out=await build({entryPoints:['worker/index.mjs'],platform:'browser',bundle:true,format:'esm',write:false,external:['node:*','cloudflare:*']});
