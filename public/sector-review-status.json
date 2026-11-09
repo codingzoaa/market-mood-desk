@@ -1,10 +1,9 @@
 {
-  "date": "2026-11-06",
-  "status": "pending",
-  "checkedAt": "2026-11-06T07:56:58Z",
-  "reason": "17:00 예약 작업은 실행됐으나, 강세 섹터별 대표·동반 종목의 정규장 종가 및 상승 재료 교차검증 근거가 부족해 확정 리뷰 등록을 보류했습니다. 검증된 섹터만 등록하는 기존 방식을 유지합니다.",
+  "date": "2026-11-09",
+  "status": "published",
+  "checkedAt": "2026-11-09T14:19:39.136Z",
+  "reason": "1개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포",
   "sources": [
-    "https://www.news2day.co.kr/article/20261106500276"
-  ],
-  "reviewPr": null
+    "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5KQUFyV2FFR1BmbUMya1UtcjVuZU9PeWpfOFFJQ2tYQTVZY0hMRWJzZTdVT3JDX3I0M29hR0RWaGQwcDhaQ2lkc1VQLVcwLU5mY3RkZlZWb0VWdVBs?oc=5"
+  ]
 }
