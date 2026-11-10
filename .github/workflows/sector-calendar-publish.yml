@@ -1,10 +1,13 @@
 name: Publish verified sector calendar at 17 KST
 on:
   schedule:
-    # GitHub cron uses UTC. Korea 17:00 / 17:30 / 18:00.
+    # GitHub cron uses UTC. Korea 17:00 / 17:30 / 18:00 / 18:30 / 19:00.
+    # GitHub scheduled starts are best effort. Extra windows mitigate missed/delayed runs.
     - cron: '0 8 * * 1-5'
     - cron: '30 8 * * 1-5'
     - cron: '0 9 * * 1-5'
+    - cron: '30 9 * * 1-5'
+    - cron: '0 10 * * 1-5'
   workflow_dispatch:
   push:
     branches: [main]
@@ -32,6 +35,8 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - name: Record invocation and Korean local time
+        run: echo "SECTOR_INVOCATION event=${{ github.event_name }} utc=$(date -u +%FT%TZ) kst=$(TZ=Asia/Seoul date +%FT%T%z)"
       - name: Generate same-day evidence-gated editorial review
         id: review
         run: |
