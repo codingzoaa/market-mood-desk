@@ -3,7 +3,8 @@ export type IndexDetail={value:number;change:number;changePct:number;advances:nu
 export type Flow={foreign:number;institution:number;individual:number;financial:number;pension?:number};
 export type FlowPoint={time:string;asOf:string;markets:Record<Board,{individual:number;foreign:number;changePct:number}>};
 export type HeatStock={symbol:string;name:string;market:Board;sector:string;changePct:number;marketCap:number};
-export type MarketDetails={date:string;asOf:string;indices:Partial<Record<Board,IndexDetail>>;flowHistory?:FlowPoint[];flows?:{asOf:string;unit:'억원';source:string;segments:Record<'KOSPI'|'KOSDAQ'|'FUTURES'|'CALL'|'PUT',Flow>};heatmap?:{asOf:string;source:string;stocks:HeatStock[]};errors:Record<string,string>};
+export type IntegratedFlows={date:string;asOf:string;scope:'KRX+NXT';status:'verified';unit:'억원';segments:Record<Board,Pick<Flow,'individual'|'foreign'|'institution'>>};
+export type MarketDetails={date:string;asOf:string;flowsIntegrated?:IntegratedFlows|{date:string;status:'unverified'};indices:Partial<Record<Board,IndexDetail>>;flowHistory?:FlowPoint[];flows?:{asOf:string;unit:'억원';source:string;segments:Record<'KOSPI'|'KOSDAQ'|'FUTURES'|'CALL'|'PUT',Flow>};heatmap?:{asOf:string;source:string;stocks:HeatStock[]};errors:Record<string,string>};
 const num=(v:any,min=-1e15,max=1e17)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max)throw Error('시장 상세 수치 오류');return v;};
 const str=(v:any,max=120)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error('시장 상세 문자 오류');return v;};
 const timestamp=(v:any,date:string)=>{str(v,40);if(!/(Z|[+-]\d{2}:\d{2})$/.test(v)||!Number.isFinite(Date.parse(v))||(new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(v))<date||Date.parse(v)-Date.parse(date+'T00:00:00+09:00')>8*86400000||Date.parse(v)>Date.now()+60000))throw Error('시장 상세 날짜 오류');return v as string;};
@@ -12,6 +13,19 @@ export function validateDetails(raw:any,date:string):MarketDetails{
  const result:MarketDetails={date,asOf:timestamp(raw.asOf,date),indices:{},errors:{}};
  for(const market of ['KOSPI','KOSDAQ'] as const){const q=raw.indices?.[market];if(!q)continue;if(!Array.isArray(q.series)||q.series.length>500)throw Error('지수 추이 오류');const times=new Set<string>();result.indices[market]={value:num(q.value,0,1e7),change:num(q.change,-1e7,1e7),changePct:num(q.changePct,-100,10000),advances:num(q.advances,0,10000),unchanged:num(q.unchanged,0,10000),declines:num(q.declines,0,10000),asOf:timestamp(q.asOf,date),series:q.series.map((p:any)=>{if(!/^([01]\d|2[0-3])[0-5]\d[0-5]\d$/.test(p.time)||times.has(p.time))throw Error('지수 시각 오류');times.add(p.time);return {time:p.time,value:num(p.value,0,1e7)};}).sort((a:any,b:any)=>a.time.localeCompare(b.time))};}
  if(raw.flows){if(raw.flows.unit!=='억원')throw Error('수급 단위 오류');const segments={} as NonNullable<MarketDetails['flows']>['segments'];for(const key of ['KOSPI','KOSDAQ','FUTURES','CALL','PUT'] as const){const f=raw.flows.segments?.[key];segments[key]={foreign:num(f?.foreign),institution:num(f?.institution),individual:num(f?.individual),financial:num(f?.financial),...(f?.pension===undefined?{}:{pension:num(f.pension)})};}result.flows={asOf:timestamp(raw.flows.asOf,date),unit:'억원',source:str(raw.flows.source),segments};}
+ if(raw.flowsIntegrated!==undefined){
+  const v=raw.flowsIntegrated;
+  if(v.date!==date)throw Error('통합 수급 거래일 오류');
+  if(v.status==='verified'){
+   if(v.scope!=='KRX+NXT'||v.unit!=='억원')throw Error('통합 수급 범위 오류');
+   const segments={} as IntegratedFlows['segments'];
+   for(const key of ['KOSPI','KOSDAQ'] as const){
+    const f=v.segments?.[key];
+    segments[key]={individual:num(f?.individual),foreign:num(f?.foreign),institution:num(f?.institution)};
+   }
+   result.flowsIntegrated={date,asOf:timestamp(v.asOf,date),scope:'KRX+NXT',status:'verified',unit:'억원',segments};
+  }else result.flowsIntegrated={date,status:'unverified'};
+ }
  if(raw.flowHistory!==undefined){
   if(!Array.isArray(raw.flowHistory)||raw.flowHistory.length>100)throw Error('수급 이력 오류');
   const times=new Set<string>();result.flowHistory=raw.flowHistory.map((p:any)=>{
