@@ -101,3 +101,20 @@ jobs:
           if(response.status!==200 && !(response.status===503 && body.error==='PENSION_KOSPI_DAILY_NOT_READY'))
             process.exit(1);
           JS
+
+      - name: Report safely verified LS venue probe status
+        continue-on-error: true
+        run: |
+          node --input-type=module <<'JS'
+          const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+          const url='https://market-note-ls-api.kby0991.workers.dev/api/investor-flow-venues?date='+date;
+          try{
+            const response=await fetch(url,{signal:AbortSignal.timeout(15000),headers:{Accept:'application/json'}});
+            const d=await response.json();
+            console.log('LS_VENUE_PROBE '+JSON.stringify({
+              date,status:response.ok?d.status:'HTTP_'+response.status,
+              scope:d.scope||null,asOf:d.asOf||null,error:d.error||null,
+              markets:d.segments?Object.keys(d.segments):[]
+            }));
+          }catch{console.log('LS_VENUE_PROBE_UNAVAILABLE');}
+          JS
