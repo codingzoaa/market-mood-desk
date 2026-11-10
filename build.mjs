@@ -19,3 +19,5 @@ await copyFile(
 console.log('Copied Market Breadth JSON');
 await copyFile('public/kospi-pension-rsi.json', 'dist/kospi-pension-rsi.json');
 console.log('Copied KOSPI / Pension RSI JSON');
+await copyFile('public/sector-review-status.json', 'dist/sector-review-status.json');
+console.log('Copied sector review verification status');
