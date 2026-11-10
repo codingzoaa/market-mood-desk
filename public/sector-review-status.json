@@ -1,9 +1,7 @@
 {
-  "date": "2026-11-10",
-  "status": "published",
-  "checkedAt": "2026-11-10T08:51:28.848Z",
-  "reason": "1개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포",
-  "sources": [
-    "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9WVmpxbVBDTW5GSXI4Tnk1YjU4clFNemtYODhPTHItc2hBTGJERmwxZkloRXV1aHA4eWlUUTllSnR1UXdoUjMtTWlBSDd4cEdzakstUHlULTlaM3BY?oc=5"
-  ]
+  "date": "2026-11-11",
+  "status": "pending",
+  "checkedAt": "2026-11-10T15:05:35.036Z",
+  "reason": "검증 보류: LS_SAME_DAY_SNAPSHOT_MISSING. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.",
+  "sources": []
 }
