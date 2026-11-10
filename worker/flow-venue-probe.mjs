@@ -40,7 +40,7 @@ const reason=e=>{
 };
 export async function probeVenueFlows(env,now=new Date(),dependencies={}){
  const t=kst(now),date=t.date;
- if(['Sat','Sun'].includes(t.weekday)||t.time<'1620'||t.time>'1630')return {status:'outside-probe-window'};
+ if(['Sat','Sun'].includes(t.weekday)||t.time<'1620'||t.time>'1700')return {status:'outside-probe-window'};
  const key='investor-flow-venue:'+date;
  const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();
  if(row?.payload && JSON.parse(row.payload).status==='verified')return {status:'already-verified'};
