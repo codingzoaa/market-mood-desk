@@ -79,8 +79,9 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
           showSymbol: false, sampling: 'lttb', lineStyle: {width: 1.7, color: '#2e7860'}, z: 3,
           markArea: {
             silent: false,
+            label: {show: false},
             itemStyle: {color: 'rgba(228,93,75,0.18)', borderWidth: 0},
-            emphasis: {itemStyle: {color: 'rgba(228,93,75,0.34)'}},
+            emphasis: {label: {show: false}, itemStyle: {color: 'rgba(228,93,75,0.34)'}},
             data: signals.map(p => {
               const i = byDate.get(p.date)?.i ?? 0;
               return [{name: p.date, xAxis: p.date}, {xAxis: points[Math.min(i + 1, points.length - 1)].date}];
