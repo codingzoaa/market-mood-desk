@@ -18,7 +18,12 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
  const click=async selector=>React.act(async()=>document.querySelector(selector).click());
  try{
   await React.act(async()=>root.render(React.createElement(Calendar)));
-  assert.match(document.querySelector('h2').textContent,/강세 섹터 캘린더/);
+  assert.match(document.querySelector('.close-calendar-grid-panel h2').textContent,/강세 섹터 캘린더/);
+  assert.equal(document.querySelectorAll('.calendar-comparison table tbody tr').length>0,true);
+  assert.match(document.querySelector('.calendar-update-status').textContent,/마지막 갱신/);
+  const card=document.querySelector('.close-sector');
+  assert.ok(card.querySelector('.calendar-reason').compareDocumentPosition(card.querySelector('.calendar-key-facts')) & 4);
+  assert.ok(card.querySelector('.calendar-key-facts').compareDocumentPosition(card.querySelector('.calendar-news')) & 4);
   assert.match(document.querySelector('.close-review h2').textContent,new RegExp(newest.date));
   assert.equal(document.querySelectorAll('.close-sector').length,newest.sectors.length);
   assert.equal(new Set([...document.querySelectorAll('.close-sector h3')].map(x=>x.textContent)).size,document.querySelectorAll('.close-sector').length);
