@@ -137,15 +137,31 @@ def refresh(data, public, payload, today):
     reference = daily.loc[public_end,'validStockCount']
     if known[target_day]['validStockCount'] < reference*.95: raise ValueError('Latest coverage fell unexpectedly')
     output = dict(data); output['rows'] = [known[k] for k in sorted(known)];output['endDate']=output['rows'][-1]['date']
-    output.update(updatedAt=datetime.now(KST).isoformat(),source='FinanceData/marcap 종목 종가 · LS증권 코스피 지수',priceAdjustment='unadjusted',universe='원본 기준 유지: KOSPI 6자리 숫자 종목, 거래량 > 0, 20거래일 모두 유효한 종목. 보통주 전용 분류는 미검증.',excludedDates=sorted(FLAGS-set(approved)),autoUpdate='거래일 17:40 · 20:40 · 22:30 KST',validation={'methodReproduced':True,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'indexCheckedBreadthDates':approved,'stockCloseSource':'FinanceData/marcap only','sourceLagDays':(pd.Timestamp(record['date'])-target).days,'lsDate':record['date'],'lsObservedAt':record['observedAt'],'lsExpectedStocks':record['expected'],'publicThrough':public_end.date().isoformat()})
+    output.update(updatedAt=datetime.now(KST).isoformat(),source='FinanceData/marcap 종목 종가 · LS증권 코스피 지수',priceAdjustment='unadjusted',universe='원본 기준 유지: KOSPI 6자리 숫자 종목, 거래량 > 0, 20거래일 모두 유효한 종목. 보통주 전용 분류는 미검증.',excludedDates=sorted(FLAGS-set(approved)),autoUpdate='매 거래일 17:40 · 지연 시 20:40·22:30 재시도 · 다음 거래일 08:15 재확인 (KST)',validation={'methodReproduced':True,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'indexCheckedBreadthDates':approved,'stockCloseSource':'FinanceData/marcap only','sourceLagDays':(pd.Timestamp(record['date'])-target).days,'lsDate':record['date'],'lsObservedAt':record['observedAt'],'lsExpectedStocks':record['expected'],'publicThrough':public_end.date().isoformat()})
     report={'latestBreadthDate':target_day,'indexOnlyDates':index_only,'latestDate':output['endDate'],'latest':known[target_day],'restored':restored,'matchedSessions':matched,'comparedSessions':compared,'indexCrossChecks':index_checks,'excludedDates':output['excludedDates'],'status':'provisional','lsDate':record['date']}
     return output,report
+
+def available_session(payload, now):
+    """Use the latest completed close, even if a delayed job crosses midnight.
+    A previous session remains explicitly dated; never relabel it as today.
+    """
+    record = payload.get('record') or {}
+    if record.get('status') != 'COMPLETE': raise NotReady('Waiting for a complete closing collection')
+    try: day = datetime.strptime(record.get('date', ''), '%Y-%m-%d').date()
+    except (ValueError, TypeError): raise ValueError('Invalid completed closing date')
+    local = now.astimezone(KST)
+    age = (local.date() - day).days
+    if age < 0: raise ValueError('Future closing session')
+    if age > 14: raise NotReady('Completed closing session is too old')
+    if age == 0 and local.strftime('%H%M') < '1640': raise NotReady('Today closing collection is not confirmed yet')
+    return day.isoformat()
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--output',default='public/market-breadth.json');ap.add_argument('--marcap');ap.add_argument('--ls-feed');ap.add_argument('--report',default='work/breadth-refresh-report.json');a=ap.parse_args()
     today=datetime.now(KST).date().isoformat();data=json.loads(Path(a.output).read_text());payload=json.loads(Path(a.ls_feed).read_text()) if a.ls_feed else get_json(API+'/api/breadth-close?v='+str(int(datetime.now().timestamp())))
     # Test readiness before downloading the annual public source.
-    validate_ls(payload,today)
+    session=available_session(payload,datetime.now(KST))
+    validate_ls(payload,session)
     if a.marcap:
         source=Path(a.marcap);public=pd.read_parquet(source);sources=[{'localFile':source.name,'sha256':hashlib.sha256(source.read_bytes()).hexdigest()}]
     else:
@@ -159,7 +175,7 @@ def main():
                 raise
             frames.append(frame);sources.append(proof)
         public=pd.concat(frames,ignore_index=True)
-    output,report=refresh(data,public,payload,today);output['provenance']={'publicSources':sources,'lsFeed':API+'/api/breadth-close','lsPayloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'formula':'FinanceData/marcap positive-volume raw close < calendar SMA20; no cross-vendor price splicing; no forward fill; 20/20 observations required'}
+    output,report=refresh(data,public,payload,session);report['checkedForDate']=today;output['provenance']={'publicSources':sources,'lsFeed':API+'/api/breadth-close','lsPayloadSha256':hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'formula':'FinanceData/marcap positive-volume raw close < calendar SMA20; no cross-vendor price splicing; no forward fill; 20/20 observations required'}
     # Repeated schedules without new values do not cause redundant data commits.
     old_rows=data['rows'];changed=old_rows!=output['rows'] or data.get('validation')!=output['validation'] or data.get('excludedDates')!=output['excludedDates'] or data.get('autoUpdate')!=output['autoUpdate']
     if changed: Path(a.output).write_text(json.dumps(output,ensure_ascii=False,separators=(',',':')))

@@ -62,4 +62,22 @@ class RefreshGuardTests(unittest.TestCase):
         original,_=b.refresh(self.original,self.public,self.payload,self.today)
         self.assertEqual(changed['rows'],original['rows'])
 
+class DelayedScheduleTests(unittest.TestCase):
+    def payload(self, day):
+        return {'record': {'date':day,'status':'COMPLETE'}}
+    def test_next_morning_uses_last_completed_session_not_uncollected_today(self):
+        now=b.datetime.fromisoformat('2026-11-10T08:15:00+09:00')
+        self.assertEqual(b.available_session(self.payload('2026-11-09'),now),'2026-11-09')
+    def test_same_day_requires_post_close_confirmation(self):
+        with self.assertRaises(b.NotReady): b.available_session(self.payload('2026-11-10'),b.datetime.fromisoformat('2026-11-10T15:00:00+09:00'))
+        self.assertEqual(b.available_session(self.payload('2026-11-10'),b.datetime.fromisoformat('2026-11-10T17:40:00+09:00')),'2026-11-10')
+    def test_weekend_keeps_friday_date_and_never_relabels_it(self):
+        self.assertEqual(b.available_session(self.payload('2026-11-06'),b.datetime.fromisoformat('2026-11-09T08:15:00+09:00')),'2026-11-06')
+    def test_future_stale_invalid_or_incomplete_records_do_not_publish(self):
+        now=b.datetime.fromisoformat('2026-11-10T08:15:00+09:00')
+        with self.assertRaises(ValueError): b.available_session(self.payload('2026-11-11'),now)
+        with self.assertRaises(ValueError): b.available_session(self.payload('2026-02-30'),now)
+        with self.assertRaises(b.NotReady): b.available_session(self.payload('2026-10-01'),now)
+        with self.assertRaises(b.NotReady): b.available_session({'progress':{'status':'RUNNING'}},now)
+
 if __name__=='__main__': unittest.main()
