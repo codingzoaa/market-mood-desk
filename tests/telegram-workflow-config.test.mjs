@@ -14,6 +14,7 @@ test('Cloudflare owns scheduled dual briefings and Github does not schedule deli
  assert.ok(src.includes('deliverScheduled(event,env)'));
  assert.ok(src.includes('DELIVERY_CRONS.includes(event.cron)'));
  assert.ok(src.includes('ctx.waitUntil(deliverScheduled(event,env))'));
+ assert.ok(src.includes('probeVenueFlows(env)'));
  assert.ok(!src.includes('Notify Telegram after successful'));
 });
 test('Cloudflare deploy provisions Telegram secrets without printing values',()=>{

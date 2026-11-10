@@ -1,3 +1,4 @@
+import {probeVenueFlows} from './flow-venue-probe.mjs';
 import {deliverScheduled,DELIVERY_CRONS} from './telegram-delivery.mjs';
 import {safeCollectNaverHeatmap,readNaverHeatmap,naverHeatmapWindow} from './naver-heatmap.mjs';
 import {collectBreadthClose,breadthCloseFeed,breadthCloseWindow} from './breadth-close.mjs';
@@ -102,11 +103,19 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
    if(path==='/api/status')return reply({configured:true,...sync});
+   if(path==='/api/investor-flow-venues'){
+    const date=new URL(request.url).searchParams.get('date')||kst().date;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>kst().date)return reply({error:'INVALID_DATE'},400);
+    const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('investor-flow-venue:'+date).first();
+    const result=row?.payload?JSON.parse(row.payload):null;
+    // Expose only source-confirmed, reconciled investor summaries and safe error codes.
+    return reply(result?{date,status:result.status,scope:result.status==='verified'?'KRX+NXT':'unverified',asOf:result.asOf||result.checkedAt||null,unit:result.unit||null,segments:result.status==='verified'?result.segments:null,components:result.status==='verified'?result.components:null,error:result.error||null}:{date,status:'not_checked'});
+   }
    if(path==='/api/telegram-delivery-status'){
     const date=new URL(request.url).searchParams.get('date')||kst().date;
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>kst().date)return reply({error:'INVALID_DATE'},400);
@@ -166,6 +175,8 @@ export default {
     const value=detail?JSON.parse(detail.payload):naver?{date:to,asOf:naver.asOf,indices:{},errors:{}}:null;
     if(value){
      if(naver){value.heatmap=naver;if(value.errors)delete value.errors.heatmap;}
+     const venueRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('investor-flow-venue:'+to).first();
+     if(venueRow?.payload){const venue=JSON.parse(venueRow.payload);value.flowsIntegrated=venue.status==='verified'?{date:to,asOf:venue.asOf,scope:'KRX+NXT',status:'verified',unit:'억원',segments:venue.segments}: {date:to,status:'unverified'};}
      const heatStatus=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('naver-heatmap-status').first();
      const status=heatStatus?JSON.parse(heatStatus.payload):null;
      if(status?.date===to&&status.pipeline==='github-verified-v1'&&status.error&&(!naver||Date.parse(status.asOf)>Date.parse(naver.asOf)+600000))value.errors={...value.errors,heatmap:status.error};
@@ -183,6 +194,8 @@ export default {
   // Share existing 5-minute collection Cron slots; no additional Cloudflare Cron triggers needed.
   // Telegram sends in a separate waitUntil so market data collection retains its existing path.
   if(DELIVERY_CRONS.includes(event.cron))ctx.waitUntil(deliverScheduled(event,env));
+  // Independent one-time late-close venue verification; never delays LS collectors.
+  if(event.cron==='*/5 7 * * MON-FRI'&&['1620','1625'].includes(kst().time))ctx.waitUntil(probeVenueFlows(env));
   // Reuse existing cron slots; the Naver-only coordinator never starts LS work.
   if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}
   if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}

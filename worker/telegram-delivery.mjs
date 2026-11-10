@@ -11,9 +11,9 @@ const sanitize=e=>String(e?.message||e).replace(/https?:\/\/\S+/g,'[source]').re
 
 export function allowedDelivery(event,now=new Date()){
  const k=kst(now);
- return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&['10','40'].includes(k.time.slice(2))&&slotMinutes(k.time)>=970&&slotMinutes(k.time)<=1150;
+ return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&['00','30'].includes(k.time.slice(2))&&slotMinutes(k.time)>=990&&slotMinutes(k.time)<=1170;
 }
-export function formatClose(date,d){
+export function formatClose(date,d,integrated=null){
  assert(d?.date===date,'CLOSE_DATE_MISMATCH');
  assert(!d.errors?.KOSPI&&!d.errors?.KOSDAQ&&!d.errors?.flows&&!d.errors?.ls,'CLOSE_COLLECTION_ERROR');
  const i=d.indices||{},f=d.flows;
@@ -26,9 +26,12 @@ export function formatClose(date,d){
  }
  for(const market of ['KOSPI','KOSDAQ','FUTURES','CALL','PUT'])
   assert(['individual','foreign','institution'].every(w=>valid(f.segments?.[market]?.[w])),'CLOSE_FLOW_MISSING_'+market);
+ const integrationVerified=integrated?.status==='verified'&&integrated?.date===date&&integrated?.scope==='KRX+NXT'&&integrated?.unit==='억원'&&
+  ['KOSPI','KOSDAQ'].every(m=>['individual','foreign','institution'].every(w=>valid(integrated.segments?.[m]?.[w])));
+ const spot=(market)=>integrationVerified?integrated.segments[market]:f.segments[market];
  const index=k=>{const a=i[k];return k+' '+num(a.value)+' ('+(a.changePct>0?'+':'')+num(a.changePct)+'%) · 상승 '+a.advances+' / 보합 '+a.unchanged+' / 하락 '+a.declines;};
- const flow=k=>{const a=f.segments[k];return k+' 개인 '+num(a.individual)+' / 외국인 '+num(a.foreign)+' / 기관 '+num(a.institution)+'억';};
- const foreignSpot=f.segments.KOSPI.foreign+f.segments.KOSDAQ.foreign,future=f.segments.FUTURES.foreign;
+ const flow=k=>{const a=k==='KOSPI'||k==='KOSDAQ'?spot(k):f.segments[k];return k+' 개인 '+num(a.individual)+' / 외국인 '+num(a.foreign)+' / 기관 '+num(a.institution)+'억';};
+ const foreignSpot=spot('KOSPI').foreign+spot('KOSDAQ').foreign,future=f.segments.FUTURES.foreign;
  const direction=foreignSpot>0&&future>0?'상방 우위':foreignSpot<0&&future<0?'하방 우위':'현물·선물 혼조';
  const oi=d.oi?.futures;
  const oiValid=oi?.source==='LS t2424'&&dateLocal(oi.asOf)===date&&slotMinutes(kst(new Date(oi.asOf)).time)>=930&&valid(oi.openInterest)&&Number.isInteger(oi.change)&&/^[A-Z0-9]{8}$/.test(oi.contract||'');
@@ -36,9 +39,10 @@ export function formatClose(date,d){
   date+' 국내 증시 장 마감·수급 브리핑','',
   index('KOSPI'),index('KOSDAQ'),'',
   '개인 / 외국인 / 기관 순매수 (억원)',
+  integrationVerified?'현물: LS KRX+NXT 통합 · '+integrated.asOf+' 기준 잠정치 (NXT 장중)':'현물: LS KRX 전용 · NXT 통합 미검증',
   ...['KOSPI','KOSDAQ','FUTURES','CALL','PUT'].map(flow),'',
   '단기 방향: '+direction,
-  '외국인 현물 '+num(foreignSpot)+'억 · KOSPI200 선물 '+num(future)+'억',
+  '외국인 현물 '+num(foreignSpot)+'억 ('+(integrationVerified?'KRX+NXT':'KRX')+') · KOSPI200 선물 '+num(future)+'억',
   oiValid?'선물 근월물 '+oi.contract+' OI '+num(oi.openInterest)+'계약 (전일 대비 '+(oi.change>0?'+':'')+num(oi.change)+')':'선물 미결제약정(OI): 확인 불가',
   '※ 옵션 수급 및 OI만으로 신규 숏·숏커버 여부를 확정할 수 없음. ETF 제외.'
  ].join('\n');
@@ -90,7 +94,8 @@ async function readPayload(env,kind,date,fetcher=fetch){
  if(kind==='close'){
   const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();
   assert(r?.payload,'CLOSE_STORED_DATA_MISSING');
-  return formatClose(date,JSON.parse(r.payload));
+  const venue=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('investor-flow-venue:'+date).first();
+  return formatClose(date,JSON.parse(r.payload),venue?.payload?JSON.parse(venue.payload):null);
  }
  const r=await env.DB.prepare('SELECT payload FROM snapshots WHERE date=?').bind(date).first();
  assert(r?.payload,'SECTOR_STORED_DATA_MISSING');
@@ -138,7 +143,7 @@ export async function deliverScheduled(event,env,now=new Date(),dependencies={})
  if(!allowedDelivery(event,now))return {status:'outside-window'};
  const k=kst(now),results=[];
  for(const kind of ['close','sector'])results.push(await attempt(env,kind,k.date,now,dependencies));
- if(slotMinutes(k.time)>=1150&&results.some(r=>r.status==='failed')){
+ if(slotMinutes(k.time)>=1170&&results.some(r=>r.status==='failed')){
   try{await transmit(env,'🚨 '+k.date+' 브리핑 최종 발송 실패: '+results.filter(r=>r.status==='failed').map(r=>r.kind==='close'?'장 마감·수급':'강세·이슈 섹터').join(', ')+'. Cloudflare D1 발송기록 확인.',dependencies.fetcher);}
   catch(error){console.log('TELEGRAM_FAILURE_ALERT_UNAVAILABLE',sanitize(error));}
  }

@@ -8,10 +8,11 @@ const segments=Object.fromEntries(['KOSPI','KOSDAQ','FUTURES','CALL','PUT'].map(
 const close={date:day,indices,flows:{unit:'억원',asOf,segments},errors:{}};
 test('Cloudflare scheduled times use UTC 07:10 / 07:40 and block dawn or weekends',()=>{
  assert.equal(DELIVERY_CRONS.length,2);
- assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T07:10:00Z')),true);
- assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T07:40:00Z')),true);
- assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T10:10:00Z')),true);
- assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T02:10:00Z')),false);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T07:10:00Z')),false);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T07:30:00Z')),true);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T08:00:00Z')),true);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T10:30:00Z')),true);
+ assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-10T02:30:00Z')),false);
  assert.equal(allowedDelivery({cron:'*/5 0-6 * * MON-FRI'},new Date('2026-11-10T07:10:00Z')),false);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[0]},new Date('2026-11-14T07:10:00Z')),false);
  assert.equal(allowedDelivery({cron:DELIVERY_CRONS[1]},new Date('2026-11-10T08:15:00Z')),false);
