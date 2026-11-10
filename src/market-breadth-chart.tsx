@@ -95,10 +95,6 @@ export default function MarketBreadthChart({ rows, height = 520, asOf }: MarketB
         data: showRatio ? ['코스피 종가', '20일선 하락비율'] : ['코스피 종가'],
         textStyle: {color: '#52645c', fontSize: 12}
       },
-      toolbox: {
-        top: 4, right: 12,
-        feature: { dataZoom: {yAxisIndex: 'none', title: {zoom: '영역 확대', back: '이전 범위'}} }
-      },
       tooltip: {
         trigger: 'axis', confine: true,
         backgroundColor: 'rgba(255,255,255,0.97)', borderColor: '#d9e4dc',
@@ -241,7 +237,7 @@ export default function MarketBreadthChart({ rows, height = 520, asOf }: MarketB
       style={{width:'100%', height: clean.length ? 'min(65vh, ' + Math.max(390, height) + 'px)' : 0,
         minHeight: clean.length ? 390 : 0}}/>
     <p className="muted" style={{fontSize:11, color:'#748077', margin:'0 14px 8px'}}>
-      휠: 확대·축소 · 드래그: 이동 · 우측 상단: 영역 확대 · 하단 슬라이더: 조회 범위 조절
+      휠: 확대·축소 · 드래그: 이동 · 하단 슬라이더: 조회 범위 조절
       <span style={{display:'block'}}>확대 시 화면에 표시된 코스피 최고·최저값에 맞춰 세로축이 자동 조정됩니다. 마우스를 올리면 당일 하락비율을 확인할 수 있습니다.</span>
     </p>
   </div>;

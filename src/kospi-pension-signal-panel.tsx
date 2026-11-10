@@ -60,7 +60,6 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
             (signal ? '<br/><b style="color:#d94d40">음영 구간 · 신호 조건 충족 (클릭)</b>' : '');
         }
       },
-      toolbox: {right: 12, top: 5, feature: {dataZoom: {yAxisIndex: 'none', title: {zoom: '드래그 영역 확대', back: '이전 확대'}}}},
       xAxis: {type: 'category', boundaryGap: false, data: points.map(p => p.date),
         axisLabel: {color: '#697b71', hideOverlap: true}, axisLine: {lineStyle: {color: '#c9d5cd'}}},
       yAxis: {type: 'value', name: 'KOSPI (P)', nameTextStyle: {color: '#52645c'}, scale: true,
@@ -168,7 +167,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       <p style={{fontSize:11,color:'#7b897f',margin:'9px 0 0'}}>신호 당일 종가 기준, 거래비용 미반영 · 과거 수익률은 미래 성과를 보장하지 않습니다.</p>
     </section>}
     <p style={{fontSize:12, color:'#748077', margin:'0 14px 8px'}}>
-      음영 구간 클릭: 5·10·20거래일 후 수익률 · 휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구로 드래그 구간 선택 · 하단 슬라이더: 범위 조절
+      음영 구간 클릭: 5·10·20거래일 후 수익률 · 휠: 확대·축소 · 드래그: 차트 이동 · 하단 슬라이더: 범위 조절
       <br/>확대 시 현재 보이는 날짜의 최고·최저값 기준으로 세로축을 자동 맞춤합니다.
     </p>
     <p style={{fontSize:11, color:'#748077', margin:'0 14px 12px'}}>

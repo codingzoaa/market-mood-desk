@@ -48,7 +48,7 @@ export function PutKospiCharts({points}:{points:Point[]}){
     <strong style={{color:'#213f34'}}>{selected.date} · 코스피 {selected.kospi.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})}P ({signed(selected.changePct)}%)</strong>
     <div style={{display:'flex',flexWrap:'wrap',gap:12,marginTop:8}}>{(['individual','foreign'] as const).map(key=><button key={key} type="button" aria-pressed={visible[key]} onClick={()=>toggle(key)} style={{font:'inherit',border:0,background:'transparent',padding:'4px 0',color:key==='individual'?'#b96a3c':'#3275d6',cursor:'pointer',opacity:visible[key]?1:.4,textDecoration:visible[key]?'none':'line-through'}}>{key==='individual'?'개인':'외국인'} 풋 {signed(selected[key])}억원 · {visible[key]?'ON':'OFF'}</button>)}</div>
    </section></>:<p className="muted">아직 확보된 풋옵션 마감 기록이 없습니다.</p>}
-  <p style={{fontSize:12,color:'#748077',margin:'0 14px 8px'}}>휠: 확대·축소 · 드래그: 차트 이동 · 우측 상단 영역 확대 도구 · 하단 슬라이더: 범위 조절<br/>두 차트의 날짜 범위를 함께 조절하며, 확대 시 보이는 구간에 맞춰 세로축을 자동으로 맞춥니다. 범례 또는 수급 금액 클릭: ON/OFF</p>
+  <p style={{fontSize:12,color:'#748077',margin:'0 14px 8px'}}>휠: 확대·축소 · 드래그: 차트 이동 · 하단 슬라이더: 범위 조절<br/>두 차트의 날짜 범위를 함께 조절하며, 확대 시 보이는 구간에 맞춰 세로축을 자동으로 맞춥니다. 범례 또는 수급 금액 클릭: ON/OFF</p>
   <p style={{fontSize:11,color:'#748077',margin:'0 14px 12px'}}>원본: LS증권 일별 풋옵션 금액 순매수·코스피 종가 · {points[0]?.date||'—'} ~ {latest||'—'}<br/>장 마감 자료만 사용하며 누락 수급을 추정하지 않습니다. 순매수는 신규 포지션이나 보유 잔고를 뜻하지 않습니다.</p>
  </>;
 }
