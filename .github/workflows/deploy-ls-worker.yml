@@ -114,7 +114,13 @@ jobs:
             console.log('LS_VENUE_PROBE '+JSON.stringify({
               date,status:response.ok?d.status:'HTTP_'+response.status,
               scope:d.scope||null,asOf:d.asOf||null,error:d.error||null,
-              markets:d.segments?Object.keys(d.segments):[]
+              markets:d.segments?Object.keys(d.segments):[],
+              validatedSpot:d.status==='verified'
+                ? Object.fromEntries(['KOSPI','KOSDAQ'].map(m=>[m,{
+                    KRX:d.components?.KRX?.[m]||null,
+                    NXT:d.components?.NXT?.[m]||null,
+                    integrated:d.segments?.[m]||null
+                  }])):null
             }));
           }catch{console.log('LS_VENUE_PROBE_UNAVAILABLE');}
           JS
