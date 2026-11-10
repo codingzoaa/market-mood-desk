@@ -9,6 +9,9 @@ test('market-note pension refresh starts at 16:30 KST every KRX weekday',()=>{
  assert.match(workflow,/^\s+- cron: '40 9 \* \* 1-5'\s*$/m);
  assert.match(workflow,/run: node scripts\/update-kospi-pension\.mjs|node scripts\/update-kospi-pension\.mjs/);
  assert.match(workflow,/git push origin HEAD:main/);
+ assert.match(workflow,/^\s+- cron: '20 23 \* \* 0-4'\s*$/m);
+ assert.match(workflow,/persist-credentials: true\s+ref: main/);
+ assert.match(workflow,/paths:.*scripts\/update-kospi-pension\.mjs/);
  assert.match(workflow,/concurrency:[\s\S]*?cancel-in-progress: false/);
 });
 
