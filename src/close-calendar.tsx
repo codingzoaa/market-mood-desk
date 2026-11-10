@@ -7,7 +7,7 @@ import type {MarketDetails} from './market-details';
 import {shiftDay,type Snapshot} from './market';
 function calendarLeader(leader:string){
  const match=leader.match(/^(.+?)\s+([+\-−]?\d+(?:\.\d+)?%)/);
- return match?{name:match[1].trim(),rate:match[2]}:{name:leader.split(/[·+]/)[0].trim(),rate:null};
+ return match?{name:match[1].trim(),rate:match[2]}:{name:leader.split(/[·+(（]/)[0].trim(),rate:null};
 }
 export default function CloseCalendar({snapshots=[]}:{snapshots?:Snapshot[]}){
  const latest=closeReviews.at(-1)!.date;const[selected,setSelected]=useState(latest),[end,setEnd]=useState(latest),[expanded,setExpanded]=useState(true);
