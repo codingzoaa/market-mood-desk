@@ -14,6 +14,7 @@ on:
     paths:
       - '.github/workflows/sector-calendar-publish.yml'
       - 'scripts/publish-sector-calendar.mjs'
+      - 'scripts/naver-sector-news.mjs'
       - 'tests/close-calendar.test.mjs'
 permissions:
   contents: write
@@ -39,10 +40,14 @@ jobs:
         run: echo "SECTOR_INVOCATION event=${{ github.event_name }} utc=$(date -u +%FT%TZ) kst=$(TZ=Asia/Seoul date +%FT%T%z)"
       - name: Generate same-day evidence-gated editorial review
         id: review
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           REVIEW_DATE="$(TZ=Asia/Seoul date +%F)"
           echo "date=$REVIEW_DATE" >> "$GITHUB_OUTPUT"
+          node --input-type=module -e 'console.log("NAVER_NEWS_CONFIG="+(process.env.NAVER_CLIENT_ID&&process.env.NAVER_CLIENT_SECRET?"ready":"missing_credentials"))'
           node scripts/publish-sector-calendar.mjs
           git add public/sector-review-status.json src/close-reviews.ts src/close-review-20*.ts
           if git diff --cached --quiet; then

@@ -1,5 +1,6 @@
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {collectNaverSectorNews,mergeSectorNews} from './naver-sector-news.mjs';
 import {parseNews,selectLeaders} from './telegram-sector-briefing.mjs';
 
 const API='https://market-note-ls-api.kby0991.workers.dev/api/dashboard';
@@ -44,12 +45,12 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
   if(!matches.length)continue;
   const story=matches[0];
   const sourceId=sources.length;
-  sources.push({title:normalize(story.source)+' · '+date+' · '+normalize(story.headline),url:story.link});
+  sources.push({title:normalize(story.source)+(story.provider?' · '+story.provider:'')+' · '+date+' · '+normalize(story.headline),url:story.link});
   const gainers=group.stocks.filter(s=>s.changePct>0).sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol));
   if(gainers.length<2)continue;
   const leader=gainers[0],companions=gainers.slice(1,5);
   const headline=normalize(story.headline);
-  const reason='['+normalize(story.source)+' · '+date+' 보도] '+headline+'. 기사 제목과 종가 동반 상승은 확인했으나 상승 원인·공통 공시 간 인과관계는 별도 검증이 필요합니다.';
+  const reason='['+normalize(story.source)+(story.provider?' · '+story.provider:'')+' · '+date+' 보도] '+headline+'. 기사 제목과 종가 동반 상승은 확인했으나 상승 원인·공통 공시 간 인과관계는 별도 검증이 필요합니다.';
   sectors.push({
    name:group.name,status:'NEW',kind:'정규장 LS 표본 + 당일 매체 기사 · NEW 잠정',
    leaderSymbol:leader.symbol,leader:shortStock(leader),
@@ -89,7 +90,7 @@ const rssUrl=()=>{
  u.searchParams.set('hl','ko');u.searchParams.set('gl','KR');u.searchParams.set('ceid','KR:ko');
  return u.href;
 };
-export async function main({date=currentDay(),readData=checkedFetch,readNews=checkedFetch}={}){
+export async function main({date=currentDay(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews}={}){
  if(!iso.test(date)||date>currentDay())throw Error('INVALID_OR_FUTURE_DATE');
  const indexPath=path('src/close-reviews.ts'),index=readFileSync(indexPath,'utf8');
  if(index.includes('review'+date.replaceAll('-',''))){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'unchanged',date};}
@@ -98,10 +99,14 @@ export async function main({date=currentDay(),readData=checkedFetch,readNews=che
   const dashboard=await readData(API+'?date='+date);
   const snapshot=dashboard?.snapshots?.find(s=>s.date===date);
   if(!snapshot)throw Error('LS_SAME_DAY_SNAPSHOT_MISSING');
-  const xml=await readNews(rssUrl(),'text');
-  headlines=parseNews(xml,date);
-  if(!headlines.length)throw Error('TRUSTED_SAME_DAY_NEWS_MISSING');
   const catalog=JSON.parse(readFileSync(path('src/data/stock-map.json'),'utf8'));
+  let google=[];
+  try{google=parseNews(await readNews(rssUrl(),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
+  const queries=selectLeaders(snapshot,catalog).map(g=>g.name);
+  const naver=await readNaver(date,queries);
+  console.log('NAVER_SECTOR_NEWS status='+naver.status+' count='+naver.items.length);
+  headlines=mergeSectorNews(naver.items,google);
+  if(!headlines.length)throw Error('TRUSTED_SAME_DAY_NEWS_MISSING');
   const candidate=prepareEditorial(date,snapshot,headlines,catalog);
   if(candidate.sectors.length)review=candidate;
   else reason='LS 표본 동반 상승과 당일 신뢰매체 기사를 동시에 충족한 섹터 없음';
