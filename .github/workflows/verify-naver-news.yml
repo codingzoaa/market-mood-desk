@@ -1,0 +1,39 @@
+name: Verify Naver news connection
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-naver-news.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify credentials and read official RSS without modifying calendar
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {parseNaverNews,collectNaverSectorNews} from './scripts/naver-sector-news.mjs';
+          if(!process.env.NAVER_CLIENT_ID || !process.env.NAVER_CLIENT_SECRET)throw Error('NAVER_NEWS_MISSING_CREDENTIALS');
+          const url=new URL('https://openapi.naver.com/v1/search/news.xml');
+          url.searchParams.set('query','반도체');url.searchParams.set('display','100');url.searchParams.set('sort','date');
+          const response=await fetch(url,{redirect:'error',headers:{'X-Naver-Client-Id':process.env.NAVER_CLIENT_ID,'X-Naver-Client-Secret':process.env.NAVER_CLIENT_SECRET},signal:AbortSignal.timeout(20000)});
+          console.log('NAVER_AUTH_HTTP='+response.status);
+          if(!response.ok)throw Error('NAVER_AUTH_HTTP_'+response.status);
+          const xml=await response.text();
+          const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+          const verified=parseNaverNews(xml,date);
+          console.log('NAVER_RSS_OK date='+date+' items='+[...xml.matchAll(/<item>/g)].length+' trusted_same_day='+verified.length);
+          const collected=await collectNaverSectorNews(date,['반도체','2차전지','전력기기','방산','원전']);
+          console.log('NAVER_COLLECTOR status='+collected.status+' trusted_same_day='+collected.items.length);
+          if(collected.status!=='ok')throw Error('NAVER_COLLECTOR_UNAVAILABLE');
+          console.log('NAVER_VERIFY_SUCCESS calendar_modified=false');
+          NODE
