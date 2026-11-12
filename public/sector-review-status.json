@@ -1,7 +1,11 @@
 {
   "date": "2026-11-12",
   "status": "pending",
-  "checkedAt": "2026-11-11T15:58:17.412Z",
-  "reason": "검증 보류: LS_SAME_DAY_SNAPSHOT_MISSING. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.",
-  "sources": []
+  "checkedAt": "2026-11-12T13:42:21.585Z",
+  "reason": "검증 보류: LS 표본 동반 상승과 당일 신뢰매체 기사를 동시에 충족한 섹터 없음. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.",
+  "sources": [
+    "https://www.newspim.com/news/view/20261112001365",
+    "https://www.newspim.com/news/view/20261112001222",
+    "https://www.newsis.com/view/NISX20261112_0003865043"
+  ]
 }
