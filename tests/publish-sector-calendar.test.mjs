@@ -42,3 +42,7 @@ test('index update is idempotent, never rewrites other dated reviews',()=>{
  assert.ok(next.includes('review20261105,review20261109];'));
  assert.equal(updateIndex(next,date),next);
 });
+test('co-rise calendar accepts modest concurrent gains without a +2% or +4% stock',()=>{
+ const modest={...good,stocks:good.stocks.map((s,i)=>({...s,changePct:i===0?0.8:i===1?0.3:s.changePct}))};
+ assert.equal(prepareEditorial(date,modest,[story],mapping).sectors.length,1);
+});

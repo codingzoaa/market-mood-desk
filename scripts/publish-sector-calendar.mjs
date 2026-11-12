@@ -38,7 +38,7 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
  if(!checkedTime(snapshot.stockAsOf||snapshot.asOf,date))throw Error('REGULAR_CLOSE_NOT_CONFIRMED');
  if(!Array.isArray(snapshot.stocks)||snapshot.stocks.length<10)throw Error('LS_STOCK_SAMPLE_INSUFFICIENT');
  if(!Array.isArray(catalog)||catalog.length<50)throw Error('STOCK_TAXONOMY_MISSING');
- const candidates=selectLeaders(snapshot,catalog).filter(g=>g.stocks.filter(s=>s.changePct>=2).length>=2&&g.stocks.some(s=>s.changePct>=4));
+ const candidates=selectLeaders(snapshot,catalog,{coRise:true});
  const sources=[],sectors=[];
  for(const group of candidates){
   const matches=headlines.filter(n=>validHeadline(n,group)&&n.day===date&&/^https:\/\//.test(n.link));
@@ -61,7 +61,7 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
   });
   if(sectors.length>=5)break;
  }
- return {date,session:'KRX 정규장 마감 · LS 저장 종목 검증',summary:'거래대금 상위 LS 표본·당일 신뢰매체 기사로 교차확인한 강세 섹터 '+sectors.length+'개',coverageNote:'정규장 종가 확인, LS 표본에서 동반 상승한 종목에 한해 당일 매체 기사와 교차검증. 순서는 표본 평균등락률 순의 후보 선정이며 KRX 공식 섹터 TOP5 순위가 아닙니다. 당일 시가총액·섹터 전체 Breadth·대표종목 기관/외국인 수급·확정 지속일 등 미확인 값은 강도점수 미산출. 기사 제목만으로 인과관계를 확정하지 않음. 검증 가능한 '+sectors.length+'개만 등록.',marketFlow:'종목별 수급 원자료 미확인 · 섹터 수급 점수 미산출',sources,sectors};
+ return {date,session:'KRX 정규장 마감 · LS 저장 종목 검증',summary:'거래대금 상위 LS 표본·당일 신뢰매체 기사로 교차확인한 강세 섹터 '+sectors.length+'개',coverageNote:'정규장 종가 확인, LS 표본에서 동반 상승한 종목에 한해 당일 매체 기사와 교차검증. 상승 종목 2개 이상·상승 비율 60% 이상·표본 평균 양수 조건이며, 상승 비율·평균등락률·거래대금 순으로 선정합니다. KRX 공식 섹터 TOP5 순위가 아닙니다. 당일 시가총액·섹터 전체 Breadth·대표종목 기관/외국인 수급·확정 지속일 등 미확인 값은 강도점수 미산출. 기사 제목만으로 인과관계를 확정하지 않음. 검증 가능한 '+sectors.length+'개만 등록.',marketFlow:'종목별 수급 원자료 미확인 · 섹터 수급 점수 미산출',sources,sectors};
 }
 
 export function updateIndex(original,date){
@@ -102,7 +102,7 @@ export async function main({date=currentDay(),readData=checkedFetch,readNews=che
   const catalog=JSON.parse(readFileSync(path('src/data/stock-map.json'),'utf8'));
   let google=[];
   try{google=parseNews(await readNews(rssUrl(),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
-  const queries=selectLeaders(snapshot,catalog).map(g=>g.name);
+  const queries=selectLeaders(snapshot,catalog,{coRise:true}).map(g=>g.name);
   const naver=await readNaver(date,queries);
   console.log('NAVER_SECTOR_NEWS status='+naver.status+' count='+naver.items.length);
   headlines=mergeSectorNews(naver.items,google);

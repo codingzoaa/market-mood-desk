@@ -59,3 +59,11 @@ test('real sector report uses Telegram only when same-day data validated',async(
  assert.equal(messages.length,1);
  assert.match(messages[0],/강세·이슈 섹터/);
 });
+test('co-rise mode requires a positive majority and ranks breadth ahead of one outlier',()=>{
+ const stock=(symbol,changePct)=>({symbol,name:symbol,changePct,turnoverKRW:100});
+ const groups=[['A',[0.5,0.2]],['B',[20,0.1,-1]],['C',[20,0.1,-1,-1]],['D',[1,-0.2]],['E',[1,1,-5]]];
+ const stocks=[],map=[];let i=500000;
+ for(const [sector,changes] of groups)for(const pct of changes){const symbol=String(i++);stocks.push(stock(symbol,pct));map.push({symbol,sector});}
+ const leaders=selectLeaders({date,stocks},map,{coRise:true});
+ assert.deepEqual(leaders.map(x=>x.name),['A','B']);
+});

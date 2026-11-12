@@ -19,7 +19,7 @@ export function parseNews(xml,date){
  });
  return entries.filter(n=>n.day===date&&trusted.test(n.source)&&n.headline.length>8&&/^https:\/\//.test(n.link));
 }
-export function selectLeaders(snapshot,stockMap){
+export function selectLeaders(snapshot,stockMap,{coRise=false}={}){
  ensure(snapshot&&snapshot.date,'SECTOR_SNAPSHOT_MISSING');
  const curated=new Map(stockMap.filter(x=>typeof x.sector==='string'&&x.sector!=='분류 대기').map(x=>[x.symbol,x]));
  const groups=new Map();
@@ -37,7 +37,7 @@ export function selectLeaders(snapshot,stockMap){
   const avg=stocks.reduce((a,s)=>a+s.changePct,0)/stocks.length;
   const turnover=stocks.reduce((a,s)=>a+s.turnoverKRW,0);
   return {name,stocks,avg,turnover,gainers:gainers.length};
- }).filter(g=>g.stocks.length>=2&&g.gainers>=2&&g.avg>0).sort((a,b)=>b.avg-a.avg||b.turnover-a.turnover).slice(0,5);
+ }).filter(g=>g.stocks.length>=2&&g.gainers>=2&&g.avg>0&&(!coRise||g.gainers/g.stocks.length>=0.6)).sort((a,b)=>(coRise?b.gainers/b.stocks.length-a.gainers/a.stocks.length:0)||b.avg-a.avg||b.turnover-a.turnover).slice(0,5);
 }
 export function render(date,snapshot,leaders,news){
  ensure(snapshot.date===date,'SECTOR_DATE_MISMATCH');
