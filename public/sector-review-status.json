@@ -1,11 +1,9 @@
 {
   "date": "2026-11-12",
-  "status": "pending",
-  "checkedAt": "2026-11-12T13:42:21.585Z",
-  "reason": "검증 보류: LS 표본 동반 상승과 당일 신뢰매체 기사를 동시에 충족한 섹터 없음. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.",
+  "status": "published",
+  "checkedAt": "2026-11-12T13:46:03.790Z",
+  "reason": "LS 정규장 종가와 한국경제 당일 원문을 직접 대조해 우주항공 1개 섹터 등록. 공급 논의와 확정 계약은 구분.",
   "sources": [
-    "https://www.newspim.com/news/view/20261112001365",
-    "https://www.newspim.com/news/view/20261112001222",
-    "https://www.newsis.com/view/NISX20261112_0003865043"
+    "https://www.hankyung.com/article/202611122578i"
   ]
 }
