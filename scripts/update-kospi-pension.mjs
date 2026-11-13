@@ -23,13 +23,19 @@ if(current.schemaVersion!==1||current.pensionUnit!=='십억원'||!Array.isArray(
 const last=current.rows.at(-1);
 if(date<last[0]){console.log('Historical day ignored: '+date);process.exit(0);}
 if(date===last[0]){
- if(last[1]!==kospiClose||last[2]!==pensionNetBuyBillion)throw Error('Historical final data conflict; manual reconciliation required');
- console.log('No new trading day');process.exit(0);
+ const changed=last[1]!==kospiClose||last[2]!==pensionNetBuyBillion;
+ const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date());
+ const previousObservation=Date.parse(current.latestDataObservedAt||'');
+ const newer=Number.isFinite(previousObservation)&&Date.parse(observedAt)>previousObservation;
+ if(changed&&(date!==today||!newer||current.latestDataSource!==source))throw Error('Historical final data conflict; manual reconciliation required');
+ if(!newer){console.log('No new trading day');process.exit(0);}
+ current.rows[current.rows.length-1]=[date,kospiClose,pensionNetBuyBillion];
+}else{
+ const previousDate=new Date(last[0]+'T00:00:00Z');
+ const newDate=new Date(date+'T00:00:00Z');
+ if(newDate-previousDate>12*86400000)throw Error('Gap exceeds 12 calendar days: backfill required');
+ current.rows.push([date,kospiClose,pensionNetBuyBillion]);
 }
-const previousDate=new Date(last[0]+'T00:00:00Z');
-const newDate=new Date(date+'T00:00:00Z');
-if(newDate-previousDate>12*86400000)throw Error('Gap exceeds 12 calendar days: backfill required');
-current.rows.push([date,kospiClose,pensionNetBuyBillion]);
 current.lastDate=date;
 current.source='KRX 사용자 제공 이력 + LS증권 KRX t1511/t1601 장 마감 추가분';
 current.latestDataSource=source;
