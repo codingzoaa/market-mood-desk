@@ -8,6 +8,7 @@ import {readStockRegistry,syncStockRegistry,attachStockSectors} from './stock-re
 import {safeCollectSectorEtfs,sectorEtfPayload,etfHoldingsPayload} from './sector-etfs.mjs';
 import {validOHLC,archivedIndexCandles,attachIndexCandles} from './index-ohlc.mjs';
 import {mergeCorrelationHistory} from './correlation-history.mjs';
+import {collectClosingFlows} from './closing-flows.mjs';
 import {collectDetails,enrichDetails} from './details.mjs';
 import {recoverIntradayFlows} from './intraday-recovery.mjs';
 import {pensionDailyFeed} from './pension-signal.mjs';
@@ -200,6 +201,7 @@ export default {
   if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}
   if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
+  await collectClosingFlows(env);
   await collectDetails(env);
   // Cron performs the short, clock-aligned flow sample immediately. Long stock,
   // historical recovery and heatmap work runs in the durable alarm instead.

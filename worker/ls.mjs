@@ -56,15 +56,18 @@ export function verifySession(data,now=new Date()){
 
 // 16:10 is the final collection minute; reject requests/responses from16:11.
 export function assertCollectionWindow(now=new Date()){if(!collectWindow(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');}
-export function collectionFetch(fetcher,clock=()=>new Date()){
+export function collectionFetch(fetcher,clock=()=>new Date(),finalMinute='1610'){
+ const allowed=now=>{const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<=finalMinute;};
+ const assertAllowed=now=>{if(!allowed(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');};
  return async(url,options={})=>{
-  const now=clock();assertCollectionWindow(now);
-  const remaining=Date.parse(kst(now).date+'T16:11:00+09:00')-now.getTime();
+  const now=clock();assertAllowed(now);
+  const hour=Number(finalMinute.slice(0,2)),minute=Number(finalMinute.slice(2))+1;
+  const remaining=Date.parse(kst(now).date+'T'+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':00+09:00')-now.getTime();
   const deadline=AbortSignal.timeout(Math.max(1,remaining));
   let response;
   try{response=await fetcher(url,{...options,signal:options.signal?AbortSignal.any([options.signal,deadline]):deadline});}
-  catch(error){if(!collectWindow(clock())||deadline.aborted)throw new LSFailure('COLLECTION_WINDOW_CLOSED');throw error;}
-  assertCollectionWindow(clock());return response;
+  catch(error){if(!allowed(clock())||deadline.aborted)throw new LSFailure('COLLECTION_WINDOW_CLOSED');throw error;}
+  assertAllowed(clock());return response;
  };
 }
 
