@@ -48,7 +48,8 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
  async function saveNote(){if(!snap||demo)return;setBusy(true);try{await api('/api/note',{date:selected,note});setSnapshots(prev=>prev.map(s=>s.date===selected?{...s,note}:s));notify('날짜별 메모를 저장했습니다.');}catch(e){notify((e as Error).message);}finally{setBusy(false);}}
  const turnoverPool=turnoverLeaders(snap?.stocks||[],topN,market,snap?.etfs);
  const filtered=(stockMode==='strong'?stocks:turnoverPool).filter(s=>(theme==='ALL'||s.themes.includes(theme))&&(!watchOnly||stars.includes(s.symbol))&&[s.name,s.symbol,...s.themes].join(' ').toLowerCase().includes(search.toLowerCase())).sort((a,b)=>sort==='change'?b.changePct-a.changePct:sort==='name'?a.name.localeCompare(b.name):b.turnoverKRW-a.turnoverKRW);
- const asOf=snap?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(snap.asOf)):'';
+ const signalStamp=view==='signals'?snap?.details?.flows?.asOf:undefined;
+ const asOf=snap?new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(signalStamp||snap.asOf)):'';
  const lastDate=dates.at(-1);
  const Empty=({title='저장된 시세를 기다립니다.',description='평일 09:00–16:10에 5분마다 자동 수집합니다. 수집이 완료되면 자동으로 표시됩니다.'}:{title?:string;description?:string})=><div className="empty-state"><Database size={30}/><h3>{title}</h3><p>{description}</p></div>;
  function dayLeadersPanel(){return <section className="panel calendar-day-detail"><div className="section-title"><div><span className="eyebrow">SELECTED DAY</span><h2>{view==='overview'?'오늘의 주도주':selected.replaceAll('-','.')+'의 주도주'}</h2></div><span className="badge">{snap?stocks.length+'개 강세':'미등록'}</span></div>{snap?<><div className="day-sector-summary">{sectors.slice(0,3).map(s=><span key={s.name}>{s.name}<b>{pct(s.changePct)}</b></span>)}</div><ol className="day-leaders">{stocks.slice(0,5).map(s=><li key={s.symbol}><button onClick={()=>setDetail(s)}><strong>{s.name}</strong><small>{s.themes.join(' · ')||s.market}</small></button><span className="positive">{pct(s.changePct)}</span><b>{money(s.turnoverKRW)}</b></li>)}</ol>{!stocks.length&&<p className="footnote">이 날짜에 +4% 조건에 맞는 종목이 없습니다.</p>}</>:<Empty/>}</section>;}
@@ -108,7 +109,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='calendar'&&<CloseCalendar snapshots={snapshots}/>} 
     {view==='stockmap'&&<StockSectorMap/>}
     {view==='data'&&dataPage()}
-    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>KRX · 16:10까지 수집 · KST</span></footer>}
+    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>KRX · 수급·시장 신호 16:15 마감 · KST</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}

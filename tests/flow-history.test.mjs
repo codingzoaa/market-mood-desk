@@ -12,7 +12,7 @@ test('history buckets deduplicate, survive failures, reject stale indices and st
  const replaced=appendFlowHistory(first,details('09:07:00',120));assert.equal(replaced.length,1);assert.equal(replaced[0].markets.KOSPI.individual,120);
  const failed=details('09:10:00');failed.errors.flows='LS_ERROR';assert.deepEqual(appendFlowHistory(first,failed),first);
  const stale=details('09:10:00');stale.indices.KOSPI.asOf=date+'T09:00:00+09:00';assert.deepEqual(appendFlowHistory(first,stale),first);
- assert.equal(appendFlowHistory([],details('08:59:59')).length,0);assert.equal(appendFlowHistory([],details('16:11:00')).length,0);
+ assert.equal(appendFlowHistory([],details('08:59:59')).length,0);assert.equal(appendFlowHistory([],details('16:16:00')).length,0);
 });
 test('5 minute changes require consecutive real observations, including after gaps',()=>{
  let history=[];for(const [time,value] of [['09:05:00',100],['09:10:00',150],['09:20:00',300]])history=appendFlowHistory(history,details(time,value));
