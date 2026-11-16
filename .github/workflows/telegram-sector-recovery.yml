@@ -1,5 +1,8 @@
 name: Recover owner-requested failed sector briefing
 on:
+  push:
+    branches: [main]
+    paths: ['.github/sector-recovery-request.json']
   workflow_run:
     workflows: ['Deploy LS Cloudflare Worker']
     types: [completed]
@@ -11,13 +14,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   recover:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_commit.message, 'ops: recover')
+    if: >-
+      github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_commit.message, 'ops: recover')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
