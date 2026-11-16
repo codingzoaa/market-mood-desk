@@ -1,0 +1,48 @@
+[
+  {
+    "symbol": "457190",
+    "name": "이수스페셜티케미컬",
+    "market": "KOSPI",
+    "sector": "2차전지",
+    "subSector": "전고체전지 소재",
+    "themes": [
+      "전고체전지",
+      "황화리튬",
+      "정밀화학"
+    ],
+    "breadth": false,
+    "reviewRequired": false,
+    "updatedAt": "2026-11-16",
+    "verification": {
+      "status": "verified",
+      "method": "COMPANY_BUSINESS_REVIEW_V1",
+      "checkedAt": "2026-11-16T07:55:11.448358Z",
+      "sourceUrl": "https://www.isuspecialtychemical.com/kor/public/getPrc1001View.do?IDX=227",
+      "businessSourceUrl": "https://www.isuspecialtychemical.com/kor/public/getPrc1001View.do?IDX=227",
+      "businessReviewedAt": "2026-11-16"
+    }
+  },
+  {
+    "symbol": "093370",
+    "name": "후성",
+    "market": "KOSPI",
+    "sector": "2차전지",
+    "subSector": "전해질·전해질염",
+    "themes": [
+      "전해질",
+      "LiPF6",
+      "불소화학"
+    ],
+    "breadth": false,
+    "reviewRequired": false,
+    "updatedAt": "2026-11-16",
+    "verification": {
+      "status": "verified",
+      "method": "COMPANY_BUSINESS_REVIEW_V1",
+      "checkedAt": "2026-11-16T07:55:11.448358Z",
+      "sourceUrl": "https://www.foosungchem.com/pro/product_bat_view01.asp",
+      "businessSourceUrl": "https://www.foosungchem.com/pro/product_bat_view01.asp",
+      "businessReviewedAt": "2026-11-16"
+    }
+  }
+]

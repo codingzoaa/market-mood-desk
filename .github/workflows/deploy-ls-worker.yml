@@ -6,6 +6,7 @@ on:
       - 'worker/**'
       - 'src/data/stock-map.json'
       - 'src/data/stock-map-verified.json'
+      - 'src/data/stock-sector-reviews.json'
       - '.github/workflows/deploy-ls-worker.yml'
   workflow_dispatch:
 permissions:

@@ -1,3 +1,4 @@
+import businessReviews from '../src/data/stock-sector-reviews.json' with {type:'json'};
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import official from '../src/data/stock-map-verified.json' with {type:'json'};
 import {sectorCandidate,pendingSector,identityName,VERIFICATION_METHOD} from './stock-verification.mjs';
@@ -40,7 +41,7 @@ export function inferCuratedSector(tags){
  return {sector,subSector:subSectors.length===1?subSectors[0]:'세부 분류 검토',themes:themes.length?themes:clean.includes(sector)?[sector]:[]};
 }
 export function top100Missing(stocks,etfs,entries){
- const denied=new Set(etfs.map(x=>x.symbol)),known=new Set([...CURATED,...entries.filter(x=>!x.reviewRequired&&!pendingSector(x.sector)).map(x=>x.symbol)]);
+ const denied=new Set(etfs.map(x=>x.symbol)),known=new Set([...CURATED,...entries.filter(x=>!x.reviewRequired&&!pendingSector(x.sector)&&!pendingSector(x.subSector)).map(x=>x.symbol)]);
  const seen=new Set();
  return stocks.filter(x=>sectorCandidate(x)&&!denied.has(x.symbol))
   .sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol)).slice(0,100)
@@ -53,8 +54,9 @@ export async function readStockRegistry(env){
  // The audited exchange-source manifest overrides old pending/inferred rows,
  // while the curated map remains authoritative in both consumers.
  for(const entry of official.entries||[])if(sectorCandidate(entry)&&!CURATED.has(entry.symbol)){const prior=merged.get(entry.symbol);merged.set(entry.symbol,{...entry,...(entry.reviewRequired&&prior?.nextRetryAt?{nextRetryAt:prior.nextRetryAt,lastAttemptAt:prior.lastAttemptAt}: {})});}
+ for(const entry of businessReviews){const prior=merged.get(entry.symbol);if(!CURATED.has(entry.symbol)&&(!prior||prior.market===entry.market&&identityName(prior.name)===identityName(entry.name)))merged.set(entry.symbol,{...prior,...entry});}
  const entries=[...merged.values()].filter(x=>!CURATED.has(x.symbol)).slice(0,5000);
- return {version:1,entries,updatedAt:[stored?.updatedAt,official.checkedAt].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
+ return {version:1,entries,updatedAt:[stored?.updatedAt,official.checkedAt,...businessReviews.map(e=>e.verification.checkedAt)].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
 }
 export async function syncStockRegistry(env,snapshot,request,wait){
  const registry=await readStockRegistry(env);
@@ -68,7 +70,7 @@ export async function syncStockRegistry(env,snapshot,request,wait){
    const data=(await request('t1532',{shcode:stock.symbol})).data;
    if(!Array.isArray(data?.t1532OutBlock))throw Error('LS_THEME_RESPONSE_INVALID');
    const tags=data.t1532OutBlock.map(x=>x.tmname).filter(x=>typeof x==='string'&&x.trim()&&x.length<=60);
-   const classification=inferCuratedSector(tags),pending=pendingSector(classification.sector);
+   const classification=inferCuratedSector(tags),pending=pendingSector(classification.sector)||pendingSector(classification.subSector);
    const entry={symbol:stock.symbol,name:stock.name,market:stock.market,...classification,breadth:false,updatedAt:snapshot.date,source:'LS t1532 · 섹터맵 규칙',reviewRequired:pending,lastAttemptAt:new Date(now).toISOString(),...(pending?{nextRetryAt:new Date(now+86400000).toISOString()}: {})};
    const index=registry.entries.findIndex(x=>x.symbol===stock.symbol);if(index<0){registry.entries.push(entry);added++;}else{registry.entries[index]=entry;updated++;}
   }catch{if(++failures>=3)break;}
