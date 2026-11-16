@@ -145,3 +145,15 @@ export async function deliverScheduled(event,env,now=new Date(),dependencies={})
  }
  return {date:k.date,results};
 }
+
+// Owner-requested same-day recovery uses the same D1 id/lease as the cron.
+// It cannot re-send a successful briefing or affect the market-close briefing.
+export async function recoverSectorDelivery(env,date,now=new Date(),dependencies={}){
+ const k=kst(now);
+ assert(date===k.date&&!['Sat','Sun'].includes(k.weekday)&&slotMinutes(k.time)>=990,'SECTOR_RECOVERY_DATE_OR_TIME_INVALID');
+ const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('telegram:v3:'+date+':sector').first();
+ const previous=row?.payload?JSON.parse(row.payload):null;
+ if(previous?.status==='sent')return {kind:'sector',status:'already-sent'};
+ assert(previous?.status==='failed','SECTOR_RECOVERY_REQUIRES_FAILED_RECORD');
+ return attempt(env,'sector',date,now,dependencies);
+}

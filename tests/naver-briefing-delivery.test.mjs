@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {fetchNaverBriefingNews} from '../worker/naver-briefing-news.mjs';
-import {deliverScheduled,DELIVERY_CRONS} from '../worker/telegram-delivery.mjs';
+import {deliverScheduled,DELIVERY_CRONS,recoverSectorDelivery} from '../worker/telegram-delivery.mjs';
 const date='2026-11-10';
 const item=(title,url='https://www.hankyung.com/article/1',time='Tue, 10 Nov 2026 07:00:00 GMT')=>`<item><title><![CDATA[${title}]]></title><originallink>${url}</originallink><pubDate>${time}</pubDate></item>`;
 const xml='<rss><channel>'+item('코스피 반도체 <b>동반 상승</b> 확인')+item('어제 기사 제외',undefined,'Mon, 09 Nov 2026 07:00:00 GMT')+item('가짜 언론사 기사 제외','https://hankyung.com.evil.test/a')+'</channel></rss>';
@@ -22,7 +22,7 @@ function memoryDb(){
  const states=new Map([['telegram:v3:'+date+':close',{status:'sent',attempts:1}]]);
  const snapshot={date,asOf:'2026-11-10T06:33:00Z',stocks:[{symbol:'005930',name:'삼성전자',changePct:1,turnoverKRW:1e9},{symbol:'000660',name:'SK하이닉스',changePct:2,turnoverKRW:2e9},...Array.from({length:8},(_,i)=>({symbol:String(600000+i),name:'표본',changePct:-1,turnoverKRW:1e6}))]};
  return {states,prepare(sql){return {bind(...args){return {
-  async first(){if(sql.includes('FROM snapshots'))return {payload:JSON.stringify(snapshot)};if(sql.startsWith('UPDATE state')){const id=args[1],s=states.get(id);if(s.status==='sent')return null;return {payload:JSON.stringify(s)};}throw Error('unexpected read');},
+  async first(){if(sql.startsWith('SELECT payload FROM state')){const s=states.get(args[0]);return s?{payload:JSON.stringify(s)}:null;}if(sql.includes('FROM snapshots'))return {payload:JSON.stringify(snapshot)};if(sql.startsWith('UPDATE state')){const id=args[1],s=states.get(id);if(s.status==='sent')return null;return {payload:JSON.stringify(s)};}throw Error('unexpected read');},
   async run(){if(sql.startsWith('INSERT')){if(!states.has(args[0]))states.set(args[0],JSON.parse(args[1]));}else states.set(args[1],JSON.parse(args[0]));}
  };}};}};
 }
@@ -34,4 +34,17 @@ test('scheduled worker builds sector briefing with Naver then sends once, preser
 test('all Naver failures stop before Telegram and retain a retriable D1 failure',async()=>{
  const DB=memoryDb();let sends=0;await deliverScheduled({cron:DELIVERY_CRONS[0]},{DB,...credentials},new Date('2026-11-10T07:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='api.telegram.org')sends++;return new Response('',{status:503});}});
  assert.equal(sends,0);assert.equal(DB.states.get('telegram:v3:'+date+':sector').error,'NAVER_NEWS_HTTP_503');
+});
+
+
+test('owner recovery cannot resend successful messages or send a different day',async()=>{
+ const DB=memoryDb();DB.states.set('telegram:v3:'+date+':sector',{status:'sent',attempts:2,messageId:9});
+ const result=await recoverSectorDelivery({DB},date,new Date('2026-11-10T13:30:00Z'),{fetcher:()=>{throw Error('must not call')}});
+ assert.equal(result.status,'already-sent');
+ await assert.rejects(()=>recoverSectorDelivery({DB},'2026-11-09',new Date('2026-11-10T13:30:00Z')),/DATE_OR_TIME/);
+});
+test('owner recovery sends only a failed sector record after the normal cron window',async()=>{
+ const DB=memoryDb();DB.states.set('telegram:v3:'+date+':sector',{status:'failed',attempts:7,error:'NEWS_HTTP_503'});let sent=0;
+ const result=await recoverSectorDelivery({DB,...credentials,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},date,new Date('2026-11-10T13:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='openapi.naver.com')return new Response(xml);sent++;return Response.json({ok:true,result:{message_id:8}});}});
+ assert.equal(result.status,'sent');assert.equal(sent,1);assert.equal(DB.states.get('telegram:v3:'+date+':sector').attempts,8);assert.equal(DB.states.get('telegram:v3:'+date+':close').attempts,1);
 });
