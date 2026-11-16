@@ -130,7 +130,7 @@ export default {
      const state=row?.payload?JSON.parse(row.payload):null;
      reports[kind]=state?{status:state.status,attempts:state.attempts||0,at:state.at||null,error:state.error||null}:{status:'not_attempted',attempts:0,at:null,error:null};
     }
-    return reply({date,reports,source:'Cloudflare D1 / Telegram API'});
+    return reply({date,reports,sectorNews:{provider:'NAVER_NEWS_SEARCH_XML',configured:Boolean(env.NAVER_CLIENT_ID&&env.NAVER_CLIENT_SECRET)},source:'Cloudflare D1 / Telegram API'});
    }
    if(path==='/api/breadth-close')return reply(await breadthCloseFeed(env));
    if(path==='/api/put-kospi-daily')return reply(await putDailyFeed(env));

@@ -1,3 +1,4 @@
+import {fetchNaverBriefingNews} from '../worker/naver-briefing-news.mjs';
 import {readFileSync} from 'node:fs';
 
 const TZ='Asia/Seoul';
@@ -78,12 +79,7 @@ export async function main(env=process.env,dependencies={}){
  ensure(snapshot,'SECTOR_TODAY_NOT_SAVED');
  const map=dependencies.stockMap||JSON.parse(readFileSync(new URL('../src/data/stock-map.json',import.meta.url),'utf8'));
  const leaders=selectLeaders(snapshot,map);
- // Fetch time-stamped same-day headlines, not conjectured catalysts.
- const rss=new URL('https://news.google.com/rss/search');
- rss.searchParams.set('q','(코스피 OR 코스닥) (반도체 OR 이차전지 OR 바이오 OR 방산 OR 조선 OR 전력 OR 로봇) when:1d');
- rss.searchParams.set('hl','ko');rss.searchParams.set('gl','KR');rss.searchParams.set('ceid','KR:ko');
- const xml=await (dependencies.readNews || (async(u)=>await (await get(u)).text()))(rss);
- const news=parseNews(xml,date).slice(0,8);
+ const news=await (dependencies.collectNews||fetchNaverBriefingNews)(date,['코스피 마감','코스닥 마감',...leaders.map(g=>g.name+' 강세')],{env});
  const report=render(date,snapshot,leaders,news);
  if(env.TELEGRAM_DRY_RUN==='true'){console.log('SECTOR_DRY_RUN_OK '+date);return {status:'checked',date};}
  ensure(env.TELEGRAM_BOT_TOKEN&&env.TELEGRAM_CHAT_ID,'TELEGRAM_CREDENTIALS_MISSING');

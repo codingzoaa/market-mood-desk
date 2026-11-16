@@ -42,7 +42,7 @@ test('dry run never calls Telegram and still validates stored date',async()=>{
   now:new Date('2026-11-09T07:15:00Z'),
   stockMap,
   readJson:async()=>({snapshots:[snapshot]}),
-  readNews:async()=>xml,
+  collectNews:async()=>parseNews(xml,date),
   deliverMessage:async()=>{sent=true;}
  });
  assert.equal(result.status,'checked');
@@ -52,7 +52,7 @@ test('real sector report uses Telegram only when same-day data validated',async(
  const messages=[];
  const result=await main({TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},{
   now:new Date('2026-11-09T07:15:00Z'),stockMap,
-  readJson:async()=>({snapshots:[snapshot]}),readNews:async()=>xml,
+  readJson:async()=>({snapshots:[snapshot]}),collectNews:async()=>parseNews(xml,date),
   deliverMessage:async msg=>messages.push(msg)
  });
  assert.equal(result.status,'delivered');

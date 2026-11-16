@@ -57,6 +57,8 @@ jobs:
         env:
           MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
           MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           TELEGRAM_DRY_RUN: 'true'
         run: node ${{ matrix.entrypoint }}
       - name: Send verified briefing to Telegram
@@ -65,6 +67,8 @@ jobs:
         env:
           MARKET_DETAILS_URL: https://market-note-ls-api.kby0991.workers.dev/api/market-details
           MARKET_DASHBOARD_URL: https://market-note-ls-api.kby0991.workers.dev/api/dashboard
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node ${{ matrix.entrypoint }}

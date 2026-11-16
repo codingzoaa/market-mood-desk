@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'worker/**'
+      - 'shared/naver-news.mjs'
       - 'src/data/stock-map.json'
       - 'src/data/stock-map-verified.json'
       - 'src/data/stock-sector-reviews.json'
@@ -37,6 +38,8 @@ jobs:
         env:
           RAW_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           RAW_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          RAW_NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          RAW_NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           RAW_TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           node --input-type=module <<'JS'
@@ -83,11 +86,13 @@ jobs:
           const bot=process.env.RAW_TELEGRAM_BOT_TOKEN||'';
           const chat=process.env.RAW_TELEGRAM_CHAT_ID||'';
           if(!bot||!chat){console.error('TELEGRAM_GITHUB_SECRETS_MISSING; refusing incomplete Cloudflare Cron deployment');process.exit(1);}
+          const naverId=(process.env.RAW_NAVER_CLIENT_ID||'').trim(),naverSecret=(process.env.RAW_NAVER_CLIENT_SECRET||'').trim();
+          if(!naverId||!naverSecret){console.error('NAVER_NEWS_GITHUB_SECRETS_MISSING');process.exit(1);}
           const dir=mkdtempSync(join(tmpdir(),'market-note-secrets-'));
           const path=join(dir,'secrets.json');
           try{
-            writeFileSync(path,JSON.stringify({TELEGRAM_BOT_TOKEN:bot,TELEGRAM_CHAT_ID:chat}),{mode:0o600});
-            delete env.RAW_TELEGRAM_BOT_TOKEN;delete env.RAW_TELEGRAM_CHAT_ID;
+            writeFileSync(path,JSON.stringify({TELEGRAM_BOT_TOKEN:bot,TELEGRAM_CHAT_ID:chat,NAVER_CLIENT_ID:naverId,NAVER_CLIENT_SECRET:naverSecret}),{mode:0o600});
+            delete env.RAW_TELEGRAM_BOT_TOKEN;delete env.RAW_TELEGRAM_CHAT_ID;delete env.RAW_NAVER_CLIENT_ID;delete env.RAW_NAVER_CLIENT_SECRET;
             const child=spawnSync('npx',['--yes','wrangler@4','deploy','--config','wrangler.jsonc','--secrets-file',path],{cwd:process.cwd(),env,stdio:'inherit'});
             if(child.error)console.error('WRANGLER_EXECUTION_FAILED '+child.error.name);
             process.exitCode=child.status??1;
@@ -134,4 +139,20 @@ jobs:
                   }])):null
             }));
           }catch{console.log('LS_VENUE_PROBE_UNAVAILABLE');}
+          JS
+
+      - name: Verify Naver news and deployed configuration without sending Telegram
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: |
+          node --input-type=module <<'JS'
+          import {fetchNaverBriefingNews} from './worker/naver-briefing-news.mjs';
+          const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+          const items=await fetchNaverBriefingNews(date,['코스피 마감','코스닥 마감'],{env:process.env});
+          console.log('NAVER_BRIEFING_VERIFY '+JSON.stringify({date,provider:'NAVER_NEWS_SEARCH_XML',trustedSameDay:items.length,telegramSent:false}));
+          const r=await fetch('https://market-note-ls-api.kby0991.workers.dev/api/telegram-delivery-status?date='+date,{redirect:'error',signal:AbortSignal.timeout(15000)});
+          const state=await r.json();
+          if(!r.ok||state.sectorNews?.provider!=='NAVER_NEWS_SEARCH_XML'||state.sectorNews?.configured!==true)throw Error('WORKER_NAVER_CONFIGURATION_NOT_READY');
+          console.log('WORKER_NAVER_CONFIGURATION_READY');
           JS

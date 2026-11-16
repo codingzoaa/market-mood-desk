@@ -1,3 +1,4 @@
+import {fetchNaverBriefingNews} from './naver-briefing-news.mjs';
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import {kst} from './ls.mjs';
 
@@ -100,12 +101,7 @@ async function readPayload(env,kind,date,fetcher=fetch){
  const r=await env.DB.prepare('SELECT payload FROM snapshots WHERE date=?').bind(date).first();
  assert(r?.payload,'SECTOR_STORED_DATA_MISSING');
  const snapshot=JSON.parse(r.payload);
- const rss=new URL('https://news.google.com/rss/search');
- rss.searchParams.set('q','(코스피 OR 코스닥) (반도체 OR 이차전지 OR 바이오 OR 방산 OR 조선 OR 로봇) when:1d');
- rss.searchParams.set('hl','ko');rss.searchParams.set('gl','KR');rss.searchParams.set('ceid','KR:ko');
- const response=await fetcher(rss,{signal:AbortSignal.timeout(15000)});
- assert(response.ok,'NEWS_HTTP_'+response.status);
- const news=filterNews(await response.text(),date);
+ const news=await fetchNaverBriefingNews(date,['코스피 마감','코스닥 마감',...sectorGroups(snapshot).map(g=>g.sector+' 강세')],{env,request:fetcher});
  return formatSector(date,snapshot,news);
 }
 async function transmit(env,message,fetcher=fetch){
