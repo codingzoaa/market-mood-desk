@@ -19,7 +19,7 @@ test('missing credentials, exhausted Naver requests and empty verified news rema
  await assert.rejects(()=>fetchNaverBriefingNews(date,['시장'],{env:credentials,request:async()=>new Response('<rss><channel></channel></rss>')}),/NO_VERIFIED_ARTICLES/);
 });
 function memoryDb(){
- const states=new Map([['telegram:v3:'+date+':close',{status:'sent',attempts:1}]]);
+ const states=new Map([['telegram:v3:'+date+':close',{status:'sent',attempts:1}],['sector-news:naver:'+date,{date,provider:'NAVER_NEWS_SEARCH_XML',receivedAt:'2026-11-10T07:20:00Z',news:[{headline:'코스피 반도체 동반 상승 확인',link:'https://www.hankyung.com/article/1',published:'Tue, 10 Nov 2026 07:00:00 GMT',provider:'네이버 뉴스'}]}]]);
  const snapshot={date,asOf:'2026-11-10T06:33:00Z',stocks:[{symbol:'005930',name:'삼성전자',changePct:1,turnoverKRW:1e9},{symbol:'000660',name:'SK하이닉스',changePct:2,turnoverKRW:2e9},...Array.from({length:8},(_,i)=>({symbol:String(600000+i),name:'표본',changePct:-1,turnoverKRW:1e6}))]};
  return {states,prepare(sql){return {bind(...args){return {
   async first(){if(sql.startsWith('SELECT payload FROM state')){const s=states.get(args[0]);return s?{payload:JSON.stringify(s)}:null;}if(sql.includes('FROM snapshots'))return {payload:JSON.stringify(snapshot)};if(sql.startsWith('UPDATE state')){const id=args[1],s=states.get(id);if(s.status==='sent')return null;return {payload:JSON.stringify(s)};}throw Error('unexpected read');},
@@ -27,13 +27,14 @@ function memoryDb(){
  };}};}};
 }
 test('scheduled worker builds sector briefing with Naver then sends once, preserving already-sent close report',async()=>{
- const DB=memoryDb(),messages=[];const fetcher=async(url,options)=>{const u=new URL(url);if(u.hostname==='openapi.naver.com')return new Response(xml);assert.equal(u.hostname,'api.telegram.org');messages.push(JSON.parse(options.body).text);return Response.json({ok:true,result:{message_id:7}});};
+ const DB=memoryDb(),messages=[];const fetcher=async(url,options)=>{const u=new URL(url);assert.equal(u.hostname,'api.telegram.org');messages.push(JSON.parse(options.body).text);return Response.json({ok:true,result:{message_id:7}});};
  await deliverScheduled({cron:DELIVERY_CRONS[0]},{DB,...credentials,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},new Date('2026-11-10T07:30:00Z'),{fetcher});
+ await deliverScheduled({cron:DELIVERY_CRONS[1]},{DB,...credentials,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},new Date('2026-11-10T08:00:00Z'),{fetcher});
  assert.equal(messages.length,1);assert.match(messages[0],/네이버 뉴스/);assert.ok(!messages[0].includes('news.google.com'));assert.equal(DB.states.get('telegram:v3:'+date+':sector').status,'sent');assert.equal(DB.states.get('telegram:v3:'+date+':close').attempts,1);
 });
-test('all Naver failures stop before Telegram and retain a retriable D1 failure',async()=>{
- const DB=memoryDb();let sends=0;await deliverScheduled({cron:DELIVERY_CRONS[0]},{DB,...credentials},new Date('2026-11-10T07:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='api.telegram.org')sends++;return new Response('',{status:503});}});
- assert.equal(sends,0);assert.equal(DB.states.get('telegram:v3:'+date+':sector').error,'NAVER_NEWS_HTTP_503');
+test('missing relayed news stops before Telegram and retains a retriable D1 failure',async()=>{
+ const DB=memoryDb();DB.states.delete('sector-news:naver:'+date);let sends=0;await deliverScheduled({cron:DELIVERY_CRONS[0]},{DB,...credentials},new Date('2026-11-10T07:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='api.telegram.org')sends++;return new Response('',{status:503});}});
+ assert.equal(sends,0);assert.equal(DB.states.get('telegram:v3:'+date+':sector').error,'NAVER_NEWS_RELAY_NOT_READY');
 });
 
 
@@ -44,7 +45,7 @@ test('owner recovery cannot resend successful messages or send a different day',
  await assert.rejects(()=>recoverSectorDelivery({DB},'2026-11-09',new Date('2026-11-10T13:30:00Z')),/DATE_OR_TIME/);
 });
 test('owner recovery sends only a failed sector record after the normal cron window',async()=>{
- const DB=memoryDb();DB.states.set('telegram:v3:'+date+':sector',{status:'failed',attempts:7,error:'NEWS_HTTP_503'});let sent=0;
+ const DB=memoryDb();DB.states.get('sector-news:naver:'+date).receivedAt='2026-11-10T13:20:00Z';DB.states.set('telegram:v3:'+date+':sector',{status:'failed',attempts:7,error:'NEWS_HTTP_503'});let sent=0;
  const result=await recoverSectorDelivery({DB,...credentials,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},date,new Date('2026-11-10T13:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='openapi.naver.com')return new Response(xml);sent++;return Response.json({ok:true,result:{message_id:8}});}});
  assert.equal(result.status,'sent');assert.equal(sent,1);assert.equal(DB.states.get('telegram:v3:'+date+':sector').attempts,8);assert.equal(DB.states.get('telegram:v3:'+date+':close').attempts,1);
 });

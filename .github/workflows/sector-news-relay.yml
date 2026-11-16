@@ -1,0 +1,35 @@
+name: Relay Naver sector news to Cloudflare
+on:
+  schedule:
+    # News prefetch at 16:20 KST; refresh ahead of the existing 30-minute sends.
+    - cron: '20,25,30,55 7 * * 1-5'
+    - cron: '0,25,30,55 8-9 * * 1-5'
+    - cron: '0,25,30 10 * * 1-5'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Deploy LS Cloudflare Worker']
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: naver-sector-news-relay
+  cancel-in-progress: false
+jobs:
+  relay:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Collect same-day Naver news and cache it without sending Telegram
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node scripts/sync-sector-news.mjs

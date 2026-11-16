@@ -1,4 +1,4 @@
-import {fetchNaverBriefingNews} from './naver-briefing-news.mjs';
+import {readSectorNews} from './sector-news-cache.mjs';
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import {kst} from './ls.mjs';
 
@@ -91,7 +91,7 @@ export function formatSector(date,snapshot,news){
  assert(report.length<=3800,'SECTOR_REPORT_TOO_LONG');
  return report;
 }
-async function readPayload(env,kind,date,fetcher=fetch,verifiedNews=null){
+async function readPayload(env,kind,date,fetcher=fetch,verifiedNews=null,now=new Date()){
  if(kind==='close'){
   const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();
   assert(r?.payload,'CLOSE_STORED_DATA_MISSING');
@@ -101,7 +101,7 @@ async function readPayload(env,kind,date,fetcher=fetch,verifiedNews=null){
  const r=await env.DB.prepare('SELECT payload FROM snapshots WHERE date=?').bind(date).first();
  assert(r?.payload,'SECTOR_STORED_DATA_MISSING');
  const snapshot=JSON.parse(r.payload);
- const news=verifiedNews||await fetchNaverBriefingNews(date,['코스피 마감','코스닥 마감',...sectorGroups(snapshot).map(g=>g.sector+' 강세')],{env,request:fetcher});
+ const news=verifiedNews||await readSectorNews(env,date,now);
  return formatSector(date,snapshot,news);
 }
 async function transmit(env,message,fetcher=fetch){
@@ -123,7 +123,7 @@ async function attempt(env,kind,date,now,dependencies={}){
  if(!claim)return {kind,status:'already-sent-or-in-progress'};
  const attempts=Number(JSON.parse(claim.payload).attempts||0)+1;
  try{
-  const message=await readPayload(env,kind,date,dependencies.fetcher,dependencies.sectorNews);
+  const message=await readPayload(env,kind,date,dependencies.fetcher,dependencies.sectorNews,now);
   const messageId=await transmit(env,message,dependencies.fetcher);
   await write(env,id,{status:'sent',attempts,at:new Date(timestamp).toISOString(),messageId});
   console.log('TELEGRAM_SENT',date,kind,messageId);

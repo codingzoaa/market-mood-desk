@@ -1,3 +1,4 @@
+import {storeSectorNews} from './sector-news-cache.mjs';
 import {parseNaverNews} from '../shared/naver-news.mjs';
 import {recoverSectorDelivery} from './telegram-delivery.mjs';
 const encode=new TextEncoder();
@@ -16,7 +17,7 @@ export async function handleSectorRecovery(request,env,now=new Date(),dependenci
  const bytes=Uint8Array.from(signature.match(/../g).map(x=>parseInt(x,16)));
  if(!await crypto.subtle.verify('HMAC',await key(env.TELEGRAM_BOT_TOKEN),bytes,input(date,time,bodyHash)))return reply({error:'RECOVERY_AUTH_REQUIRED'},401);
  try{
-  let sectorNews;
+  let sectorNews,operation='recover';
   if(bodyHash){
    const reader=request.body?.getReader();if(!reader)return reply({error:'RECOVERY_BODY_REQUIRED'},400);
    const chunks=[];let length=0;while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>16384){await reader.cancel();return reply({error:'RECOVERY_BODY_TOO_LARGE'},413);}chunks.push(value);}
@@ -24,12 +25,14 @@ export async function handleSectorRecovery(request,env,now=new Date(),dependenci
    const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
    if(digest!==bodyHash)return reply({error:'RECOVERY_BODY_MISMATCH'},401);
    const data=JSON.parse(new TextDecoder().decode(bytes));
+   operation=data.operation||'recover';if(!['cache','recover'].includes(operation))return reply({error:'RECOVERY_OPERATION_INVALID'},400);
    if(!Array.isArray(data.news)||!data.news.length||data.news.length>4||data.news.some(n=>n.provider!=='네이버 뉴스'||typeof n.headline!=='string'||n.headline.length>240||typeof n.link!=='string'||n.link.length>500))return reply({error:'RECOVERY_NEWS_INVALID'},400);
    const escape=x=>String(x||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
    const xml='<rss><channel>'+data.news.map(n=>'<item><title>'+escape(n.headline)+'</title><originallink>'+escape(n.link)+'</originallink><pubDate>'+escape(n.published)+'</pubDate></item>').join('')+'</channel></rss>';
    sectorNews=parseNaverNews(xml,date).map(n=>({...n,title:n.headline,pubDate:n.published,source:n.source+' · 네이버 뉴스'}));
    if(sectorNews.length!==data.news.length)return reply({error:'RECOVERY_NEWS_INVALID'},400);
   }
+  if(operation==='cache')return reply(await storeSectorNews(env,date,sectorNews,now),200);
   const result=await recoverSectorDelivery(env,date,now,{...dependencies,...(sectorNews?{sectorNews}:{})});
   if(!['sent','already-sent'].includes(result.status))return reply(result,502);
   const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('telegram:v3:'+date+':sector').first();const state=JSON.parse(row.payload);
