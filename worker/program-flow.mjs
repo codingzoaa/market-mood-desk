@@ -29,7 +29,7 @@ export async function collectProgramFlow(env){
    try{
     await pause();const flow=(await request('t1662',{gubun,gubun1:'0',gubun3:'0',exchgubun:'K'})).data;
     await pause();const index=(await request('t8409',{shcode:upcode,ncnt:5,qrycnt:100,nday:'1',sdate:day.date.replaceAll('-',''),stime:'',edate:day.date.replaceAll('-',''),etime:'161500',cts_date:'',cts_time:'',comp_yn:'N'})).data;
-    const q=d.indices?.[market],previous=q?.value/(1+q?.changePct/100);
+    const q=d.indices?.[market],previous=q?.value-q?.change;
     const points=normalizeProgram(flow.t1662OutBlock,(index.t8409OutBlock1||[]).filter(r=>r.date===day.date.replaceAll('-','')),previous);
     if(!points.length)throw Error('PROGRAM_NO_POINTS');status.markets[market]=points;
    }catch(e){status.errors[market]=e.code||String(e.message).slice(0,60);}
