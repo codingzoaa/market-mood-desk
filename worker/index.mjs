@@ -1,3 +1,4 @@
+import {stockSearch,drawdownFeed,collectDrawdown,validSymbol} from './drawdown.mjs';
 import {collectProgramFlow,programWindow} from './program-flow.mjs';
 import {probeVenueFlows} from './flow-venue-probe.mjs';
 import {deliverScheduled,DELIVERY_CRONS} from './telegram-delivery.mjs';
@@ -105,10 +106,12 @@ export default {
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(!['/api/drawdown','/api/stock-search','/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
+   if(path==='/api/stock-search'){const q=new URL(request.url).searchParams.get('q')||'';return reply({results:await stockSearch(env,q)});}
+   if(path==='/api/drawdown'){const result=await drawdownFeed(env,new URL(request.url).searchParams.get('symbol'));const {http,...body}=result;return reply(body,http);}
    if(path==='/api/status')return reply({configured:true,...sync});
    if(path==='/api/investor-flow-venues'){
     const date=new URL(request.url).searchParams.get('date')||kst().date;
@@ -219,6 +222,7 @@ export default {
 export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
  async fetch(request,now=new Date()){
+  if(request.method==='POST'&&new URL(request.url).pathname==='/drawdown'){const symbol=new URL(request.url).searchParams.get('symbol');if(!validSymbol(symbol))return new Response(null,{status:400});await this.state.storage.put('drawdown-symbol',symbol);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/program'){if(!programWindow(now))return new Response(null,{status:204});await this.state.storage.put('program-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/naver'){if(!naverHeatmapWindow(now))return new Response(null,{status:204});await this.state.storage.put('naver-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/breadth'){if(!breadthCloseWindow(now))return new Response(null,{status:204});await this.state.storage.put('breadth-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
@@ -227,6 +231,6 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){if(this.state.storage.get&&await this.state.storage.get('program-only')){await collectProgramFlow(this.env);return;}if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await collectProgramFlow(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
+ async alarm(){const drawdownSymbol=this.state.storage.get&&await this.state.storage.get('drawdown-symbol');if(drawdownSymbol){await collectDrawdown(this.env,drawdownSymbol);return;}if(this.state.storage.get&&await this.state.storage.get('program-only')){await collectProgramFlow(this.env);return;}if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await collectProgramFlow(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
 
