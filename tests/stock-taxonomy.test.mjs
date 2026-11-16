@@ -41,7 +41,8 @@ test('reviewed complex portfolios keep evidence, one scoring subsector and multi
  const x=businessTaxonomy(issuer('028260','삼성물산','기타 전문 도매업','도소매, 건설'));
  assert.equal(x.sector,'건설·EPC');assert.equal(x.subSector,'종합건설');assert.ok(x.themes.includes('상사'));assert.match(x.sourceUrl,/samsungcnt.com/);
  assert.equal(businessTaxonomy(issuer('028260','다른회사','기타 전문 도매업','모르는사업')),null);
- assert.equal(businessTaxonomy(issuer('290690','아리바이오홀딩스','전구 및 조명장치 제조업','실내등')),null);
+ assert.equal(businessTaxonomy(issuer('290690','아리바이오홀딩스','전구 및 조명장치 제조업','실내등')).subSector,'조명·LED');
+ assert.equal(businessTaxonomy(issuer('290690','다른회사','전구 및 조명장치 제조업','실내등')),null);
 });
 test('published taxonomy uses three distinct fields and keeps every original member and Breadth membership unchanged',()=>{
  assert.ok(catalog.length>=145);

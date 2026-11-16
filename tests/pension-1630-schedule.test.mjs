@@ -18,7 +18,7 @@ test('market-note pension refresh starts at 16:30 KST every KRX weekday',()=>{
 test('a successful LS pension import triggers a GitHub Pages deployment',()=>{
  const workflow=readFileSync(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');
  assert.match(workflow,/workflow_run:/);
- assert.match(workflow,/workflows: \['Update KOSPI pension signal data'\]/);
+ assert.match(workflow,/workflows: \['Update KOSPI pension signal data'(?:, [^\n]+)?\]/);
  assert.match(workflow,/types: \[completed\]/);
  assert.match(workflow,/github\.event\.workflow_run\.conclusion == 'success'/);
  assert.match(workflow,/uses: actions\/deploy-pages@v4/);

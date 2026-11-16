@@ -1,3 +1,5 @@
+import shared from '../src/data/stock-sector-overrides.json' with {type:'json'};
+import {applySharedSectorEdits} from '../src/shared-sector-edits.mjs';
 import businessReviews from '../src/data/stock-sector-reviews.json' with {type:'json'};
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import official from '../src/data/stock-map-verified.json' with {type:'json'};
@@ -17,6 +19,8 @@ export function attachStockSectors(snapshot,registry={entries:[]}){
  return {...snapshot,stocks:snapshot.stocks.map(stock=>{
   if(!sectorCandidate(stock))return stock;
   const curated=CATALOG_BY_CODE.get(stock.symbol),entry=curated||discovered.get(stock.symbol);
+  const manual=shared.entries.find(e=>e.symbol===stock.symbol&&e.market===stock.market&&identityName(e.name)===identityName(stock.name));
+  if(manual&&snapshot.date>=manual.editedAt.slice(0,10))return {...stock,themes:[manual.sector]};
   // Current official verification supersedes inferred LS labels. Historical
   // populated tags remain intact; no future taxonomy is backdated into them.
   if(!curated&&entry?.verification?.method===VERIFICATION_METHOD&&(!entry.updatedAt||snapshot.date>=entry.updatedAt)){
@@ -55,8 +59,8 @@ export async function readStockRegistry(env){
  // while the curated map remains authoritative in both consumers.
  for(const entry of official.entries||[])if(sectorCandidate(entry)&&!CURATED.has(entry.symbol)){const prior=merged.get(entry.symbol);merged.set(entry.symbol,{...entry,...(entry.reviewRequired&&prior?.nextRetryAt?{nextRetryAt:prior.nextRetryAt,lastAttemptAt:prior.lastAttemptAt}: {})});}
  for(const entry of businessReviews){const prior=merged.get(entry.symbol);if(!CURATED.has(entry.symbol)&&(!prior||prior.market===entry.market&&identityName(prior.name)===identityName(entry.name)))merged.set(entry.symbol,{...prior,...entry});}
- const entries=[...merged.values()].filter(x=>!CURATED.has(x.symbol)).slice(0,5000);
- return {version:1,entries,updatedAt:[stored?.updatedAt,official.checkedAt,...businessReviews.map(e=>e.verification.checkedAt)].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
+ const entries=applySharedSectorEdits([...merged.values()].filter(x=>!CURATED.has(x.symbol)),shared.entries).slice(0,5000);
+ return {version:1,entries,sharedEdits:shared.entries,updatedAt:[stored?.updatedAt,official.checkedAt,...businessReviews.map(e=>e.verification.checkedAt),...shared.entries.map(e=>e.editedAt)].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
 }
 export async function syncStockRegistry(env,snapshot,request,wait){
  const registry=await readStockRegistry(env);

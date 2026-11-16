@@ -15,7 +15,7 @@ export function parseSectorEdits(raw){
 }
 export function applySectorEdits(registry,edits){
  const map=new Map(edits.map(e=>[e.symbol,e]));
- return registry.map(row=>{const e=map.get(row.symbol);if(!e||e.market!==row.market||e.name.replaceAll(' ','')!==row.name.replaceAll(' ',''))return row;
+ return registry.map(row=>{const e=map.get(row.symbol);if(!e||row.sharedEditedAt&&e.editedAt<=row.sharedEditedAt||e.market!==row.market||e.name.replaceAll(' ','')!==row.name.replaceAll(' ',''))return row;
   return {...row,sector:e.sector,subSector:e.subSector,themes:[...e.themes],manualEditedAt:e.editedAt,reviewRequired:pendingClassification(e.sector)||pendingClassification(e.subSector),verification:undefined};
  });
 }

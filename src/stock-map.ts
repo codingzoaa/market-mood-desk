@@ -1,3 +1,5 @@
+import shared from './data/stock-sector-overrides.json';
+import {applySharedSectorEdits} from './shared-sector-edits.mjs';
 import raw from './data/stock-map.json';
 import reviewed from './data/stock-sector-reviews.json';
 import type {MarketDetails} from './market-details';
@@ -13,6 +15,7 @@ export type StockMapEntry={
  updatedAt?:string;
  reviewRequired?:boolean;
  manualEditedAt?:string;
+ sharedEditedAt?:string;
  verification?:{status:'verified'|'pending';checkedAt:string;sourceUrl:string;method?:string;reason?:string;industry?:string;businessSourceUrl?:string;businessReviewedAt?:string;taxonomyVersion?:number};
 };
 
@@ -113,7 +116,7 @@ export function combinedStockMap(discovered:StockMapEntry[]=[]):StockMapEntry[]{
   if(!x||!/^\d{6}$/.test(x.symbol)||byCode.has(x.symbol)||!['KOSPI','KOSDAQ'].includes(x.market)||!x.name||!x.sector||!x.subSector||!Array.isArray(x.themes))continue;
   byCode.set(x.symbol,{...x,themes:x.themes.filter(t=>typeof t==='string'&&!!t.trim()).slice(0,5),breadth:false});
  }
- return [...byCode.values()];
+ return applySharedSectorEdits([...byCode.values()],shared.entries);
 }
 export function stockMapThemes<T extends {symbol:string;themes:string[]}>(stocks:T[],discovered:StockMapEntry[]=[]):T[]{
  const registry=new Map(combinedStockMap(discovered).map(x=>[x.symbol,x]));

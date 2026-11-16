@@ -1,0 +1,46 @@
+name: Save shared stock classification
+on:
+  issues:
+    types: [opened, edited]
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: shared-stock-classification
+  cancel-in-progress: false
+jobs:
+  save:
+    if: github.event.issue.user.login == github.repository_owner && github.actor == github.repository_owner && startsWith(github.event.issue.title, '[섹터 분류] ')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/apply_sector_issue.mjs
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run build
+      - name: Publish owner-confirmed classification
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/data/stock-sector-overrides.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data: save owner-confirmed shared stock classification'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - uses: actions/github-script@v7
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+        with:
+          script: |
+            const success=process.env.RESULT==='success';
+            await github.rest.issues.createComment({...context.repo,issue_number:context.issue.number,body:success?'공통 분류를 검증하고 저장했습니다. 자동 배포가 끝나면 모든 기기에 반영됩니다.':'분류 저장을 완료하지 못했습니다. Actions 실행 기록을 확인하세요. 충돌한 요청은 사이트를 새로고침한 뒤 다시 제출하세요.'});
+            if(success)await github.rest.issues.update({...context.repo,issue_number:context.issue.number,state:'closed'});

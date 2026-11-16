@@ -1,3 +1,4 @@
+import {applySharedSectorEdits} from './shared-sector-edits.mjs';
 import {useSectorEdits,SectorEditDialog,SectorEditTransfer} from './sector-editor';
 import {applySectorEdits,pendingClassification} from './sector-edits.mjs';
 'use client';
@@ -10,11 +11,12 @@ type Mode='stocks'|'sectors';
 
 const uniq=(xs:string[])=>[...new Set(xs)].sort((a,b)=>a.localeCompare(b,'ko'));
 const normalize=(v:string)=>v.trim().toLowerCase();
-const businessSources=new Set(['www.samsungcnt.com','www.sk-inc.co.kr','seojinsystem.net','www.lunit.io','www.sketernix.com','lsholdings.co.kr','www.oci-holdings.co.kr','www.lginnotek.com','www.foosungchem.com','www.isuspecialtychemical.com']);
+const businessSources=new Set(['kind.krx.co.kr','lab.aribiogroup.com','www.koreanair.com','www.samsungcnt.com','www.sk-inc.co.kr','seojinsystem.net','www.lunit.io','www.sketernix.com','lsholdings.co.kr','www.oci-holdings.co.kr','www.lginnotek.com','www.foosungchem.com','www.isuspecialtychemical.com']);
 function businessSource(url?:string){try{const u=new URL(url||'');return u.protocol==='https:'&&businessSources.has(u.hostname)?u.href:null;}catch{return null;}}
 
 
 export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntry[]}){
+ const [sharedEdits,setSharedEdits]=useState<any[]>([]);
  const [remote,setRemote]=useState<StockMapEntry[]>([]),[registryError,setRegistryError]=useState(false),[checkedAt,setCheckedAt]=useState('');
  useEffect(()=>{
   const ctrl=new AbortController();
@@ -22,14 +24,14 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
    const response=await fetch(API_URL+'/api/stock-map',{credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.any([ctrl.signal,AbortSignal.timeout(12000)])});
    if(!response.ok)throw Error('registry');const body=await response.json();
    if(body.version!==1||!Array.isArray(body.entries)||body.entries.length>5000)throw Error('registry schema');
-   if(!ctrl.signal.aborted){setRemote(body.entries);setCheckedAt(typeof body.updatedAt==='string'?body.updatedAt:typeof body.verification?.checkedAt==='string'?body.verification.checkedAt:'');setRegistryError(false);}
+   if(!ctrl.signal.aborted){setRemote(body.entries);setSharedEdits(Array.isArray(body.sharedEdits)?body.sharedEdits:[]);setCheckedAt(typeof body.updatedAt==='string'?body.updatedAt:typeof body.verification?.checkedAt==='string'?body.verification.checkedAt:'');setRegistryError(false);}
   }catch{if(!ctrl.signal.aborted)setRegistryError(true);}};
   const visible=()=>{if(document.visibilityState==='visible')void refresh();};void refresh();const timer=window.setInterval(refresh,300000);document.addEventListener('visibilitychange',visible);
   return()=>{ctrl.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
  },[]);
  const local=useSectorEdits();
  const [editing,setEditing]=useState<StockMapEntry|null>(null),[onlyPending,setOnlyPending]=useState(false);
- const registry=useMemo(()=>applySectorEdits(combinedStockMap([...discovered,...remote]),local.edits) as StockMapEntry[],[discovered,remote,local.edits]);
+ const registry=useMemo(()=>applySectorEdits(applySharedSectorEdits(combinedStockMap([...discovered,...remote]),sharedEdits),local.edits) as StockMapEntry[],[discovered,remote,sharedEdits,local.edits]);
  const autoVerified=registry.filter(x=>x.verification?.status==='verified').length;
  const pending=registry.filter(x=>x.reviewRequired||pendingClassification(x.sector)||pendingClassification(x.subSector)).length;
  const [mode,setMode]=useState<Mode>('stocks');

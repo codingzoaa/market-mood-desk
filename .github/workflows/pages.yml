@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
   # Data commits made with GITHUB_TOKEN do not trigger ordinary push workflows.
   workflow_run:
-    workflows: ['Update KOSPI pension signal data']
+    workflows: ['Update KOSPI pension signal data', 'Save shared stock classification']
     types: [completed]
     branches: [main]
 

@@ -7,8 +7,15 @@ on:
       - 'src/data/stock-map.json'
       - 'src/data/stock-map-verified.json'
       - 'src/data/stock-sector-reviews.json'
+      - 'src/data/stock-sector-overrides.json'
+      - 'src/shared-sector-edits.mjs'
+      - 'src/sector-edits.mjs'
       - '.github/workflows/deploy-ls-worker.yml'
   workflow_dispatch:
+  workflow_run:
+    workflows: ['Save shared stock classification']
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
 concurrency:
@@ -16,9 +23,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
