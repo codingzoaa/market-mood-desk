@@ -48,3 +48,11 @@ test('owner recovery sends only a failed sector record after the normal cron win
  const result=await recoverSectorDelivery({DB,...credentials,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},date,new Date('2026-11-10T13:30:00Z'),{fetcher:async url=>{if(new URL(url).hostname==='openapi.naver.com')return new Response(xml);sent++;return Response.json({ok:true,result:{message_id:8}});}});
  assert.equal(result.status,'sent');assert.equal(sent,1);assert.equal(DB.states.get('telegram:v3:'+date+':sector').attempts,8);assert.equal(DB.states.get('telegram:v3:'+date+':close').attempts,1);
 });
+
+test('signed Naver relay sends from verified articles without another Cloudflare-to-Naver request',async()=>{
+ const {handleSectorRecovery,sectorRecoverySignature}=await import('../worker/sector-recovery.mjs');const DB=memoryDb();DB.states.set('telegram:v3:'+date+':sector',{status:'failed',attempts:8});
+ const now=new Date('2026-11-10T13:30:00Z'),time=String(+now),body=JSON.stringify({news:[{headline:'코스피 반도체 동반 상승 확인',link:'https://www.hankyung.com/article/1',published:'Tue, 10 Nov 2026 07:00:00 GMT',provider:'네이버 뉴스'}]});
+ const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body)))].map(x=>x.toString(16).padStart(2,'0')).join(''),signature=await sectorRecoverySignature('test',date,time,hash);
+ const response=await handleSectorRecovery(new Request('https://worker/internal/sector-recovery',{method:'POST',headers:{'X-Sector-Date':date,'X-Sector-Time':time,'X-Sector-Signature':signature,'X-Sector-Body-SHA256':hash},body}),{DB,TELEGRAM_BOT_TOKEN:'test',TELEGRAM_CHAT_ID:'123'},now,{fetcher:async url=>{assert.equal(new URL(url).hostname,'api.telegram.org');return Response.json({ok:true,result:{message_id:9}});}});
+ assert.equal(response.status,200);assert.equal((await response.json()).messageId,9);assert.equal(DB.states.get('telegram:v3:'+date+':sector').attempts,9);
+});

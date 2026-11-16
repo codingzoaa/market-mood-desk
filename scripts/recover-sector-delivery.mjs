@@ -1,11 +1,15 @@
 import fs from 'node:fs';
+import {fetchNaverBriefingNews} from '../worker/naver-briefing-news.mjs';
 import {sectorRecoverySignature} from '../worker/sector-recovery.mjs';
 const request=JSON.parse(fs.readFileSync('.github/sector-recovery-request.json','utf8'));
 const now=new Date();
 if(request.kind!=='sector'||!Number.isFinite(Date.parse(request.requestedAt))||Math.abs(now-Date.parse(request.requestedAt))>3600000)throw Error('SECTOR_RECOVERY_REQUEST_EXPIRED');
 if(!process.env.TELEGRAM_BOT_TOKEN)throw Error('SECTOR_RECOVERY_CREDENTIAL_MISSING');
-const time=String(+now),signature=await sectorRecoverySignature(process.env.TELEGRAM_BOT_TOKEN,request.date,time);
-const r=await fetch('https://market-note-ls-api.kby0991.workers.dev/internal/sector-recovery',{method:'POST',redirect:'error',signal:AbortSignal.timeout(120000),headers:{'X-Sector-Date':request.date,'X-Sector-Time':time,'X-Sector-Signature':signature}});
+const news=await fetchNaverBriefingNews(request.date,['코스피 마감','코스닥 마감'],{env:process.env});
+const body=JSON.stringify({news}),bodyHash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+console.log('NAVER_RECOVERY_NEWS_VERIFIED '+news.length);
+const time=String(Date.now()),signature=await sectorRecoverySignature(process.env.TELEGRAM_BOT_TOKEN,request.date,time,bodyHash);
+const r=await fetch('https://market-note-ls-api.kby0991.workers.dev/internal/sector-recovery',{method:'POST',redirect:'error',signal:AbortSignal.timeout(120000),headers:{'X-Sector-Date':request.date,'X-Sector-Time':time,'X-Sector-Signature':signature,'X-Sector-Body-SHA256':bodyHash,'Content-Type':'application/json'},body});
 const result=await r.json().catch(()=>({}));
 if(!r.ok||!['sent','already-sent'].includes(result.status)||!Number.isInteger(result.messageId))throw Error('SECTOR_RECOVERY_NOT_CONFIRMED_HTTP_'+r.status);
 console.log('SECTOR_RECOVERY_CONFIRMED '+JSON.stringify(result));

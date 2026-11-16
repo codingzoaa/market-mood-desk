@@ -27,5 +27,7 @@ jobs:
           node-version: '24'
       - name: Recover only the failed sector briefing using signed Worker request
         env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: node scripts/recover-sector-delivery.mjs

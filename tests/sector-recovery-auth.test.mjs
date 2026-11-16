@@ -11,3 +11,9 @@ test('valid scoped request confirms the existing sent receipt without sending ag
  const signature=await sectorRecoverySignature(env.TELEGRAM_BOT_TOKEN,date,time);const r=await handleSectorRecovery(new Request('https://worker/internal/sector-recovery',{method:'POST',headers:{'X-Sector-Date':date,'X-Sector-Time':time,'X-Sector-Signature':signature}}),{...env,DB},now);
  assert.equal(r.status,200);const result=await r.json();assert.equal(result.status,'already-sent');assert.equal(result.messageId,99);assert.equal(result.closeUntouched,true);
 });
+
+test('signed body hash cannot be replayed with altered article content',async()=>{
+ const body='{"news":[]}',hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body)))].map(x=>x.toString(16).padStart(2,'0')).join(''),signature=await sectorRecoverySignature(env.TELEGRAM_BOT_TOKEN,date,time,hash);
+ const r=await handleSectorRecovery(new Request('https://worker/internal/sector-recovery',{method:'POST',headers:{'X-Sector-Date':date,'X-Sector-Time':time,'X-Sector-Signature':signature,'X-Sector-Body-SHA256':hash},body:body+' '}),env,now);
+ assert.equal(r.status,401);
+});
