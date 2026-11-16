@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {prepareEditorial,updateIndex,nextState} from '../scripts/publish-sector-calendar.mjs';
+import {prepareEditorial,updateIndex,nextState,reviewTargetDate,reviewNewsUrl} from '../scripts/publish-sector-calendar.mjs';
 
 const date='2026-11-09';
 const mk=(symbol,name,changePct,turnoverKRW)=>({symbol,name,market:'KOSPI',themes:['기존 LS 테마'],changePct,turnoverKRW,price:10000});
@@ -58,4 +58,21 @@ test('foreign defense stock feature alone does not explain Korean defense stocks
  const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector:'방산'}));
  const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'국내방산'+i,changePct:1,turnoverKRW:1000}))};
  assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'[인도 특징주] 국영 방산 힌두스탄 항공, 수주 잔고 성장'}],map).sectors.length,0);
+});
+
+
+test('delayed runs keep the intended market day across KST midnight and weekends',()=>{
+ assert.equal(reviewTargetDate('2026-11-13T08:00:00Z'),'2026-11-13'); // Friday 17:00
+ assert.equal(reviewTargetDate('2026-11-13T16:00:13Z'),'2026-11-13'); // Actual failed Friday run, Saturday 01:00
+ assert.equal(reviewTargetDate('2026-11-13T17:33:31Z'),'2026-11-13');
+ assert.equal(reviewTargetDate('2026-11-15T10:00:00Z'),'2026-11-13'); // Sunday evening
+ assert.equal(reviewTargetDate('2026-11-16T07:59:59Z'),'2026-11-13');
+ assert.equal(reviewTargetDate('2026-11-16T08:00:00Z'),'2026-11-16');
+ assert.equal(reviewTargetDate('2026-11-16T17:30:00Z'),'2026-11-16'); // Tuesday 02:30
+ assert.throws(()=>reviewTargetDate('not-a-date'),/CLOCK/);
+});
+test('delayed news collection requests the target date rather than a moving one-day window',()=>{
+ const q=new URL(reviewNewsUrl('2026-11-13')).searchParams.get('q');
+ assert.match(q,/after:2026-11-13 before:2026-11-14/);
+ assert.ok(!q.includes('when:1d'));
 });

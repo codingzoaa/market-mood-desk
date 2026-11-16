@@ -10,6 +10,22 @@ const iso=/^\d{4}-\d{2}-\d{2}$/;
 const dateParts=v=>Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(v)).map(p=>[p.type,p.value]));
 const day=v=>{const p=dateParts(v);return p.year+'-'+p.month+'-'+p.day;};
 const currentDay=()=>day(new Date());
+// A delayed 17:00 KST run can start after midnight. Until the next 17:00,
+// keep the previous business day's review instead of advancing to tomorrow.
+export function reviewTargetDate(now=new Date()){
+ const parsed=new Date(now);if(!Number.isFinite(+parsed))throw Error('INVALID_REVIEW_CLOCK');
+ let date=day(new Date(+parsed-17*3600000));
+ while([0,6].includes(new Date(date+'T00:00:00Z').getUTCDay()))date=new Date(Date.parse(date+'T00:00:00Z')-86400000).toISOString().slice(0,10);
+ return date;
+}
+export function reviewNewsUrl(date){
+ if(!iso.test(date))throw Error('INVALID_CLOSE_DATE');
+ const next=new Date(Date.parse(date+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+ const u=new URL('https://news.google.com/rss/search');
+ u.searchParams.set('q','(코스피 OR 코스닥 OR 반도체 OR 바이오 OR 조선 OR 방산 OR 화장품 OR 로봇 OR 배터리 OR 은행 OR 보험 OR 음식료) (상승 OR 강세 OR 특징주 OR 실적) after:'+date+' before:'+next);
+ u.searchParams.set('hl','ko');u.searchParams.set('gl','KR');u.searchParams.set('ceid','KR:ko');return u.href;
+}
+
 const checkedTime=(value,date)=>{if(!value||Number.isNaN(Date.parse(value))||day(value)!==date)return false;const p=dateParts(value);return p.hour+p.minute>='1530';};
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,240);
 const aliases={
@@ -93,16 +109,10 @@ async function checkedFetch(url,mode='json'){
  const text=await res.text();if(text.length>5000000)throw Error('SOURCE_TOO_LARGE');
  return mode==='text'?text:JSON.parse(text);
 }
-const rssUrl=()=>{
- const u=new URL('https://news.google.com/rss/search');
- u.searchParams.set('q','(코스피 OR 코스닥 OR 반도체 OR 바이오 OR 조선 OR 방산 OR 화장품 OR 로봇 OR 배터리) (상승 OR 강세 OR 특징주 OR 실적) when:1d');
- u.searchParams.set('hl','ko');u.searchParams.set('gl','KR');u.searchParams.set('ceid','KR:ko');
- return u.href;
-};
-export async function main({date=currentDay(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews}={}){
+export async function main({date=reviewTargetDate(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews}={}){
  if(!iso.test(date)||date>currentDay())throw Error('INVALID_OR_FUTURE_DATE');
  const indexPath=path('src/close-reviews.ts'),index=readFileSync(indexPath,'utf8');
- if(index.includes('review'+date.replaceAll('-',''))){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'unchanged',date};}
+ if(index.includes('review'+date.replaceAll('-',''))){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'already_published',date};}
  let review=null,headlines=[],reason='당일 종가 또는 기사 검증에 필요한 자료 부족';
  try{
   const dashboard=await readData(API+'?date='+date);
@@ -110,7 +120,7 @@ export async function main({date=currentDay(),readData=checkedFetch,readNews=che
   if(!snapshot)throw Error('LS_SAME_DAY_SNAPSHOT_MISSING');
   const catalog=JSON.parse(readFileSync(path('src/data/stock-map.json'),'utf8'));
   let google=[];
-  try{google=parseNews(await readNews(rssUrl(),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
+  try{google=parseNews(await readNews(reviewNewsUrl(date),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
   const queries=selectLeaders(snapshot,catalog,{coRise:true}).map(g=>g.name);
   const naver=await readNaver(date,queries);
   console.log('NAVER_SECTOR_NEWS status='+naver.status+' count='+naver.items.length);
@@ -132,10 +142,14 @@ export async function main({date=currentDay(),readData=checkedFetch,readNews=che
  // Stable pending records do not cause repeated commits at each retry.
  const old=existsSync(statusPath)?JSON.parse(readFileSync(statusPath,'utf8')):null;
  if(!review&&old?.date===date&&old?.status==='pending'&&old?.reason===status.reason){
-  console.log('SECTOR_NO_CHANGE '+date);return {status:'unchanged',date};
+  console.log('SECTOR_NO_CHANGE '+date);return {status:'pending',date,reason:status.reason,changed:false};
  }
  writeFileSync(statusPath,JSON.stringify(status,null,2)+'\n');
  console.log('SECTOR_REVIEW_RESULT '+JSON.stringify({date,status:status.status,sectors:review?.sectors?.length||0,reason:status.reason}));
- return {status:status.status,date};
+ return {status:status.status,date,reason:status.reason,changed:true};
 }
-if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main({date:process.env.REVIEW_DATE||currentDay()}).catch(e=>{console.error('SECTOR_REVIEW_PIPELINE_FAILED',e.message);process.exitCode=1;});
+if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main({date:process.env.REVIEW_DATE||reviewTargetDate()}).then(result=>{
+ mkdirSync(path('work/'),{recursive:true});
+ writeFileSync(path('work/sector-calendar-result.json'),JSON.stringify({...result,invokedAt:new Date().toISOString()},null,2)+'\n');
+ console.log('SECTOR_RUN_OUTCOME '+JSON.stringify(result));
+}).catch(e=>{console.error('SECTOR_REVIEW_PIPELINE_FAILED',e.message);process.exitCode=1;});

@@ -1,14 +1,16 @@
 name: Publish verified sector calendar at 17 KST
 on:
   schedule:
-    # GitHub cron uses UTC. Korea 17:00 / 17:30 / 18:00 / 18:30 / 19:00.
-    # GitHub scheduled starts are best effort. Extra windows mitigate missed/delayed runs.
+    # UTC: 17:00 KST initial attempt; off-hour backups reduce scheduler congestion.
     - cron: '0 8 * * 1-5'
-    - cron: '30 8 * * 1-5'
-    - cron: '0 9 * * 1-5'
-    - cron: '30 9 * * 1-5'
-    - cron: '0 10 * * 1-5'
+    - cron: '7,37 8,9 * * 1-5'
+    - cron: '7 10 * * 1-5'
   workflow_dispatch:
+  # A completed close-data update is a second wake-up path if cron is delayed.
+  workflow_run:
+    workflows: ['Update KOSPI pension signal data']
+    types: [completed]
+    branches: [main]
   push:
     branches: [main]
     paths:
@@ -25,6 +27,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -45,26 +48,31 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          REVIEW_DATE="$(TZ=Asia/Seoul date +%F)"
-          echo "date=$REVIEW_DATE" >> "$GITHUB_OUTPUT"
           node --input-type=module -e 'console.log("NAVER_NEWS_CONFIG="+(process.env.NAVER_CLIENT_ID&&process.env.NAVER_CLIENT_SECRET?"ready":"missing_credentials"))'
           node scripts/publish-sector-calendar.mjs
+          # Use the selected market date, never the runner's calendar date.
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const result=JSON.parse(fs.readFileSync('work/sector-calendar-result.json','utf8'));
+          if(!/^\d{4}-\d{2}-\d{2}$/.test(result.date))throw Error('REVIEW_RESULT_DATE_INVALID');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`date=${result.date}\nresult=${result.status}\n`);
+          JS
           git add public/sector-review-status.json src/close-reviews.ts src/close-review-20*.ts
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "SECTOR_NO_REVIEW_CHANGE date=$REVIEW_DATE"
+            echo "SECTOR_NO_REVIEW_CHANGE"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Validate candidate with full test, type check and build
-        if: steps.review.outputs.changed == 'true'
+        if: steps.review.outputs.changed == 'true' && steps.review.outputs.result == 'published'
         run: |
           npm ci
           npm test
           npx tsc --noEmit
           npm run build
       - name: Create PR, verify CI, merge and deploy existing Pages
-        if: steps.review.outputs.changed == 'true'
+        if: steps.review.outputs.changed == 'true' && steps.review.outputs.result == 'published'
         env:
           GH_TOKEN: ${{ github.token }}
           REVIEW_DATE: ${{ steps.review.outputs.date }}
@@ -120,3 +128,15 @@ jobs:
           JOB_STATUS="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEPLOY_RUN/jobs" --jq '[.jobs[] | select(.name=="deploy" and .conclusion=="success")] | length')"
           [[ "$JOB_STATUS" == "1" ]] || { echo 'SECTOR_PAGES_DEPLOY_NOT_CONFIRMED';exit 1; }
           echo "SECTOR_PAGES_DEPLOYED date=$REVIEW_DATE sha=$MERGED url=https://codingzoaa.github.io/market-mood-desk/#calendar"
+
+      - name: Report publication result and expose verification failures
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const file='work/sector-calendar-result.json';
+          if(!fs.existsSync(file)){fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## 강세 섹터 리뷰\n실행 결과를 생성하지 못했습니다. 앞 단계 오류를 확인하세요.\n');process.exit(1);}
+          const r=JSON.parse(fs.readFileSync(file,'utf8'));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## 강세 섹터 리뷰\n대상 거래일: ${r.date}\n결과: ${r.status}\n${r.reason||'이미 등록된 리뷰를 확인했습니다.'}\n`);
+          if(r.status==='pending'){console.error('SECTOR_VERIFICATION_PENDING '+r.date);process.exit(1);}
+          JS
