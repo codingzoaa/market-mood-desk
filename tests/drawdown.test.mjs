@@ -23,3 +23,5 @@ test('LS normalization retains positive daily closes, validates symbols and sepa
  assert.throws(()=>priceRows([{date:'20260230',close:1}]));assert.equal(validSymbol('../005930'),false);assert.equal(validSymbol('005930'),true);
  assert.notEqual(drawdownScope(new Date('2026-11-16T14:00:00+09:00')).cacheDay,drawdownScope(new Date('2026-11-16T16:00:00+09:00')).cacheDay);
 });
+
+test('a response for a different stock cannot be rendered under the selected name',()=>{const p={symbol:'005930',adjusted:true,points:points([100,90])};assert.equal(validatePrices(p,'005930').length,2);assert.throws(()=>validatePrices(p,'000660'),/종목이 다릅니다/);});

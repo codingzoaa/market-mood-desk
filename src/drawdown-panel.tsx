@@ -22,9 +22,9 @@ export default function DrawdownPanel(){
  useEffect(()=>{const ctrl=new AbortController();let timer:ReturnType<typeof setTimeout>;let stopped=false;const started=Date.now();setFeed(null);setError('');setBusy(true);setProgress('최대 20년의 수정주가를 확인하고 있습니다.');
  const load=async()=>{try{const r=await fetch(API_URL+'/api/drawdown?symbol='+stock.symbol,{signal:AbortSignal.any([ctrl.signal,AbortSignal.timeout(30000)]),cache:'no-store'});const d=await r.json();if(stopped)return;
  if(r.status===202){if(Date.now()-started>240000)throw Error('과거 이력 수집이 지연되고 있습니다. 잠시 후 다시 조회해주세요.');setProgress(d.progress?.rows?'수정주가 '+d.progress.rows.toLocaleString()+'개 확인 · 과거 이력을 수집 중입니다.':'처음 조회하는 종목은 과거 이력 수집에 시간이 걸릴 수 있습니다.');timer=setTimeout(load,2500);return;}
- if(!r.ok)throw Error(d.message||'수정주가 이력을 불러오지 못했습니다.');const points=validatePrices(d);setFeed({...d,points});setBusy(false);setProgress('');
+ if(!r.ok)throw Error(d.message||'수정주가 이력을 불러오지 못했습니다.');const points=validatePrices(d,stock.symbol);setFeed({...d,points});setBusy(false);setProgress('');
  }catch(e){if(!stopped){setError(e instanceof Error?e.message:'조회 오류');setBusy(false);}}};void load();return()=>{stopped=true;ctrl.abort();clearTimeout(timer);};},[stock.symbol,retry]);
- const analysis=useMemo(()=>feed?drawdownAnalysis(feed.points,years):null,[feed,years]);
+ const analysis=useMemo(()=>feed?.symbol===stock.symbol?drawdownAnalysis(feed.points,years):null,[feed,years,stock.symbol]);
  return <div className="drawdown-page"><section className="panel"><span className="eyebrow">STOCK DRAWDOWN · 20 YEARS</span><h2>종목명으로 낙폭 분석</h2><p className="muted">종목을 선택하면 수정주가와 과거 고점 대비 하락률을 함께 보여줍니다.</p>
  <div className="drawdown-search"><label htmlFor="drawdown-search">종목명 또는 종목코드</label><input id="drawdown-search" placeholder="예: 삼성전자, SK하이닉스, 005930" value={query} onChange={e=>setQuery(e.target.value)} autoComplete="off"/>{query&&<div className="drawdown-suggestions" aria-label="종목 검색 결과">{suggestions.map(s=><button key={s.symbol} type="button" onClick={()=>{setStock(s);setQuery('');setSuggestions([]);}}><strong>{s.name}</strong><span>{s.symbol} · {s.market}</span></button>)}{searchError&&<p role="status">{searchError}</p>}</div>}</div>
  <div className="drawdown-selected"><strong>{stock.name}</strong><span>{stock.symbol} · {stock.market==='KOSPI'?'코스피':'코스닥'}</span><button className="text-link" type="button" disabled={busy} onClick={()=>setRetry(v=>v+1)}>다시 조회</button></div>
@@ -36,6 +36,6 @@ export default function DrawdownPanel(){
  </>}
  </section>
  {analysis&&<section className="panel"><div className="section-title"><h2>주요 하락 구간 TOP5</h2><span className="muted">서로 겹치지 않는 고점~회복 구간</span></div><div className="drawdown-table"><table><thead><tr><th>고점일</th><th>저점일</th><th>최대 낙폭</th><th>회복일</th><th>고점 이후 기간</th></tr></thead><tbody>{analysis.episodes.map(e=><tr key={e.peakDate}><td>{e.peakDate}</td><td>{e.troughDate}</td><td className="negative">{pct(e.drawdown)}</td><td>{e.recoveryDate||'미회복'}</td><td>{e.days.toLocaleString()}일{!e.recoveryDate?' 진행 중':''}</td></tr>)}</tbody></table>{!analysis.episodes.length&&<p>선택 기간에 고점 대비 하락 구간이 없습니다.</p>}</div><p className="footnote">회복 기간은 고점일부터 종가가 해당 고점 이상으로 회복한 첫날까지의 달력 일수입니다.</p></section>}
- {feed&&<p className="footnote">{feed.source} · 실제 확보 이력 {feed.firstDate} ~ {feed.lastDate} · 마지막 수집 {new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',dateStyle:'short',timeStyle:'short'}).format(new Date(feed.asOf))} KST<br/>조회한 종목은 다음 접속 시 최신 마감 자료로 갱신합니다. 거래정지·가격 미제공일의 가격은 임의로 채우지 않습니다.</p>}
+ {feed?.symbol===stock.symbol&&<p className="footnote">{feed.source} · 실제 확보 이력 {feed.firstDate} ~ {feed.lastDate} · 마지막 수집 {new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',dateStyle:'short',timeStyle:'short'}).format(new Date(feed.asOf))} KST<br/>조회한 종목은 다음 접속 시 최신 마감 자료로 갱신합니다. 거래정지·가격 미제공일의 가격은 임의로 채우지 않습니다.</p>}
  </div>;
 }
