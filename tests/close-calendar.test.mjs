@@ -45,7 +45,6 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelector('[aria-label="2026-10-28 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   assert.equal(document.querySelector('[aria-label="2026-10-27 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   assert.equal(document.querySelector('[aria-label="2026-10-26 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
-  assert.equal(document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   await click('[aria-label="2026-10-29 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   assert.ok(document.querySelector('.close-review').textContent.includes('NH투자증권 +2.52%'));
@@ -63,6 +62,9 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   await click('[aria-label="2026-10-26 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,2);
   assert.match(document.querySelector('.close-review').textContent,/루닛 \+30.00%/);
+  // The latest review can shift October 23 outside the rolling four-week page.
+  if(!document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]'))await click('[aria-label="이전 4주"]');
+  assert.equal(document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
   await click('[aria-label="2026-10-23 장 마감 리뷰"]');
   assert.equal(document.querySelectorAll('.close-sector').length,5);
   assert.match(document.querySelector('.close-review').textContent,/SK하이닉스 \+4.42%/);

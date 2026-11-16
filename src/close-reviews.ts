@@ -1,4 +1,5 @@
 import type {ScoreInput} from './close-score';
+import {review20261116} from './close-review-2026-11-16';
 import {review20261112} from './close-review-2026-11-12';
 import {review20261110} from './close-review-2026-11-10';
 import {review20261109} from './close-review-2026-11-09';
@@ -962,7 +963,7 @@ const historicalReviews:CloseReview[]=[
     ]
   }
 ];
-const records=[...historicalReviews,...latestReview,review20261027,review20261028,review20261029,review20261030,review20261102,review20261103,review20261104,review20261105,review20261109,review20261110,review20261112];
+const records=[...historicalReviews,...latestReview,review20261027,review20261028,review20261029,review20261030,review20261102,review20261103,review20261104,review20261105,review20261109,review20261110,review20261112,review20261116];
 export const closeReviews:CloseReview[]=records.map((review,index)=>({...review,sectors:review.sectors.map(sector=>{
  if(index===0||!historicalReviews.includes(review))return sector;
  const previous=records[index-1],match=previous.sectors.find(s=>s.name===sector.name);

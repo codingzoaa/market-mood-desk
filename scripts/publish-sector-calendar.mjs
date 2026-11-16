@@ -28,7 +28,16 @@ const aliases={
  '사이버보안':['보안','사이버'],
  '건설·EPC':['건설','플랜트','EPC']
 };
-const validHeadline=(story,group)=>{const h=normalize(story.headline).toLowerCase();const terms=[group.name,...(aliases[group.name]||[]),...group.stocks.filter(s=>s.name.length>=3).map(s=>s.name)];return terms.some(w=>w.length>=2&&h.includes(w.toLowerCase()));};
+const validHeadline=(story,group)=>{
+ // A report's broker byline is not evidence that financial stocks rose.
+ const h=normalize(story.headline).replace(/\s*[-–]\s*[^-–]*투자증권(?:\s*[-–].*)?$/,'').toLowerCase();
+ const stocks=group.stocks.filter(s=>s.name.length>=3).map(s=>s.name.toLowerCase());
+ const direct=stocks.some(name=>h.includes(name));
+ // Foreign stock-market features do not establish a catalyst for Korean peers.
+ if(/\[(?:[^\]]*(?:인도|유럽|미국|중국|일본|홍콩))[^\]]*특징주\]/.test(h)&&!direct)return false;
+ const terms=[group.name,...(aliases[group.name]||[])];
+ return direct||terms.some(w=>w.length>=2&&h.includes(w.toLowerCase()));
+};
 const pct=n=>(n>0?'+':'')+n.toFixed(2)+'%';
 const shortStock=s=>s.name+' '+pct(s.changePct);
 

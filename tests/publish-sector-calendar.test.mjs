@@ -46,3 +46,16 @@ test('co-rise calendar accepts modest concurrent gains without a +2% or +4% stoc
  const modest={...good,stocks:good.stocks.map((s,i)=>({...s,changePct:i===0?0.8:i===1?0.3:s.changePct}))};
  assert.equal(prepareEditorial(date,modest,[story],mapping).sectors.length,1);
 });
+
+test('broker report attribution is not a financial-sector catalyst',()=>{
+ const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector:'금융·증권'}));
+ const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'금융종목'+i,changePct:1,turnoverKRW:1000}))};
+ const unrelated={...story,headline:"[리포트 브리핑]SFA반도체, 실적 개선 목표가 9000원 - BNK투자증권 - 뉴스핌"};
+ assert.equal(prepareEditorial(date,snapshot,[unrelated],map).sectors.length,0);
+ assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'은행주 동반 강세, 금융지주 상승'}],map).sectors.length,1);
+});
+test('foreign defense stock feature alone does not explain Korean defense stocks',()=>{
+ const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector:'방산'}));
+ const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'국내방산'+i,changePct:1,turnoverKRW:1000}))};
+ assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'[인도 특징주] 국영 방산 힌두스탄 항공, 수주 잔고 성장'}],map).sectors.length,0);
+});

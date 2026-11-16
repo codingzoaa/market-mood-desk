@@ -1,7 +1,12 @@
 {
-  "date": "2026-11-14",
-  "status": "pending",
-  "checkedAt": "2026-11-13T16:00:15.294Z",
-  "reason": "검증 보류: LS_SAME_DAY_SNAPSHOT_MISSING. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.",
-  "sources": []
+  "date": "2026-11-16",
+  "status": "published",
+  "checkedAt": "2026-11-16T09:38:39.618623+00:00",
+  "reason": "정규장 종가와 당일 기사·증권사 원문을 직접 대조해 음식료·보험·은행 3개 그룹 확인. 미확인 인과관계는 단정하지 않음.",
+  "sources": [
+    "https://www.hankyung.com/article/2026111696486",
+    "https://www.mk.co.kr/news/stock/12209970",
+    "https://mbnmoney.mbn.co.kr/stock/item/news?code=086790",
+    "https://file.hanaw.com/download/research/FileServer/WEB/industry/industry/2026/11/15/Bank_Weekly_20261116.pdf"
+  ]
 }
