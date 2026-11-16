@@ -1,8 +1,9 @@
 name: Recover owner-requested failed sector briefing
 on:
-  push:
+  workflow_run:
+    workflows: ['Deploy LS Cloudflare Worker']
+    types: [completed]
     branches: [main]
-    paths: ['.github/sector-recovery-request.json']
 permissions:
   contents: read
 concurrency:
@@ -10,18 +11,17 @@ concurrency:
   cancel-in-progress: false
 jobs:
   recover:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_commit.message, 'ops: recover')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Recover only the failed sector briefing and confirm D1 receipt
+      - name: Recover only the failed sector briefing using signed Worker request
         env:
-          RAW_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node scripts/recover-sector-delivery.mjs

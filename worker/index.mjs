@@ -1,3 +1,4 @@
+import {handleSectorRecovery} from './sector-recovery.mjs';
 import {stockSearch,drawdownFeed,collectDrawdown,validSymbol} from './drawdown.mjs';
 import {collectProgramFlow,programWindow} from './program-flow.mjs';
 import {probeVenueFlows} from './flow-venue-probe.mjs';
@@ -97,6 +98,7 @@ export function closingPoints(rows,now=new Date()){
 }
 export default {
  async fetch(request,env,ctx){
+  if(new URL(request.url).pathname==='/internal/sector-recovery')return handleSectorRecovery(request,env);
   const origin=request.headers.get('origin');const allowed=env.ALLOWED_ORIGIN||'https://codingzoaa.github.io';
   const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Origin'};
   if(origin===allowed){headers['Access-Control-Allow-Origin']=origin;headers['Access-Control-Allow-Headers']='Authorization';headers['Access-Control-Allow-Methods']='GET, OPTIONS';}
