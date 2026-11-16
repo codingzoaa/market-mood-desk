@@ -114,5 +114,7 @@ export function businessTaxonomy(issuer){
  // investment exposure merely from the current company name.
  if(['290690','475150'].includes(issuer.symbol))return null;
  const rule=PRODUCTS.find(x=>x.pattern.test(issuer.products))||INDUSTRIES.find(x=>x.pattern.test(issuer.industry));
- return rule?{sector:rule.sector,subSector:rule.subSector,themes:[...rule.themes],ruleId:rule.id}:null;
+ // A generic industry alone must not be relabeled as an investment theme.
+ if(!rule||rule.themes.length===1&&rule.themes[0]===rule.sector)return null;
+ return {sector:rule.sector,subSector:rule.subSector,themes:[...rule.themes],ruleId:rule.id};
 }

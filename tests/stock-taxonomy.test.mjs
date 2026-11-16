@@ -52,3 +52,5 @@ test('published taxonomy uses three distinct fields and keeps every original mem
  }}
  assert.equal(new Set(manifest.entries.map(x=>x.symbol)).size,manifest.entries.length);
 });
+
+test('generic industry identical to a lone theme remains pending instead of breaking verification',()=>{assert.equal(businessTaxonomy({symbol:'799998',name:'검토종목',industry:'전자부품 제조업',products:'확인되지 않은 사업'}),null);});
