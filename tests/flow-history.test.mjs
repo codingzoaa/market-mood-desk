@@ -22,3 +22,17 @@ test('5 minute changes require consecutive real observations, including after ga
  assert.throws(()=>validateDetails({...raw,flowHistory:[{...history[0],asOf:shiftDay(date,-1)+'T09:05:00+09:00'}]},date));
  assert.throws(()=>validateDetails({...raw,flowHistory:[{...history[0],markets:{KOSPI:{individual:NaN,foreign:1,changePct:1}}}]},date));
 });
+
+test('institution cumulative flow survives storage and validation; deltas never bridge missing institution values',()=>{
+ let history=[];
+ for(const [time,value,institution] of [['09:05:00',100,800],['09:10:00',150,1100],['09:15:00',160,null],['09:20:00',170,1300]]){
+  const d=details(time,value);for(const b of ['KOSPI','KOSDAQ'])if(institution!==null)d.flows.segments[b].institution=b==='KOSPI'?institution:-institution;
+  history=appendFlowHistory(history,d);
+ }
+ const raw=demoMarketDetails(demoSnapshots(date).at(-1));raw.flowHistory=history;
+ const validated=validateDetails(raw,date).flowHistory;
+ assert.equal(validated[0].markets.KOSPI.institution,800);assert.equal(validated[2].markets.KOSPI.institution,null);
+ assert.deepEqual(flowSeries(validated,'KOSPI',true).map(p=>p.institution),[null,300,null,null]);
+ assert.deepEqual(flowSeries(validated,'KOSDAQ',false).map(p=>p.institution),[-800,-1100,null,-1300]);
+ assert.throws(()=>validateDetails({...raw,flowHistory:[{...history[0],markets:{...history[0].markets,KOSPI:{...history[0].markets.KOSPI,institution:NaN}}}]},date));
+});

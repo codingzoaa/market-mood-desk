@@ -10,7 +10,7 @@ export function appendFlowHistory(previous, details) {
  for(const board of ['KOSPI','KOSDAQ']){
   const q=details.indices?.[board],f=details.flows.segments?.[board];
   if(details.errors?.[board]||q?.asOf!==details.asOf||![q?.changePct,f?.individual,f?.foreign].every(Number.isFinite))return history;
-  markets[board]={individual:f.individual,foreign:f.foreign,changePct:q.changePct};
+  markets[board]={individual:f.individual,foreign:f.foreign,...(Number.isFinite(f.institution)?{institution:f.institution}:{}),changePct:q.changePct};
  }
  const point={time,asOf:details.asOf,markets};
  return [...history.filter(p=>p.time!==time),point].sort((a,b)=>a.time.localeCompare(b.time)).slice(-100);

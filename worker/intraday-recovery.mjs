@@ -25,7 +25,8 @@ export function historicalFlowPoints({date,observedAt,flows,indices,previous=[]}
   for(const r of sorted){const time=sourceTime(r.time),minute=Number(time.slice(0,2))*60+Number(time.slice(2,4));
    if(time.slice(4)!=='00'||minute%5!==0||time<'090000'||time>'161000'||!chart.has(time))continue;
    const asOf=date+'T'+time.slice(0,2)+':'+time.slice(2,4)+':00+09:00';if(Date.parse(asOf)>Date.parse(observedAt))continue;
-   const point={individual:number(r.sv_08)*scale,foreign:number(r.sv_17)*scale,changePct:(chart.get(time)/base-1)*100};
+   const institution=r.sv_18==null||String(r.sv_18).trim()===''?null:Number(String(r.sv_18).replaceAll(',',''));
+   const point={individual:number(r.sv_08)*scale,foreign:number(r.sv_17)*scale,...(Number.isFinite(institution)?{institution:institution*scale}:{}),changePct:(chart.get(time)/base-1)*100};
    if(!Object.values(point).every(Number.isFinite)||Math.abs(point.changePct)>100)throw Error('FLOW_HISTORY_RANGE');
    if(map.has(time))throw Error('FLOW_HISTORY_DUPLICATE');map.set(time,point);
   }boards[b]=map;
