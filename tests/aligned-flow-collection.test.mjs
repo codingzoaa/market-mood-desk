@@ -38,7 +38,7 @@ test('atomic D1 history writes preserve recovered slots and newer live samples i
   db.exec('DELETE FROM state');const initial={flowHistory:[{time:'0900',v:1}],indices:{KOSPI:{series:[1]},KOSDAQ:{series:[2]}},errors:{flows:'OLD'},heatmap:{kept:true}};
   db.prepare('INSERT INTO state VALUES(?,?)').run('details:test',JSON.stringify(initial));
   const writeCore=()=>{const sample=JSON.stringify([{time:'0910',v:3}]);db.prepare(core).run('details:test','{}',JSON.stringify({indices:{KOSPI:{value:123}},errors:{flows:null}}),sample,sample);};
-  const writeRecovery=()=>db.prepare(recovery).run(JSON.stringify([{time:'0900',v:99},{time:'0905',v:2}]),JSON.stringify({status:'COMPLETE'}),'details:test');
+  const writeRecovery=()=>db.prepare(recovery).run(JSON.stringify([{time:'0900',v:99},{time:'0905',v:2}]),JSON.stringify([{time:'0900',v:99},{time:'0905',v:2}]),JSON.stringify({status:'COMPLETE'}),'details:test');
   if(order==='core-first'){writeCore();writeRecovery();}else{writeRecovery();writeCore();}
   const result=JSON.parse(db.prepare('SELECT payload FROM state').get().payload);
   assert.deepEqual(result.flowHistory,[{time:'0900',v:1},{time:'0905',v:2},{time:'0910',v:3}]);assert.equal(result.heatmap.kept,true);assert.deepEqual(result.indices.KOSPI.series,[1]);assert.equal(result.errors.flows,undefined);
@@ -50,4 +50,10 @@ test('durable sampler schedules the next absolute 5-minute boundary, not five mi
  t.mock.timers.enable({apis:['Date'],now:new Date('2026-11-06T09:04:40+09:00')});
  const alarms=[];const coordinator=new CollectorAlarm({storage:{setAlarm:async time=>alarms.push(time),getAlarm:async()=>alarms.at(-1)||null}},{});
  await coordinator.alarm();assert.equal(alarms[0],Date.parse('2026-11-06T09:05:00+09:00'));
+});
+
+test('institution backfill enriches missing values only and preserves observed totals',()=>{
+ const s=source();for(const b of ['KOSPI','KOSDAQ'])s.flows[b].rows=s.flows[b].rows.map(r=>({...r,sv_18:12300}));
+ const p=historicalFlowPoints(s)[0];delete p.markets.KOSPI.institution;p.markets.KOSPI.individual=777;p.markets.KOSDAQ.institution=456;
+ const result=historicalFlowPoints({...s,previous:[p]})[0];assert.equal(result.markets.KOSPI.institution,123);assert.equal(result.markets.KOSPI.individual,777);assert.equal(result.markets.KOSDAQ.institution,456);assert.ok(result.institutionRecoveredAt);
 });

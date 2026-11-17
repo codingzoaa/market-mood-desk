@@ -31,9 +31,10 @@ export function historicalFlowPoints({date,observedAt,flows,indices,previous=[]}
    if(map.has(time))throw Error('FLOW_HISTORY_DUPLICATE');map.set(time,point);
   }boards[b]=map;
  }
+ const enriched=previous.map(p=>{const markets={...p.markets};let changed=false;for(const b of ['KOSPI','KOSDAQ']){const candidate=boards[b].get(p.time+'00');if(markets[b]&&markets[b].institution==null&&Number.isFinite(candidate?.institution)){markets[b]={...markets[b],institution:candidate.institution};changed=true;}}return changed?{...p,markets,institutionRecoveredAt:observedAt,institutionSource:'LS증권 KRX · t1602 동일 시각 누적 금액'}:p;});
  const added=[];for(const [time,kospi] of boards.KOSPI){const short=time.slice(0,4),kosdaq=boards.KOSDAQ.get(time);if(!kosdaq||existing.has(short))continue;
   added.push({time:short,asOf:date+'T'+time.slice(0,2)+':'+time.slice(2,4)+':00+09:00',markets:{KOSPI:kospi,KOSDAQ:kosdaq},source:'LS증권 KRX · t1602 누적 금액 + t8409 동일 시각 지수',recoveredAt:observedAt});
- }return [...previous,...added].sort((a,b)=>a.time.localeCompare(b.time));
+ }return [...enriched,...added].sort((a,b)=>a.time.localeCompare(b.time));
 }
 export async function recoverIntradayFlows(env){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
@@ -67,12 +68,12 @@ export async function recoverIntradayFlows(env){
   if(kst().date!==date||!collectWindow())throw Error('FLOW_HISTORY_DATE_CHANGED');
   const latestRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first(),latest=latestRow?JSON.parse(latestRow.payload):old;
   const history=historicalFlowPoints({date,observedAt:new Date().toISOString(),flows,indices,previous:latest.flowHistory||[]});
-  const report={date,status:'COMPLETE',checkedAt,completedAt:new Date().toISOString(),added:history.length-(latest.flowHistory||[]).length,total:history.length,units:{KOSPI:flows.KOSPI.scale,KOSDAQ:flows.KOSDAQ.scale}};
+  const report={date,status:'COMPLETE',checkedAt,completedAt:new Date().toISOString(),added:history.length-(latest.flowHistory||[]).length,institutionEnriched:history.filter(p=>['KOSPI','KOSDAQ'].some(b=>Number.isFinite(p.markets[b].institution)&&!(latest.flowHistory||[]).some(o=>o.time===p.time&&Number.isFinite(o.markets?.[b]?.institution)))).length,total:history.length,units:{KOSPI:flows.KOSPI.scale,KOSDAQ:flows.KOSDAQ.scale}};
   // Only update history: never replace a newer live quote or live investor totals.
   await env.DB.prepare(`UPDATE state SET payload=json_set(payload,'$.flowHistory',json((SELECT json_group_array(json(value)) FROM (
-   SELECT value,json_extract(value,'$.time') AS slot FROM json_each(state.payload,'$.flowHistory')
+   SELECT CASE WHEN json_type(e.value,'$.markets.KOSDAQ.institution') IS NULL OR json_type(e.value,'$.markets.KOSDAQ.institution')='null' THEN CASE WHEN json_type(i.value,'$.markets.KOSDAQ.institution') IN ('integer','real') THEN json_set(CASE WHEN json_type(e.value,'$.markets.KOSPI.institution') IS NULL OR json_type(e.value,'$.markets.KOSPI.institution')='null' THEN CASE WHEN json_type(i.value,'$.markets.KOSPI.institution') IN ('integer','real') THEN json_set(e.value,'$.markets.KOSPI.institution',json_extract(i.value,'$.markets.KOSPI.institution')) ELSE e.value END ELSE e.value END,'$.markets.KOSDAQ.institution',json_extract(i.value,'$.markets.KOSDAQ.institution')) ELSE CASE WHEN json_type(e.value,'$.markets.KOSPI.institution') IS NULL OR json_type(e.value,'$.markets.KOSPI.institution')='null' THEN CASE WHEN json_type(i.value,'$.markets.KOSPI.institution') IN ('integer','real') THEN json_set(e.value,'$.markets.KOSPI.institution',json_extract(i.value,'$.markets.KOSPI.institution')) ELSE e.value END ELSE e.value END END ELSE CASE WHEN json_type(e.value,'$.markets.KOSPI.institution') IS NULL OR json_type(e.value,'$.markets.KOSPI.institution')='null' THEN CASE WHEN json_type(i.value,'$.markets.KOSPI.institution') IN ('integer','real') THEN json_set(e.value,'$.markets.KOSPI.institution',json_extract(i.value,'$.markets.KOSPI.institution')) ELSE e.value END ELSE e.value END END AS value,json_extract(e.value,'$.time') AS slot FROM json_each(state.payload,'$.flowHistory') e LEFT JOIN json_each(?) i ON json_extract(i.value,'$.time')=json_extract(e.value,'$.time')
    UNION ALL SELECT i.value AS value,json_extract(i.value,'$.time') AS slot FROM json_each(?) i WHERE NOT EXISTS(SELECT 1 FROM json_each(state.payload,'$.flowHistory') e WHERE json_extract(e.value,'$.time')=json_extract(i.value,'$.time'))
-   ORDER BY slot))),'$.intradayRecovery',json(?)) WHERE id=?`).bind(JSON.stringify(history),JSON.stringify(report),'details:'+date).run();
+   ORDER BY slot))),'$.intradayRecovery',json(?)) WHERE id=?`).bind(JSON.stringify(history),JSON.stringify(history),JSON.stringify(report),'details:'+date).run();
   await put(env,statusId,report);
  }catch(e){const report={date,status:'FAILED',checkedAt,stage,code:String(e.code||e.message||'FLOW_HISTORY_FAILED').replace(/[^A-Z0-9_]/g,'').slice(0,80),...(e.evidence?{evidence:e.evidence}:{})};await put(env,statusId,report);await env.DB.prepare("UPDATE state SET payload=json_set(payload,'$.intradayRecovery',json(?)) WHERE id=?").bind(JSON.stringify(report),'details:'+date).run();}
  finally{if(session)await session.close();await env.DB.prepare("UPDATE state SET payload='0' WHERE id=? AND payload=?").bind(leaseId,lease).run();}
