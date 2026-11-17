@@ -2,10 +2,10 @@
   "version": 1,
   "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
   "checkedDate": "2026-11-17",
-  "checkedAt": "2026-11-16T16:56:29.848Z",
-  "quoteDate": "2026-11-16",
+  "checkedAt": "2026-11-17T07:45:25.277Z",
+  "quoteDate": "2026-11-17",
   "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
-  "sourceSha256": "f750e8cbd8fb9b80f35bf158c271e87a3a329216d803a1fdc2f964bdf8a38305",
+  "sourceSha256": "ddf99ca5b31b3b075cc744f3aafd62f3173d1acbba7bdfc460d84afeaefdc004",
   "listingCount": 2769,
   "entries": [
     {
@@ -25,7 +25,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "두산",
         "industry": "전자부품 제조업",
@@ -50,7 +50,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼성화재해상보험",
         "industry": "보험업",
@@ -76,7 +76,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "DB하이텍",
         "industry": "반도체 제조업",
@@ -102,7 +102,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "금호전기",
         "industry": "전구 및 조명장치 제조업",
@@ -128,7 +128,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한진",
         "industry": "도로 화물 운송업",
@@ -154,7 +154,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "금호건설",
         "industry": "건물 건설업",
@@ -180,7 +180,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "디아이",
         "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
@@ -206,7 +206,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼양식품",
         "industry": "기타 식품 제조업",
@@ -231,7 +231,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "하림지주",
         "industry": "기타 금융업",
@@ -257,7 +257,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대한항공",
         "industry": "항공 여객 운송업",
@@ -283,7 +283,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대한항공",
         "industry": "항공 여객 운송업",
@@ -311,13 +311,31 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "깨끗한나라",
         "industry": "펄프, 종이 및 판지 제조업",
         "products": "펄프,판지원지,화장지 제조,수출입",
         "taxonomyVersion": 3,
         "ruleId": "paper"
+      }
+    },
+    {
+      "symbol": "005385",
+      "name": "현대차우",
+      "market": "KOSPI",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "NO_OFFICIAL_ISSUER",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13"
       }
     },
     {
@@ -337,13 +355,38 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "POSCO홀딩스",
         "industry": "1차 철강 제조업",
         "products": "열연코일,냉연강판,후판,선재,스테인리스 제조",
         "taxonomyVersion": 3,
         "ruleId": "steel"
+      }
+    },
+    {
+      "symbol": "005500",
+      "name": "삼진제약",
+      "market": "KOSPI",
+      "sector": "바이오",
+      "subSector": "신약·제약",
+      "themes": [
+        "의약품"
+      ],
+      "breadth": false,
+      "reviewRequired": false,
+      "source": "KRX KIND · 기존 섹터맵 체계로 사업·제품 분류",
+      "updatedAt": "2026-11-17",
+      "verification": {
+        "status": "verified",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "issuerName": "삼진제약",
+        "industry": "의약품 제조업",
+        "products": "의약품(게보린,세트라졸,염산나록손) 제조,판매,수출입,약초재배",
+        "taxonomyVersion": 3,
+        "ruleId": "industry-pharma"
       }
     },
     {
@@ -362,7 +405,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "DB손해보험",
         "industry": "보험업",
@@ -388,7 +431,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼성전자",
         "industry": "통신 및 방송 장비 제조업",
@@ -417,7 +460,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LS",
         "industry": "기타 금융업",
@@ -445,7 +488,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대동기어",
         "industry": "특수 목적용 기계 제조업",
@@ -470,7 +513,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한올바이오파마",
         "industry": "의약품 제조업",
@@ -495,7 +538,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한화솔루션",
         "industry": "기초 화학물질 제조업",
@@ -521,7 +564,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "OCI홀딩스",
         "industry": "기타 금융업",
@@ -549,13 +592,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대한광통신",
         "industry": "절연선 및 케이블 제조업",
         "products": "광섬유, 광케이블",
         "taxonomyVersion": 3,
         "ruleId": "optical-network"
+      }
+    },
+    {
+      "symbol": "010470",
+      "name": "오리콤",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "광고업",
+        "products": "광고대행"
       }
     },
     {
@@ -575,7 +638,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "S-Oil",
         "industry": "석유 정제품 제조업",
@@ -602,7 +665,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LG이노텍",
         "industry": "전자부품 제조업",
@@ -630,7 +693,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "HMM",
         "industry": "해상 운송업",
@@ -655,7 +718,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼익제약",
         "industry": "의약품 제조업",
@@ -681,7 +744,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한국전력공사",
         "industry": "전기업",
@@ -707,7 +770,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SK텔레콤",
         "industry": "전기 통신업",
@@ -733,7 +796,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "현대엘리베이터",
         "industry": "일반 목적용 기계 제조업",
@@ -758,7 +821,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "광전자",
         "industry": "반도체 제조업",
@@ -784,7 +847,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼성에스디에스",
         "industry": "컴퓨터 프로그래밍, 시스템 통합 및 관리업",
@@ -809,7 +872,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대동금속",
         "industry": "금속 주조업",
@@ -835,13 +898,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "KBI메탈",
         "industry": "1차 비철금속 제조업",
         "products": "동ROD, 모터코어",
         "taxonomyVersion": 3,
         "ruleId": "products-copper-rod"
+      }
+    },
+    {
+      "symbol": "025980",
+      "name": "아난티",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "일반 및 생활 숙박시설 운영업",
+        "products": "리조트 운영 및 분양"
       }
     },
     {
@@ -861,7 +944,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "아주IB투자",
         "industry": "기타 금융업",
@@ -891,7 +974,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼성물산",
         "industry": "기타 전문 도매업",
@@ -918,7 +1001,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "케이티",
         "industry": "전기 통신업",
@@ -944,7 +1027,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "원익홀딩스",
         "industry": "기초 화학물질 제조업",
@@ -970,7 +1053,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "양지사",
         "industry": "인쇄 및 인쇄관련 산업",
@@ -996,7 +1079,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "피에스케이홀딩스",
         "industry": "특수 목적용 기계 제조업",
@@ -1021,7 +1104,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼성생명",
         "industry": "보험업",
@@ -1046,13 +1129,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "엠케이전자",
         "industry": "전자부품 제조업",
         "products": "반도체용세금선",
         "taxonomyVersion": 3,
         "ruleId": "products-bond-wire"
+      }
+    },
+    {
+      "symbol": "033340",
+      "name": "좋은사람들",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "봉제의복 제조업",
+        "products": "패션내의"
       }
     },
     {
@@ -1072,7 +1175,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "케이티앤지",
         "industry": "담배 제조업",
@@ -1098,7 +1201,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "피노",
         "industry": "일차전지 및 이차전지 제조업",
@@ -1123,7 +1226,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LG디스플레이",
         "industry": "전자부품 제조업",
@@ -1149,7 +1252,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "파라다이스",
         "industry": "유원지 및 기타 오락관련 서비스업",
@@ -1175,7 +1278,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SK",
         "industry": "기타 금융업",
@@ -1203,7 +1306,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "NAVER",
         "industry": "자료처리, 호스팅, 포털 및 기타 인터넷 정보매개 서비스업",
@@ -1229,7 +1332,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "카카오",
         "industry": "자료처리, 호스팅, 포털 및 기타 인터넷 정보매개 서비스업",
@@ -1255,7 +1358,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "JYP Ent.",
         "industry": "오디오물 출판 및 원판 녹음업",
@@ -1280,7 +1383,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SFA반도체",
         "industry": "반도체 제조업",
@@ -1305,7 +1408,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "NC",
         "industry": "소프트웨어 개발 및 공급업",
@@ -1331,7 +1434,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "심텍홀딩스",
         "industry": "회사 본부 및 경영 컨설팅 서비스업",
@@ -1357,7 +1460,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "이오테크닉스",
         "industry": "특수 목적용 기계 제조업",
@@ -1383,7 +1486,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "화성밸브",
         "industry": "일반 목적용 기계 제조업",
@@ -1409,7 +1512,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "폴라리스AI",
         "industry": "컴퓨터 프로그래밍, 시스템 통합 및 관리업",
@@ -1435,7 +1538,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "인바디",
         "industry": "의료용 기기 제조업",
@@ -1461,13 +1564,53 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "성호전자",
         "industry": "전자부품 제조업",
         "products": "전원공급장치,필름콘덴서",
         "taxonomyVersion": 3,
         "ruleId": "power-component"
+      }
+    },
+    {
+      "symbol": "045390",
+      "name": "대아티아이",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "기타 전기장비 제조업",
+        "products": "철도신호제어시스템 등"
+      }
+    },
+    {
+      "symbol": "047770",
+      "name": "코데즈컴바인",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "봉제의복 제조업",
+        "products": "패션의류"
       }
     },
     {
@@ -1486,7 +1629,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "현대바이오",
         "industry": "기타 화학제품 제조업",
@@ -1511,13 +1654,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LG화학",
         "industry": "기초 화학물질 제조업",
         "products": "유화/기능/합성수지,재생섬유소,산업재,리튬이온전지,평광판,PVC 제조,도매",
         "taxonomyVersion": 3,
         "ruleId": "petrochemical"
+      }
+    },
+    {
+      "symbol": "052710",
+      "name": "아모텍",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "전자부품 제조업",
+        "products": "칩바리스터, 아몰퍼스코어"
       }
     },
     {
@@ -1537,7 +1700,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "세코닉스",
         "industry": "사진장비 및 광학기기 제조업",
@@ -1563,7 +1726,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "리노공업",
         "industry": "전자부품 제조업",
@@ -1589,7 +1752,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한국첨단소재",
         "industry": "통신 및 방송 장비 제조업",
@@ -1615,7 +1778,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "인텍플러스",
         "industry": "특수 목적용 기계 제조업",
@@ -1641,7 +1804,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LG씨엔에스",
         "industry": "컴퓨터 프로그래밍, 시스템 통합 및 관리업",
@@ -1666,7 +1829,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "큐에스아이",
         "industry": "반도체 제조업",
@@ -1692,7 +1855,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LG전자",
         "industry": "통신 및 방송 장비 제조업",
@@ -1717,7 +1880,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "JW신약",
         "industry": "의약품 제조업",
@@ -1742,7 +1905,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "하나마이크론",
         "industry": "반도체 제조업",
@@ -1768,7 +1931,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에스텍",
         "industry": "영상 및 음향기기 제조업",
@@ -1794,7 +1957,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "빛과전자",
         "industry": "통신 및 방송 장비 제조업",
@@ -1820,7 +1983,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "빛샘전자",
         "industry": "전자부품 제조업",
@@ -1846,7 +2009,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LIG아큐버",
         "industry": "통신 및 방송 장비 제조업",
@@ -1872,7 +2035,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "원익QnC",
         "industry": "유리 및 유리제품 제조업",
@@ -1897,7 +2060,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한양디지텍",
         "industry": "반도체 제조업",
@@ -1922,7 +2085,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대주전자재료",
         "industry": "전자부품 제조업",
@@ -1948,7 +2111,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "서산",
         "industry": "시멘트, 석회, 플라스터 및 그 제품 제조업",
@@ -1974,7 +2137,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "모두투어",
         "industry": "여행사 및 기타 여행보조 서비스업",
@@ -2000,7 +2163,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "제주반도체",
         "industry": "반도체 제조업",
@@ -2026,7 +2189,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "오킨스전자",
         "industry": "전자부품 제조업",
@@ -2052,7 +2215,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "유진테크",
         "industry": "특수 목적용 기계 제조업",
@@ -2078,7 +2241,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "뉴프렉스",
         "industry": "전자부품 제조업",
@@ -2103,7 +2266,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "동국제약",
         "industry": "의약품 제조업",
@@ -2129,7 +2292,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "테크윙",
         "industry": "특수 목적용 기계 제조업",
@@ -2155,7 +2318,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "롯데렌탈",
         "industry": "운송장비 임대업",
@@ -2181,7 +2344,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "코세스",
         "industry": "특수 목적용 기계 제조업",
@@ -2207,7 +2370,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "브이엠",
         "industry": "특수 목적용 기계 제조업",
@@ -2232,7 +2395,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "상신이디피",
         "industry": "일차전지 및 이차전지 제조업",
@@ -2258,7 +2421,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "엑시콘",
         "industry": "특수 목적용 기계 제조업",
@@ -2283,7 +2446,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "후성",
         "industry": "기초 화학물질 제조업",
@@ -2309,7 +2472,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "참좋은여행",
         "industry": "여행사 및 기타 여행보조 서비스업",
@@ -2334,7 +2497,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "미래나노텍",
         "industry": "플라스틱제품 제조업",
@@ -2360,7 +2523,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "테스",
         "industry": "특수 목적용 기계 제조업",
@@ -2386,7 +2549,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "씨젠",
         "industry": "의료용품 및 기타 의약 관련제품 제조업",
@@ -2411,7 +2574,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SK이노베이션",
         "industry": "석유 정제품 제조업",
@@ -2437,7 +2600,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "마이크로컨텍솔",
         "industry": "전자부품 제조업",
@@ -2463,7 +2626,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "고영",
         "industry": "특수 목적용 기계 제조업",
@@ -2489,7 +2652,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "머큐리",
         "industry": "통신 및 방송 장비 제조업",
@@ -2515,7 +2678,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "미래에셋벤처투자",
         "industry": "기타 금융업",
@@ -2541,7 +2704,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "노랑풍선",
         "industry": "여행사 및 기타 여행보조 서비스업",
@@ -2567,7 +2730,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "디케이락",
         "industry": "일반 목적용 기계 제조업",
@@ -2592,7 +2755,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한중엔시에스",
         "industry": "전동기, 발전기 및 전기 변환 · 공급 · 제어 장치 제조업",
@@ -2618,7 +2781,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "셀바스AI",
         "industry": "소프트웨어 개발 및 공급업",
@@ -2644,7 +2807,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에스와이",
         "industry": "구조용 금속제품, 탱크 및 증기발생기 제조업",
@@ -2670,7 +2833,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "씨에스윈드",
         "industry": "구조용 금속제품, 탱크 및 증기발생기 제조업",
@@ -2696,13 +2859,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "강원에너지",
         "industry": "기타 전기장비 제조업",
         "products": "플랜트설비(산업용 보일러)",
         "taxonomyVersion": 3,
         "ruleId": "plant-boiler"
+      }
+    },
+    {
+      "symbol": "115450",
+      "name": "HLB테라퓨틱스",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "기타 전문 도매업",
+        "products": "임베디드 GUI 미들웨어 FXUI-2D, FXUI-3D"
       }
     },
     {
@@ -2722,7 +2905,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "지엔씨에너지",
         "industry": "전동기, 발전기 및 전기 변환 · 공급 · 제어 장치 제조업",
@@ -2747,13 +2930,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "나노신소재",
         "industry": "기타 화학제품 제조업",
         "products": "인듐계 산화물 TCO Target, 반도체 CMP Slurry 등",
         "taxonomyVersion": 3,
         "ruleId": "semiconductor-material"
+      }
+    },
+    {
+      "symbol": "122640",
+      "name": "예스티",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "특수 목적용 기계 제조업",
+        "products": "반도체 및 디스플레이 제조 장비"
       }
     },
     {
@@ -2773,7 +2976,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한라캐스트",
         "industry": "자동차 신품 부품 제조업",
@@ -2798,7 +3001,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "비나텍",
         "industry": "일차전지 및 이차전지 제조업",
@@ -2823,7 +3026,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에코캡",
         "industry": "자동차 신품 부품 제조업",
@@ -2849,7 +3052,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "티에스이",
         "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
@@ -2875,7 +3078,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "앤로보틱스",
         "industry": "특수 목적용 기계 제조업",
@@ -2903,7 +3106,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "이마트",
         "industry": "종합 소매업",
@@ -2928,13 +3131,39 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "메지온",
         "industry": "자연과학 및 공학 연구개발업",
         "products": "발기부전증치료제, 전립선비대증치료제",
         "taxonomyVersion": 3,
         "ruleId": "bio-drug"
+      }
+    },
+    {
+      "symbol": "140430",
+      "name": "카티스",
+      "market": "KOSDAQ",
+      "sector": "IT서비스",
+      "subSector": "시스템통합·IT아웃소싱",
+      "themes": [
+        "IT서비스",
+        "시스템통합"
+      ],
+      "breadth": false,
+      "reviewRequired": false,
+      "source": "KRX KIND · 기존 섹터맵 체계로 사업·제품 분류",
+      "updatedAt": "2026-11-17",
+      "verification": {
+        "status": "verified",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "issuerName": "카티스",
+        "industry": "컴퓨터 프로그래밍, 시스템 통합 및 관리업",
+        "products": "산업인프라 보안플랫폼",
+        "taxonomyVersion": 3,
+        "ruleId": "industry-it"
       }
     },
     {
@@ -2954,7 +3183,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "파크시스템스",
         "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
@@ -2980,7 +3209,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "비아트론",
         "industry": "특수 목적용 기계 제조업",
@@ -3006,13 +3235,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "뉴파워프라즈마",
         "industry": "특수 목적용 기계 제조업",
         "products": "플라즈마 세정기(Remote Plasma Cleaning Generator)",
         "taxonomyVersion": 3,
         "ruleId": "semiconductor-plasma"
+      }
+    },
+    {
+      "symbol": "145020",
+      "name": "휴젤",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "기초 의약물질 제조업",
+        "products": "보툴리눔톡신, 필러"
       }
     },
     {
@@ -3032,7 +3281,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "아스플로",
         "industry": "일반 목적용 기계 제조업",
@@ -3057,7 +3306,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "엘티씨",
         "industry": "기초 화학물질 제조업",
@@ -3083,7 +3332,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "선익시스템",
         "industry": "특수 목적용 기계 제조업",
@@ -3110,7 +3359,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "서진시스템",
         "industry": "기타 전기장비 제조업",
@@ -3138,7 +3387,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "멜콘",
         "industry": "특수 목적용 기계 제조업",
@@ -3163,7 +3412,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "NHN",
         "industry": "소프트웨어 개발 및 공급업",
@@ -3188,7 +3437,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "나무가",
         "industry": "전자부품 제조업",
@@ -3213,7 +3462,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에이팩트",
         "industry": "반도체 제조업",
@@ -3238,7 +3487,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에이디테크놀로지",
         "industry": "반도체 제조업",
@@ -3263,7 +3512,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "제이앤티씨",
         "industry": "전자부품 제조업",
@@ -3290,7 +3539,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "셀바스헬스케어",
         "industry": "의료용 기기 제조업",
@@ -3316,13 +3565,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "와이제이링크",
         "industry": "특수 목적용 기계 제조업",
         "products": "SMT(PCB 표면실장) 이송 및 추적장비 등 스마트 공정장비",
         "taxonomyVersion": 3,
         "ruleId": "products-smt"
+      }
+    },
+    {
+      "symbol": "214150",
+      "name": "클래시스",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "의료용 기기 제조업",
+        "products": "미용의료기기"
       }
     },
     {
@@ -3341,7 +3610,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "파마리서치",
         "industry": "의료용품 및 기타 의약 관련제품 제조업",
@@ -3367,13 +3636,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "RFHIC",
         "industry": "통신 및 방송 장비 제조업",
         "products": "GaN 트랜지스터",
         "taxonomyVersion": 3,
         "ruleId": "rf-network"
+      }
+    },
+    {
+      "symbol": "219130",
+      "name": "타이거일렉",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "전자부품 제조업",
+        "products": "인쇄회로기판 제조업"
       }
     },
     {
@@ -3393,7 +3682,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "LK삼양",
         "industry": "사진장비 및 광학기기 제조업",
@@ -3418,7 +3707,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "올릭스",
         "industry": "자연과학 및 공학 연구개발업",
@@ -3444,7 +3733,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "와이씨",
         "industry": "특수 목적용 기계 제조업",
@@ -3470,7 +3759,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "메드팩토",
         "industry": "자연과학 및 공학 연구개발업",
@@ -3496,7 +3785,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "DSC인베스트먼트",
         "industry": "신탁업 및 집합투자업",
@@ -3522,7 +3811,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "펌텍코리아",
         "industry": "플라스틱제품 제조업",
@@ -3548,7 +3837,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "샘씨엔에스",
         "industry": "전자부품 제조업",
@@ -3573,7 +3862,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "크래프톤",
         "industry": "소프트웨어 개발 및 공급업",
@@ -3599,7 +3888,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "아리바이오LAB",
         "industry": "자연과학 및 공학 연구개발업",
@@ -3628,7 +3917,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "HD건설기계",
         "industry": "특수 목적용 기계 제조업",
@@ -3654,7 +3943,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "오리온",
         "industry": "기타 식품 제조업",
@@ -3680,7 +3969,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "진에어",
         "industry": "항공 여객 운송업",
@@ -3706,7 +3995,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "금양그린파워",
         "industry": "전기 및 통신 공사업",
@@ -3732,7 +4021,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SV인베스트먼트",
         "industry": "기타 금융업",
@@ -3758,7 +4047,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "디케이티",
         "industry": "전자부품 제조업",
@@ -3783,7 +4072,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "엘앤씨바이오",
         "industry": "의약품 제조업",
@@ -3809,7 +4098,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "아리바이오홀딩스",
         "industry": "전구 및 조명장치 제조업",
@@ -3818,6 +4107,26 @@
         "ruleId": "review-290690",
         "businessSourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "businessReviewedAt": "2026-11-16"
+      }
+    },
+    {
+      "symbol": "295310",
+      "name": "에이치브이엠",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "1차 비철금속 제조업",
+        "products": "Ni계 합금, Fe계 합금, 스퍼터링타겟, Cu계 합금 등"
       }
     },
     {
@@ -3837,7 +4146,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "바이브컴퍼니",
         "industry": "소프트웨어 개발 및 공급업",
@@ -3862,7 +4171,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "HD현대에너지솔루션",
         "industry": "반도체 제조업",
@@ -3888,7 +4197,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "태성",
         "industry": "특수 목적용 기계 제조업",
@@ -3913,7 +4222,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "박셀바이오",
         "industry": "자연과학 및 공학 연구개발업",
@@ -3939,7 +4248,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "RF머트리얼즈",
         "industry": "전자부품 제조업",
@@ -3965,7 +4274,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "루닛",
         "industry": "소프트웨어 개발 및 공급업",
@@ -3993,7 +4302,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "PS일렉트로닉스",
         "industry": "전자부품 제조업",
@@ -4019,7 +4328,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "시선AI",
         "industry": "소프트웨어 개발 및 공급업",
@@ -4045,7 +4354,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "영광와이케이엠씨",
         "industry": "기타 금속 가공제품 제조업",
@@ -4070,7 +4379,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "스피어",
         "industry": "소프트웨어 개발 및 공급업",
@@ -4095,7 +4404,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "디앤디파마텍",
         "industry": "자연과학 및 공학 연구개발업",
@@ -4121,7 +4430,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "하이브",
         "industry": "오디오물 출판 및 원판 녹음업",
@@ -4146,7 +4455,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "엑스게이트",
         "industry": "소프트웨어 개발 및 공급업",
@@ -4172,7 +4481,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "티엘비",
         "industry": "전자부품 제조업",
@@ -4198,7 +4507,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "영광",
         "industry": "구조용 금속제품, 탱크 및 증기발생기 제조업",
@@ -4224,7 +4533,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에스와이스틸텍",
         "industry": "구조용 금속제품, 탱크 및 증기발생기 제조업",
@@ -4250,7 +4559,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "파이버프로",
         "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
@@ -4276,7 +4585,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "노을",
         "industry": "의료용 기기 제조업",
@@ -4303,7 +4612,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "제닉스로보틱스",
         "industry": "특수 목적용 기계 제조업",
@@ -4329,7 +4638,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "대명에너지",
         "industry": "건물 건설업",
@@ -4355,7 +4664,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "쓰리빌리언",
         "industry": "자연과학 및 공학 연구개발업",
@@ -4380,7 +4689,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "HT로보틱스",
         "industry": "기타 금속 가공제품 제조업",
@@ -4405,7 +4714,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "가온칩스",
         "industry": "반도체 제조업",
@@ -4430,13 +4739,33 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SK스퀘어",
         "industry": "기타 금융업",
         "products": "지주회사",
         "taxonomyVersion": 3,
         "ruleId": "holding"
+      }
+    },
+    {
+      "symbol": "417010",
+      "name": "나노팀",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "일반 목적용 기계 제조업",
+        "products": "전기차용 방열제품"
       }
     },
     {
@@ -4456,7 +4785,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "저스템",
         "industry": "특수 목적용 기계 제조업",
@@ -4482,7 +4811,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼기에너지솔루션즈",
         "industry": "자동차 신품 부품 제조업",
@@ -4508,7 +4837,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "인텔리빅스",
         "industry": "소프트웨어 개발 및 공급업",
@@ -4534,7 +4863,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "티에프이",
         "industry": "전자부품 제조업",
@@ -4560,7 +4889,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한싹",
         "industry": "소프트웨어 개발 및 공급업",
@@ -4586,7 +4915,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "삼현",
         "industry": "자동차 신품 부품 제조업",
@@ -4612,7 +4941,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "크리에이츠",
         "industry": "그외 기타 제품 제조업",
@@ -4638,7 +4967,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "파두",
         "industry": "반도체 제조업",
@@ -4664,7 +4993,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "에스피소프트",
         "industry": "컴퓨터 프로그래밍, 시스템 통합 및 관리업",
@@ -4689,7 +5018,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "큐리옥스바이오시스템즈",
         "industry": "의료용 기기 제조업",
@@ -4697,6 +5026,26 @@
         "taxonomyVersion": 3,
         "ruleId": "bio-analysis",
         "identityAlias": true
+      }
+    },
+    {
+      "symbol": "446840",
+      "name": "지슨",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
+        "products": "무선도청탐지기"
       }
     },
     {
@@ -4716,7 +5065,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "한빛레이저",
         "industry": "특수 목적용 기계 제조업",
@@ -4741,7 +5090,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "사피엔반도체",
         "industry": "반도체 제조업",
@@ -4767,7 +5116,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "아이씨티케이",
         "industry": "반도체 제조업",
@@ -4792,7 +5141,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "이수스페셜티케미컬",
         "industry": "기초 화학물질 제조업",
@@ -4818,7 +5167,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "씨어스",
         "industry": "의료용 기기 제조업",
@@ -4844,7 +5193,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "피앤에스로보틱스",
         "industry": "의료용 기기 제조업",
@@ -4869,7 +5218,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "프로티나",
         "industry": "자연과학 및 공학 연구개발업",
@@ -4896,7 +5245,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "SK이터닉스",
         "industry": "건물 건설업",
@@ -4905,6 +5254,26 @@
         "ruleId": "review-475150",
         "businessSourceUrl": "https://www.sketernix.com/company/overview.do",
         "businessReviewedAt": "2026-11-09"
+      }
+    },
+    {
+      "symbol": "476080",
+      "name": "M83",
+      "market": "KOSDAQ",
+      "updatedAt": "2026-11-17",
+      "sector": "분류 대기",
+      "subSector": "분류 대기",
+      "themes": [],
+      "breadth": false,
+      "reviewRequired": true,
+      "verification": {
+        "status": "pending",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "reason": "INDUSTRY_REQUIRES_REVIEW",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "industry": "영화, 비디오물, 방송프로그램 제작 및 배급업",
+        "products": "VFX"
       }
     },
     {
@@ -4923,7 +5292,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "달바글로벌",
         "industry": "기타 화학제품 제조업",
@@ -4949,7 +5318,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "세미파이브",
         "industry": "건축기술, 엔지니어링 및 관련 기술 서비스업",
@@ -4975,13 +5344,39 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "리브스메드",
         "industry": "의료용 기기 제조업",
         "products": "다관절 다자유도 복강경 수술기구인 ArtiSential, ArtiSeal, ArtiStapler, LivsCam, Stark",
         "taxonomyVersion": 3,
         "ruleId": "medical-surgery"
+      }
+    },
+    {
+      "symbol": "493260",
+      "name": "옵토닉스",
+      "market": "KOSDAQ",
+      "sector": "통신",
+      "subSector": "광통신·네트워크",
+      "themes": [
+        "광통신",
+        "네트워크"
+      ],
+      "breadth": false,
+      "reviewRequired": false,
+      "source": "KRX KIND · 기존 섹터맵 체계로 사업·제품 분류",
+      "updatedAt": "2026-11-17",
+      "verification": {
+        "status": "verified",
+        "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
+        "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
+        "issuerName": "옵토닉스",
+        "industry": "측정, 시험, 항해, 제어 및 기타 정밀기기 제조업; 광학기기 제외",
+        "products": "링레이저 자이로스코프(RLG) 및 광섬유자이로스코프(FOG) 핵심 부품 제조",
+        "taxonomyVersion": 3,
+        "ruleId": "optical-network"
       }
     },
     {
@@ -5001,7 +5396,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "넥스아이",
         "industry": "자연과학 및 공학 연구개발업",
@@ -5027,7 +5422,7 @@
       "verification": {
         "status": "verified",
         "method": "KRX_KIND_IDENTITY_INDUSTRY_V1",
-        "checkedAt": "2026-11-16T16:56:29.848Z",
+        "checkedAt": "2026-11-17T07:45:25.277Z",
         "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13",
         "issuerName": "이에스티",
         "industry": "특수 목적용 기계 제조업",
@@ -5038,8 +5433,8 @@
     }
   ],
   "summary": {
-    "examined": 194,
-    "verified": 194,
-    "pending": 0
+    "examined": 213,
+    "verified": 197,
+    "pending": 16
   }
 }
