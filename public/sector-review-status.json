@@ -1,13 +1,13 @@
 {
   "date": "2026-11-18",
   "status": "published",
-  "checkedAt": "2026-11-18T14:26:28.599Z",
+  "checkedAt": "2026-11-18T14:28:31.214Z",
   "reason": "5개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포",
   "sources": [
-    "https://www.hankyung.com/article/2026111851106",
+    "https://www.yna.co.kr/view/AKR20261118041351008?input=1195m",
     "https://www.yna.co.kr/view/AKR20261118062451008?input=1195m",
-    "https://www.sedaily.com/article/20115532?ref=naver",
-    "https://www.sedaily.com/article/20116144?ref=naver",
-    "https://www.fnnews.com/news/202611181832342817"
+    "https://www.newspim.com/news/view/20261118001281",
+    "https://www.sedaily.com/article/20116027?ref=naver",
+    "https://www.etnews.com/20261118000445"
   ]
 }
