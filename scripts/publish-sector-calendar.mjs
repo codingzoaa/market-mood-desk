@@ -31,7 +31,7 @@ const checkedTime=(value,date)=>{if(!value||Number.isNaN(Date.parse(value))||day
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,240);
 const aliases={
  '엔터·콘텐츠':['엔터','엔터테인먼트','K팝','K-팝'],
- '반도체':['반도체','메모리','HBM','패키징','칩','마이크론'],
+ '반도체':['반도체','메모리','HBM','패키징','마이크론'],
  '2차전지':['이차전지','2차전지','배터리','양극재'],
  '제약·바이오':['바이오','신약','제약','임상'],
  '금융·증권':['금융','증권','은행'],
@@ -54,6 +54,8 @@ const validHeadline=(story,group)=>{
  const marketContext=/주가|주식|증시|코스피|코스닥|특징주|종목|상한가|급등|강세|동반.{0,8}상승|관련주|수혜주/.test(h);
  const companyCatalyst=direct&&/실적|수주|공급|계약|공시|증설|매출|영업이익/.test(h);
  if(!marketContext&&!companyCatalyst)return false;
+ if(/애프터마켓|시간외|장후|장\s*마감\s*후/.test(h))return false;
+ if(!/강세|급등|상한가|동반.{0,8}상승|반등|회복|호조|훈풍|수혜/.test(h)&&!companyCatalyst)return false;
  // Foreign stock-market features do not establish a catalyst for Korean peers.
  if(/\[(?:[^\]]*(?:인도|유럽|미국|중국|일본|홍콩))[^\]]*특징주\]/.test(h)&&!direct)return false;
  const terms=[group.name,...(aliases[group.name]||[])];
@@ -73,7 +75,8 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
  for(const group of candidates){
   const matches=headlines.filter(n=>validHeadline(n,group)&&n.day===date&&/^https:\/\//.test(n.link));
   if(!matches.length)continue;
-  const story=matches[0];
+  const relevance=n=>{const h=normalize(n.headline).toLowerCase();const direct=group.stocks.some(s=>s.name.length>=3&&h.includes(s.name.toLowerCase()));const terms=[group.name,...(aliases[group.name]||[])];return (direct?10:0)+terms.filter(t=>h.includes(t.toLowerCase())).length;};
+  const story=matches.sort((a,b)=>relevance(b)-relevance(a))[0];
   const sourceId=sources.length;
   sources.push({title:normalize(story.source)+(story.provider?' · '+story.provider:'')+' · '+date+' · '+normalize(story.headline),url:story.link});
   const gainers=group.stocks.filter(s=>s.changePct>0).sort((a,b)=>b.turnoverKRW-a.turnoverKRW||a.symbol.localeCompare(b.symbol));

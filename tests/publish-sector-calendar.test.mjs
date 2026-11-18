@@ -95,3 +95,9 @@ test('science and honorary-award stories cannot authorize a stock-sector review 
  assert.equal(prepareEditorial(date,snapshot,[{...story,headline}],map).sectors.length,0);
  }
 });
+
+test('unrelated IPO declines and aftermarket rallies are not evidence of regular-session sector strength',()=>{
+ const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector:'로봇'}));const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'국내로봇'+i,changePct:1,turnoverKRW:1000}))};
+ for(const headline of ['[특징주] 에이엘로봇, 코스닥 상장 첫날 24% 하락','로봇주 애프터마켓 급등'])assert.equal(prepareEditorial(date,snapshot,[{...story,headline}],map).sectors.length,0);
+ assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'엔비디아 훈풍에 로봇주 동반 강세'}],map).sectors.length,1);
+});
