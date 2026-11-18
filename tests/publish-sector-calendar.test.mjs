@@ -76,3 +76,9 @@ test('delayed news collection requests the target date rather than a moving one-
  assert.match(q,/after:2026-11-13 before:2026-11-14/);
  assert.ok(!q.includes('when:1d'));
 });
+
+
+test('news validation occurs before the final TOP5 cap, so a supported sixth candidate is retained',()=>{
+ const rows=[],catalog=[];for(let i=0;i<6;i++)for(let j=0;j<10;j++){const symbol=String(700000+i*10+j),sector='검증섹터'+i;rows.push(mk(symbol,'종목'+i+'-'+j,6-i*.5,1000));catalog.push({symbol,sector});}
+ const result=prepareEditorial(date,{...good,stocks:rows},[{...story,headline:'검증섹터5 관련 종목 동반 상승'}],catalog);assert.equal(result.sectors.length,1);assert.equal(result.sectors[0].name,'검증섹터5');
+});

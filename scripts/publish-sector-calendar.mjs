@@ -64,7 +64,7 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
  if(!checkedTime(snapshot.stockAsOf||snapshot.asOf,date))throw Error('REGULAR_CLOSE_NOT_CONFIRMED');
  if(!Array.isArray(snapshot.stocks)||snapshot.stocks.length<10)throw Error('LS_STOCK_SAMPLE_INSUFFICIENT');
  if(!Array.isArray(catalog)||catalog.length<50)throw Error('STOCK_TAXONOMY_MISSING');
- const candidates=selectLeaders(snapshot,catalog,{coRise:true});
+ const candidates=selectLeaders(snapshot,catalog,{coRise:true,limit:20});
  const sources=[],sectors=[];
  for(const group of candidates){
   const matches=headlines.filter(n=>validHeadline(n,group)&&n.day===date&&/^https:\/\//.test(n.link));
@@ -112,6 +112,8 @@ async function checkedFetch(url,mode='json'){
 }
 export async function main({date=reviewTargetDate(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews}={}){
  if(!iso.test(date)||date>currentDay())throw Error('INVALID_OR_FUTURE_DATE');
+ const clock=dateParts(new Date()),time=clock.hour+clock.minute;
+ if(process.env.GITHUB_EVENT_NAME==='workflow_run'&&time>='0900'&&time<'1700')return {status:'not_due',date,changed:false,reason:'17:00 KST 검증 시작 전 · 다음 완료 이벤트에서 재확인'};
  const indexPath=path('src/close-reviews.ts'),index=readFileSync(indexPath,'utf8');
  if(index.includes('review'+date.replaceAll('-',''))){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'already_published',date};}
  let review=null,headlines=[],reason='당일 종가 또는 기사 검증에 필요한 자료 부족';
@@ -127,7 +129,8 @@ export async function main({date=reviewTargetDate(),readData=checkedFetch,readNe
   const catalog=applySharedSectorEdits([...entries.values()],shared.entries);
   let google=[];
   try{google=parseNews(await readNews(reviewNewsUrl(date),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
-  const queries=selectLeaders(snapshot,catalog,{coRise:true}).map(g=>g.name);
+  const candidates=selectLeaders(snapshot,catalog,{coRise:true,limit:20});
+  const queries=[...candidates.map(g=>g.name),...candidates.slice(0,10).map(g=>g.stocks.slice().sort((a,b)=>b.turnoverKRW-a.turnoverKRW)[0].name)];
   const naver=await readNaver(date,queries);
   console.log('NAVER_SECTOR_NEWS status='+naver.status+' count='+naver.items.length);
   headlines=mergeSectorNews(naver.items,google);
@@ -159,4 +162,5 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main({date:
  writeFileSync(path('work/sector-calendar-result.json'),JSON.stringify({...result,invokedAt:new Date().toISOString()},null,2)+'\n');
  console.log('SECTOR_RUN_OUTCOME '+JSON.stringify(result));
 }).catch(e=>{console.error('SECTOR_REVIEW_PIPELINE_FAILED',e.message);process.exitCode=1;});
+
 
