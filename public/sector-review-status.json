@@ -1,12 +1,13 @@
 {
-  "date": "2026-11-16",
+  "date": "2026-11-18",
   "status": "published",
-  "checkedAt": "2026-11-16T09:38:39.618623+00:00",
-  "reason": "정규장 종가와 당일 기사·증권사 원문을 직접 대조해 음식료·보험·은행 3개 그룹 확인. 미확인 인과관계는 단정하지 않음.",
+  "checkedAt": "2026-11-18T14:26:28.599Z",
+  "reason": "5개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포",
   "sources": [
-    "https://www.hankyung.com/article/2026111696486",
-    "https://www.mk.co.kr/news/stock/12209970",
-    "https://mbnmoney.mbn.co.kr/stock/item/news?code=086790",
-    "https://file.hanaw.com/download/research/FileServer/WEB/industry/industry/2026/11/15/Bank_Weekly_20261116.pdf"
+    "https://www.hankyung.com/article/2026111851106",
+    "https://www.yna.co.kr/view/AKR20261118062451008?input=1195m",
+    "https://www.sedaily.com/article/20115532?ref=naver",
+    "https://www.sedaily.com/article/20116144?ref=naver",
+    "https://www.fnnews.com/news/202611181832342817"
   ]
 }
