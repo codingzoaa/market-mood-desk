@@ -82,3 +82,9 @@ test('news validation occurs before the final TOP5 cap, so a supported sixth can
  const rows=[],catalog=[];for(let i=0;i<6;i++)for(let j=0;j<10;j++){const symbol=String(700000+i*10+j),sector='검증섹터'+i;rows.push(mk(symbol,'종목'+i+'-'+j,6-i*.5,1000));catalog.push({symbol,sector});}
  const result=prepareEditorial(date,{...good,stocks:rows},[{...story,headline:'검증섹터5 관련 종목 동반 상승'}],catalog);assert.equal(result.sectors.length,1);assert.equal(result.sectors[0].name,'검증섹터5');
 });
+
+test('an airline valuation headline does not establish a space-sector catalyst',()=>{
+ const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector:'우주항공'}));
+ const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'우주종목'+i,changePct:1,turnoverKRW:1000}))};
+ assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'대한항공, 합병 시너지 기대감에 목표가 상향'}],map).sectors.length,0);
+});

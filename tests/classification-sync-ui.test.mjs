@@ -2,7 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {build} from 'esbuild';
-await build({entryPoints:['src/desk.tsx'],bundle:true,platform:'node',format:'esm',outfile:'work/classification-desk.mjs',packages:'external',jsx:'automatic'});
+import {resolve} from 'node:path';
+await build({entryPoints:['src/desk.tsx'],bundle:true,platform:'node',format:'esm',outfile:'work/classification-desk.mjs',packages:'external',jsx:'automatic',plugins:[{name:'fixed-calendar-fixture',setup(builder){builder.onLoad({filter:/\/close-reviews\.ts$/},()=>({contents:"import {review20261116} from './close-review-2026-11-16';export const closeReviews=[review20261116];",resolveDir:resolve('src'),loader:'ts'}));}}]});
 const dom=new JSDOM('<div id="root"></div>',{url:'https://market-note.test/#stockmap'});
 for(const key of ['window','document','HTMLElement','HTMLInputElement','Event','MouseEvent','KeyboardEvent','localStorage','location'])globalThis[key]=dom.window[key];
 Object.defineProperty(globalThis,'navigator',{value:dom.window.navigator,configurable:true});globalThis.IS_REACT_ACT_ENVIRONMENT=true;
@@ -21,9 +22,10 @@ test('one sector-map save propagates immediately to leaders, turnover and histor
   await act(async()=>document.querySelector('[role=dialog] form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
   await click(document.querySelector('nav a[href="#sectors"]'));assert.match(document.querySelector('.sector-items').textContent,/검증용 식품/);
   await click(document.querySelector('nav a[href="#stocks"]'));assert.match(document.querySelector('.turnover-list').textContent,/검증용 식품.*검증용 라면.*수출 검증/);
-  await click(document.querySelector('nav a[href="#calendar"]'));assert.match(document.querySelector('.close-sector-list').textContent,/검증용 식품/);assert.match(document.querySelector('.calendar-classification').textContent,/검증용 라면.*수출 검증/);assert.match(document.querySelector('.close-sector-list').textContent,/삼양식품 \+6.20%/);
+  await click(document.querySelector('nav a[href="#calendar"]'));if(document.querySelector('[aria-label="2026-11-16 장 마감 리뷰"]').getAttribute('aria-expanded')!=='true')await click(document.querySelector('[aria-label="2026-11-16 장 마감 리뷰"]'));assert.match(document.querySelector('.close-sector-list').textContent,/검증용 식품/);assert.match(document.querySelector('.calendar-classification').textContent,/검증용 라면.*수출 검증/);assert.match(document.querySelector('.close-sector-list').textContent,/삼양식품 \+6.20%/);
   await click(document.querySelector('nav a[href="#stockmap"]'));await click(document.querySelector('[aria-label="삼양식품 분류 수정"]'));await click([...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent==='기본 분류로 복원'));
   await click(document.querySelector('nav a[href="#stocks"]'));assert.doesNotMatch(document.querySelector('.turnover-list').textContent,/검증용/);
-  await click(document.querySelector('nav a[href="#calendar"]'));assert.doesNotMatch(document.querySelector('.close-sector-list').textContent,/검증용/);
+  await click(document.querySelector('nav a[href="#calendar"]'));if(document.querySelector('[aria-label="2026-11-16 장 마감 리뷰"]').getAttribute('aria-expanded')!=='true')await click(document.querySelector('[aria-label="2026-11-16 장 마감 리뷰"]'));assert.doesNotMatch(document.querySelector('.close-sector-list').textContent,/검증용/);
  }finally{await act(async()=>root.unmount());}
 });
+
