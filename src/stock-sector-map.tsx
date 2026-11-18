@@ -1,11 +1,10 @@
-import {applySharedSectorEdits} from './shared-sector-edits.mjs';
-import {useSectorEdits,SectorEditDialog,SectorEditTransfer} from './sector-editor';
-import {applySectorEdits,pendingClassification} from './sector-edits.mjs';
+import {useStockClassification,type StockClassification} from './use-stock-classification';
+import {SectorEditDialog,SectorEditTransfer} from './sector-editor';
+import {pendingClassification} from './sector-edits.mjs';
 'use client';
-import {useEffect,useId,useMemo,useState} from 'react';
-import {API_URL} from './live';
+import {useId,useMemo,useState} from 'react';
 import {Search,Layers3,ListFilter,ChevronDown} from 'lucide-react';
-import {combinedStockMap,STOCK_MAP,type StockMapEntry} from './stock-map';
+import {STOCK_MAP,type StockMapEntry} from './stock-map';
 
 type Mode='stocks'|'sectors';
 
@@ -15,23 +14,15 @@ const businessSources=new Set(['kind.krx.co.kr','lab.aribiogroup.com','www.korea
 function businessSource(url?:string){try{const u=new URL(url||'');return u.protocol==='https:'&&businessSources.has(u.hostname)?u.href:null;}catch{return null;}}
 
 
-export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntry[]}){
- const [sharedEdits,setSharedEdits]=useState<any[]>([]);
- const [remote,setRemote]=useState<StockMapEntry[]>([]),[registryError,setRegistryError]=useState(false),[checkedAt,setCheckedAt]=useState('');
- useEffect(()=>{
-  const ctrl=new AbortController();
-  const refresh=async()=>{try{
-   const response=await fetch(API_URL+'/api/stock-map',{credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.any([ctrl.signal,AbortSignal.timeout(12000)])});
-   if(!response.ok)throw Error('registry');const body=await response.json();
-   if(body.version!==1||!Array.isArray(body.entries)||body.entries.length>5000)throw Error('registry schema');
-   if(!ctrl.signal.aborted){setRemote(body.entries);setSharedEdits(Array.isArray(body.sharedEdits)?body.sharedEdits:[]);setCheckedAt(typeof body.updatedAt==='string'?body.updatedAt:typeof body.verification?.checkedAt==='string'?body.verification.checkedAt:'');setRegistryError(false);}
-  }catch{if(!ctrl.signal.aborted)setRegistryError(true);}};
-  const visible=()=>{if(document.visibilityState==='visible')void refresh();};void refresh();const timer=window.setInterval(refresh,300000);document.addEventListener('visibilitychange',visible);
-  return()=>{ctrl.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
- },[]);
- const local=useSectorEdits();
+export default function StockSectorMap({classification,discovered=[]}:{classification?:StockClassification;discovered?:StockMapEntry[]}){
+ return classification?<StockSectorMapContent classification={classification}/>:<StandaloneStockSectorMap discovered={discovered}/>;
+}
+function StandaloneStockSectorMap({discovered}:{discovered:StockMapEntry[]}){
+ const classification=useStockClassification(discovered);return <StockSectorMapContent classification={classification}/>;
+}
+function StockSectorMapContent({classification}:{classification:StockClassification}){
+ const {registry,registryError,checkedAt,local}=classification;
  const [editing,setEditing]=useState<StockMapEntry|null>(null),[onlyPending,setOnlyPending]=useState(false);
- const registry=useMemo(()=>applySectorEdits(applySharedSectorEdits(combinedStockMap([...discovered,...remote]),sharedEdits),local.edits) as StockMapEntry[],[discovered,remote,sharedEdits,local.edits]);
  const autoVerified=registry.filter(x=>x.verification?.status==='verified').length;
  const pending=registry.filter(x=>x.reviewRequired||pendingClassification(x.sector)||pendingClassification(x.subSector)).length;
  const [mode,setMode]=useState<Mode>('stocks');
@@ -115,3 +106,4 @@ export default function StockSectorMap({discovered=[]}:{discovered?:StockMapEntr
  {editing&&<SectorEditDialog key={editing.symbol} item={editing} sectors={sectors} subSectors={uniq(registry.map(x=>x.subSector))} canReset={local.edits.some(e=>e.symbol===editing.symbol)} onSave={local.save} onReset={()=>local.reset(editing.symbol)} onClose={()=>setEditing(null)}/>}
  </section>;
 }
+

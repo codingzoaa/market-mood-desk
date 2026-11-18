@@ -1,3 +1,4 @@
+import {applySharedSectorEdits} from '../src/shared-sector-edits.mjs';
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {collectNaverSectorNews,mergeSectorNews} from './naver-sector-news.mjs';
@@ -118,7 +119,12 @@ export async function main({date=reviewTargetDate(),readData=checkedFetch,readNe
   const dashboard=await readData(API+'?date='+date);
   const snapshot=dashboard?.snapshots?.find(s=>s.date===date);
   if(!snapshot)throw Error('LS_SAME_DAY_SNAPSHOT_MISSING');
-  const catalog=JSON.parse(readFileSync(path('src/data/stock-map.json'),'utf8'));
+  const curated=JSON.parse(readFileSync(path('src/data/stock-map.json'),'utf8'));
+  const reviewed=JSON.parse(readFileSync(path('src/data/stock-sector-reviews.json'),'utf8'));
+  const verified=JSON.parse(readFileSync(path('src/data/stock-map-verified.json'),'utf8'));
+  const shared=JSON.parse(readFileSync(path('src/data/stock-sector-overrides.json'),'utf8'));
+  const entries=new Map([...verified.entries,...reviewed,...curated].map(row=>[row.symbol,row]));
+  const catalog=applySharedSectorEdits([...entries.values()],shared.entries);
   let google=[];
   try{google=parseNews(await readNews(reviewNewsUrl(date),'text'),date);}catch{console.log('GOOGLE_SECTOR_NEWS_UNAVAILABLE');}
   const queries=selectLeaders(snapshot,catalog,{coRise:true}).map(g=>g.name);
@@ -153,3 +159,4 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main({date:
  writeFileSync(path('work/sector-calendar-result.json'),JSON.stringify({...result,invokedAt:new Date().toISOString()},null,2)+'\n');
  console.log('SECTOR_RUN_OUTCOME '+JSON.stringify(result));
 }).catch(e=>{console.error('SECTOR_REVIEW_PIPELINE_FAILED',e.message);process.exitCode=1;});
+

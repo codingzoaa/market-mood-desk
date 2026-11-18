@@ -1,5 +1,5 @@
 import {validateDetails,type MarketDetails} from './market-details.ts';
-export type Stock = { symbol: string; name: string; market: 'KOSPI' | 'KOSDAQ'; themes: string[]; price: number; changePct: number; turnoverKRW: number; instrumentType?: 'STOCK' | 'ETF' | 'ETN' };
+export type Stock = { symbol: string; name: string; market: 'KOSPI' | 'KOSDAQ'; themes: string[]; sector?:string; subSector?:string; price: number; changePct: number; turnoverKRW: number; instrumentType?: 'STOCK' | 'ETF' | 'ETN' };
 export type Etf = { symbol: string; name: string; price: number; changePct: number; turnoverKRW: number };
 export type Metrics = { kospi?: number; kospiChangePct?: number; kosdaq?: number; kosdaqChangePct?: number; nasdaqFutures?: number; nasdaqFuturesChangePct?: number; usdKrw?: number; usdKrwChangePct?: number; sox?: number; soxChangePct?: number; soxRs20d?: number; yield2y?: number; yield10y?: number; yield2yChangeBp?: number; yield10yChangeBp?: number; breadthAbove50?: number; advances?: number; declines?: number; vix?: number; creditSpreadBp?: number; riskFactors?: { breadth: number; vix: number; credit: number; sox: number; treasury: number } };
 export type Snapshot = { date: string; asOf: string; source: string; stocks: Stock[]; etfs?: Etf[]; metrics: Metrics; note: string; details?:MarketDetails; stockAsOf?:string; marketUpdate?:{collectedAt:string;source:string;quoteTimes:{kospi:string;kosdaq:string;nasdaqFutures:string;usdKrw:string}} };
@@ -24,7 +24,7 @@ export function rankKodex(etfs: Etf[] = [], by:'turnover'|'change'='turnover') {
 }
 export function rankSectors(stocks: Stock[],etfs:Etf[]=[]) {
  const map=new Map<string,{name:string;turnoverKRW:number;weighted:number;count:number;leaders:Stock[]}>();
- for(const s of eligibleStocks(stocks,etfs)) for(const theme of (s.themes.length?s.themes:['미분류'])) { const group=map.get(theme)||{name:theme,turnoverKRW:0,weighted:0,count:0,leaders:[]}; const amount=s.turnoverKRW/(s.themes.length||1);group.turnoverKRW+=amount;group.weighted+=s.changePct*amount;group.count++;group.leaders.push(s);map.set(theme,group); }
+ for(const s of eligibleStocks(stocks,etfs)) {const labels=s.sector?[s.sector]:(s.themes.length?s.themes:['미분류']);for(const theme of labels) { const group=map.get(theme)||{name:theme,turnoverKRW:0,weighted:0,count:0,leaders:[]}; const amount=s.turnoverKRW/labels.length;group.turnoverKRW+=amount;group.weighted+=s.changePct*amount;group.count++;group.leaders.push(s);map.set(theme,group); }}
  const total=[...map.values()].reduce((a,b)=>a+b.turnoverKRW,0);
  return [...map.values()].map(s=>({...s,changePct:s.turnoverKRW?s.weighted/s.turnoverKRW:0,share:total?s.turnoverKRW/total*100:0,leaders:s.leaders.sort((a,b)=>b.turnoverKRW-a.turnoverKRW)})).sort((a,b)=>b.turnoverKRW-a.turnoverKRW);
 }
@@ -63,3 +63,4 @@ export function demoSnapshots(end=dayKey()):Snapshot[] {
  const etfPool=[['069500','KODEX 200'],['229200','KODEX 코스닥150'],['122630','KODEX 레버리지'],['091160','KODEX 반도체'],['379800','KODEX 미국S&P500'],['379810','KODEX 미국나스닥100']];
  return fourWeeks(end).filter(d=>![0,6].includes(new Date(d+'T12:00:00Z').getUTCDay())).map((date,i)=>({date,asOf:date+'T15:30:00+09:00',source:'시뮬레이션 · 실제 시세 아님',note:'학습용 예시입니다. 거래대금과 등락률은 가상 수치입니다.',stocks:pool.map((p,j)=>({symbol:p[0] as string,name:p[1] as string,market:p[2] as Stock['market'],themes:p[3] as string[],price:Math.round((70000+j*31000+i*1300)/100)*100,changePct:+(j===1?2.3:3.2+((i*3+j*5)%18)/3).toFixed(2),turnoverKRW:(700+((i*137+j*321)%3000))*1e8})),etfs:etfPool.map(([symbol,name],j)=>({symbol,name,price:12000+j*5500+i*125,changePct:+(0.7+((i*3+j*7)%24)/4).toFixed(2),turnoverKRW:(60+((i*23+j*89)%900))*1e8})),metrics:{kospi:2750+i*9,kospiChangePct:0.83,kosdaq:850+i*2,kosdaqChangePct:1.24,nasdaqFutures:21000+i*45,nasdaqFuturesChangePct:-0.32,usdKrw:1350+i*0.3,usdKrwChangePct:0.18,sox:5100+i*17,soxChangePct:1.28,soxRs20d:6.8,yield2y:4.08,yield10y:4.43,yield2yChangeBp:2,yield10yChangeBp:6,breadthAbove50:47+i%17,advances:1300,declines:980,vix:19.4,creditSpreadBp:320,riskFactors:{breadth:38+i%10,vix:28,credit:36,sox:25,treasury:65}}}));
 }
+
