@@ -88,3 +88,10 @@ test('an airline valuation headline does not establish a space-sector catalyst',
  const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'우주종목'+i,changePct:1,turnoverKRW:1000}))};
  assert.equal(prepareEditorial(date,snapshot,[{...story,headline:'대한항공, 합병 시너지 기대감에 목표가 상향'}],map).sectors.length,0);
 });
+
+test('science and honorary-award stories cannot authorize a stock-sector review from a shared keyword',()=>{
+ for(const [sector,headline] of [['우주항공','49년 우주 항해한 보이저 1호, 지구서 1광일 거리 도달'],['원전',"SNT에너지, 원자력산업 발전 기여 장관 표창"]]){
+ const map=Array.from({length:60},(_,i)=>({symbol:String(100000+i),sector}));const snapshot={...good,stocks:map.map((s,i)=>({...s,name:'국내종목'+i,changePct:1,turnoverKRW:1000}))};
+ assert.equal(prepareEditorial(date,snapshot,[{...story,headline}],map).sectors.length,0);
+ }
+});

@@ -45,6 +45,7 @@ jobs:
       - name: Generate same-day evidence-gated editorial review
         id: review
         env:
+          REVIEW_REBUILD: ${{ github.event_name == 'push' && 'true' || 'false' }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |

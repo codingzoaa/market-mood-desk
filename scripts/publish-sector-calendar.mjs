@@ -30,6 +30,7 @@ export function reviewNewsUrl(date){
 const checkedTime=(value,date)=>{if(!value||Number.isNaN(Date.parse(value))||day(value)!==date)return false;const p=dateParts(value);return p.hour+p.minute>='1530';};
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,240);
 const aliases={
+ '엔터·콘텐츠':['엔터','엔터테인먼트','K팝','K-팝'],
  '반도체':['반도체','메모리','HBM','패키징','칩','마이크론'],
  '2차전지':['이차전지','2차전지','배터리','양극재'],
  '제약·바이오':['바이오','신약','제약','임상'],
@@ -50,6 +51,9 @@ const validHeadline=(story,group)=>{
  const h=normalize(story.headline).replace(/\s*[-–]\s*[^-–]*투자증권(?:\s*[-–].*)?$/,'').toLowerCase();
  const stocks=group.stocks.filter(s=>s.name.length>=3).map(s=>s.name.toLowerCase());
  const direct=stocks.some(name=>h.includes(name));
+ const marketContext=/주가|주식|증시|코스피|코스닥|특징주|종목|상한가|급등|강세|동반.{0,8}상승|관련주|수혜주/.test(h);
+ const companyCatalyst=direct&&/실적|수주|공급|계약|공시|증설|매출|영업이익/.test(h);
+ if(!marketContext&&!companyCatalyst)return false;
  // Foreign stock-market features do not establish a catalyst for Korean peers.
  if(/\[(?:[^\]]*(?:인도|유럽|미국|중국|일본|홍콩))[^\]]*특징주\]/.test(h)&&!direct)return false;
  const terms=[group.name,...(aliases[group.name]||[])];
@@ -110,12 +114,12 @@ async function checkedFetch(url,mode='json'){
  const text=await res.text();if(text.length>5000000)throw Error('SOURCE_TOO_LARGE');
  return mode==='text'?text:JSON.parse(text);
 }
-export async function main({date=reviewTargetDate(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews}={}){
+export async function main({date=reviewTargetDate(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews,rebuild=process.env.REVIEW_REBUILD==='true'}={}){
  if(!iso.test(date)||date>currentDay())throw Error('INVALID_OR_FUTURE_DATE');
  const clock=dateParts(new Date()),time=clock.hour+clock.minute;
  if(process.env.GITHUB_EVENT_NAME==='workflow_run'&&time>='0900'&&time<'1700')return {status:'not_due',date,changed:false,reason:'17:00 KST 검증 시작 전 · 다음 완료 이벤트에서 재확인'};
  const indexPath=path('src/close-reviews.ts'),index=readFileSync(indexPath,'utf8');
- if(index.includes('review'+date.replaceAll('-',''))){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'already_published',date};}
+ if(index.includes('review'+date.replaceAll('-',''))&&!rebuild){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'already_published',date};}
  let review=null,headlines=[],reason='당일 종가 또는 기사 검증에 필요한 자료 부족';
  try{
   const dashboard=await readData(API+'?date='+date);
@@ -144,7 +148,7 @@ export async function main({date=reviewTargetDate(),readData=checkedFetch,readNe
  // Pending reviews are not treated as published; reruns may strengthen evidence.
  if(review){
   const reviewPath=path('src/close-review-'+date+'.ts');
-  if(existsSync(reviewPath))throw Error('REVIEW_FILE_EXISTS_WITHOUT_INDEX');
+  if(existsSync(reviewPath)&&!rebuild)throw Error('REVIEW_FILE_EXISTS_WITHOUT_INDEX');
   writeFileSync(reviewPath,"import type {CloseReview} from './close-reviews';\n// Verified same-day LS quote sample + dated news headlines; missing measurements are not inferred.\nexport const review"+date.replaceAll('-','')+":CloseReview="+JSON.stringify(review,null,2)+";\n");
   writeFileSync(indexPath,updateIndex(index,date));
  }
