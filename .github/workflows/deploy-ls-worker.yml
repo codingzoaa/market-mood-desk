@@ -155,7 +155,7 @@ jobs:
           const quotes=await fetch('https://market-note-ls-api.kby0991.workers.dev/api/dashboard',{redirect:'error',signal:AbortSignal.timeout(15000)});
           if(!quotes.ok)throw Error('NEWS_VERIFY_MARKET_DATE_UNAVAILABLE');
           const saved=await quotes.json();
-          const date=(saved.snapshots||[]).filter(s=>/^\\d{4}-\\d{2}-\\d{2}$/.test(s.date)&&String(s.source).startsWith('LS증권 KRX')&&(s.date<today||s.date===today&&time>=marketSession(today).close)).map(s=>s.date).sort().at(-1);
+          const date=(saved.snapshots||[]).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s.date)&&String(s.source).startsWith('LS증권 KRX')&&(s.date<today||s.date===today&&time>=marketSession(today).close)).map(s=>s.date).sort().at(-1);
           if(!date)throw Error('NEWS_VERIFY_CLOSED_DATE_MISSING');
           console.log('NAVER_VERIFY_CLOSED_MARKET_DATE '+date);
           const items=await fetchNaverBriefingNews(date,['코스피 마감','코스닥 마감'],{env:process.env});
