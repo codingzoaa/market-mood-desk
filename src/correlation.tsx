@@ -1,3 +1,6 @@
+import DataQuality from './data-quality';
+import ChartControls from './chart-controls';
+import {navigateRange} from './chart-navigation.mjs';
 import {SignalPanel,SignalPeriods,signalChartStyle} from './signal-panel';
 import {periodStartIndex} from './kospi-pension-signal-data.mjs';
 import {useEffect,useRef,useState} from 'react';
@@ -17,7 +20,15 @@ const short=(date:string)=>date.slice(5).replace('-','/');
 export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
  const [period,setPeriod]=useState('1Y'),[layout,setLayout]=useState({width:760,height:520}),host=useRef<SVGSVGElement|null>(null);
  useEffect(()=>{if(!host.current)return;const resize=()=>{const box=host.current?.getBoundingClientRect();if(box&&box.width>0&&box.height>0)setLayout(v=>v.width===box.width&&v.height===box.height?v:{width:box.width,height:box.height});};resize();const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(resize):null;observer?.observe(host.current);window.addEventListener('resize',resize);return()=>{observer?.disconnect();window.removeEventListener('resize',resize);};},[history.length]);
- const points=history.slice(periodStartIndex(history,period));
+ const [windowRange,setWindowRange]=useState({start:0,end:100});
+ useEffect(()=>setWindowRange({start:0,end:100}),[period]);
+ useEffect(()=>{const root=host.current?.parentElement;if(!root)return;let dragging=false,lastX=0;const svg=(event:Event)=>(event.target as Element)?.closest?.('.correlation-svg');
+ const wheel=(event:WheelEvent)=>{if(!svg(event))return;event.preventDefault();setWindowRange(v=>navigateRange(v.start,v.end,event.deltaY<0?'in':'out'));};
+ const down=(event:PointerEvent)=>{const target=svg(event) as SVGSVGElement|null;if(!target)return;dragging=true;lastX=event.clientX;target.setPointerCapture?.(event.pointerId);};
+ const move=(event:PointerEvent)=>{if(!dragging)return;const target=svg(event);if(!target)return;const distance=event.clientX-lastX;lastX=event.clientX;setWindowRange(v=>{const span=v.end-v.start,left=Math.max(0,Math.min(100-span,v.start-distance/Math.max(1,target.getBoundingClientRect().width)*span));return {start:left,end:left+span};});};
+ const up=()=>{dragging=false;};root.addEventListener('wheel',wheel,{passive:false});root.addEventListener('pointerdown',down);root.addEventListener('pointermove',move);root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);return()=>{root.removeEventListener('wheel',wheel);root.removeEventListener('pointerdown',down);root.removeEventListener('pointermove',move);root.removeEventListener('pointerup',up);root.removeEventListener('pointercancel',up);};},[history.length]);
+ const scope=history.slice(periodStartIndex(history,period));
+ const points=scope.slice(Math.floor(windowRange.start/100*Math.max(0,scope.length-1)),Math.ceil(windowRange.end/100*Math.max(0,scope.length-1))+1);
  const [picked,setPicked]=useState<string|null>(null);const selected=points.find(p=>p.date===picked)||points.at(-1);if(!selected)return <p className="correlation-empty">아직 장 마감 데이터가 없습니다. 장 마감 후 확인한 코스피 지수와 개인 수급이 함께 있는 날짜부터 점이 쌓입니다.</p>;
  const stats=correlationStats(points),W=layout.width,H=layout.height,L=62,R=22,T=24,B=48,pw=W-L-R,ph=H-T-B;
  const xr=Math.max(1,...points.map(p=>Math.abs(p.changePct)))*1.15,yr=Math.max(.1,...points.map(p=>Math.abs(p.individual/10000)))*1.15;
@@ -28,7 +39,7 @@ export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
  const candleWidth=Math.max(1,Math.min(22,pw/points.length*.6));
  const selectedIndex=points.indexOf(selected);const color=(p:ClosePoint)=>p.changePct>0&&p.individual>0?'#e7863a':p.changePct<0&&p.individual<0?'#e8b518':'#899db7';
  const choose=(p:ClosePoint)=>setPicked(p.date);
- return <><div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:10,margin:'4px 12px 6px'}}><SignalPeriods value={period} onChange={value=>{setPeriod(value);setPicked(null);}}/></div><div className="correlation-meta" style={{margin:'0 12px 8px',fontSize:11,color:'#748077'}}><span>최근 {points.length}거래일 · 코스피 개인 수급</span><strong>{stats?'상관계수 r = '+stats.r.toFixed(2):'상관계수: 표본 부족'}</strong></div><p className="correlation-help">점을 누르면 아래 코스피 차트에서 같은 날짜를 보여줍니다.</p>
+ return <><DataQuality rows={history} field="individual" source="LS증권·네이버 금융 마감 관측" scope="산점도는 표시 구간의 동일 거래일 표본"/><ChartControls onCommand={command=>{if(command==='reset'){setPeriod('ALL');setWindowRange({start:0,end:100});}else setWindowRange(v=>navigateRange(v.start,v.end,command));}}/><div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:10,margin:'4px 12px 6px'}}><SignalPeriods value={period} onChange={value=>{setPeriod(value);setPicked(null);}}/></div><div className="correlation-meta" style={{margin:'0 12px 8px',fontSize:11,color:'#748077'}}><span>최근 {points.length}거래일 · 코스피 개인 수급</span><strong>{stats?'상관계수 r = '+stats.r.toFixed(2):'상관계수: 표본 부족'}</strong></div><p className="correlation-help">점을 누르면 아래 코스피 차트에서 같은 날짜를 보여줍니다.</p>
  <svg ref={host} style={signalChartStyle} viewBox={`0 0 ${W} ${H}`} className="correlation-svg" role="group" aria-label="개인 순매수와 코스피 일간 등락률 산점도">
  <defs><clipPath id="correlation-plot"><rect x={L} y={T} width={pw} height={ph}/></clipPath></defs>
  {[0,1,2,3,4].map(i=>{const x=-xr+i*xr/2,y=-yr+i*yr/2;return <g key={i}><line x1={sx(x)} x2={sx(x)} y1={T} y2={H-B} stroke="#e6ebef"/><line x1={L} x2={W-R} y1={sy(y)} y2={sy(y)} stroke="#e6ebef"/><text x={sx(x)} y={H-B+19} textAnchor="middle">{signed(x,1)}</text><text x={L-8} y={sy(y)+4} textAnchor="end">{signed(y,2)}</text></g>;})}

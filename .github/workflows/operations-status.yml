@@ -1,0 +1,47 @@
+name: Refresh operations status
+on:
+  schedule:
+    - cron: '19,49 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/operations-snapshot.mjs', '.github/workflows/operations-status.yml']
+  workflow_run:
+    workflows: ['Publish verified sector calendar at 17 KST', 'Update KOSPI pension signal data', 'Refresh verified KOSPI breadth', 'Verify missing stock classifications', 'Save shared stock classification', 'Deploy LS Cloudflare Worker']
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: operations-status
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Read actual collection, validation and deployment runs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/operations-snapshot.mjs
+      - name: Publish status and refresh Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/operations-status.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data: record actual automation and deployment status'
+          git pull --rebase origin main
+          git push origin HEAD:main
+          gh workflow run pages.yml --ref main

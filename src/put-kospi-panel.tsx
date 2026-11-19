@@ -1,3 +1,6 @@
+import DataQuality from './data-quality';
+import ChartControls from './chart-controls';
+import {navigateChart} from './chart-navigation.mjs';
 import {fetchPutDaily} from './put-kospi-load.mjs';
 import {SignalPanel,signalChartStyle} from './signal-panel';
 import {useEffect,useRef,useState} from 'react';
@@ -38,6 +41,8 @@ export function PutKospiCharts({points}:{points:Point[]}){
  useEffect(()=>{periodRef.current=period;const first=periodStartIndex(points,period);chart.current?.dispatchAction({type:'dataZoom',dataZoomIndex:0,start:first/Math.max(1,points.length-1)*100,end:100});},[period,points]);
  const toggle=(key:'individual'|'foreign')=>{const name=putSeriesNames[key],next=!visible[key];selectedRef.current={...selectedRef.current,[name]:next};setVisible(v=>({...v,[key]:next}));chart.current?.dispatchAction({type:next?'legendSelect':'legendUnSelect',name});const zoom=(chart.current?.getOption().dataZoom||[])[0] as {start?:number;end?:number};const bounds=putVisibleBounds(points,Number(zoom?.start??0),Number(zoom?.end??100),selectedRef.current);chart.current?.setOption({yAxis:[{min:bounds.price[0],max:bounds.price[1]},{min:bounds.flow[0],max:bounds.flow[1]}]} as EChartsCoreOption,{silent:true});};
  return <>
+  <DataQuality rows={points} field="individual" source="LS증권 풋옵션 개인·외국인 일별 순매수" scope="확보된 거래일 표본 · 보유 잔고가 아닌 금액 순매수"/>
+  <ChartControls onCommand={command=>{if(command==='reset')setPeriod('ALL');navigateChart(chart.current,command);}}/>
   <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:10,margin:'4px 12px 6px'}}>
    <div role="group" aria-label="차트 조회 기간" style={{display:'flex',flexWrap:'wrap',gap:6}}>{[['1M','1개월'],['3M','3개월'],['1Y','1년'],['5Y','5년'],['ALL','전체']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} style={{font:'inherit',fontSize:12,padding:'7px 11px',borderRadius:7,border:'1px solid #d6e1d9',background:period===value?'#215e47':'#fff',color:period===value?'#fff':'#305c4a',cursor:'pointer'}}>{label}</button>)}</div>
    <span style={{fontSize:12,color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · 음영 {points.filter(putShadeMatch).length}일</span>

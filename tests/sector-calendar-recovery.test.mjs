@@ -16,7 +16,7 @@ test('branch date comes from the validated review result and pending is visibly 
  assert.match(workflow,/date=\$\{result\.date\}/);
  assert.match(workflow,/if\(r\.status==='pending'\).*process\.exit\(1\)/);
  assert.match(workflow,/GITHUB_STEP_SUMMARY/);
- assert.equal((workflow.match(/changed == 'true' && \(steps.review.outputs.result == 'published' \|\| steps.review.outputs.result == 'pending'\)/g)||[]).length,2);
+ assert.equal((workflow.match(/changed == 'true' && \(steps.review.outputs.result == 'published' \|\| steps.review.outputs.result == 'pending'\)/g)||[]).length,5);
  assert.ok(!workflow.includes("workflow_run.conclusion == 'success'"));
 });
 

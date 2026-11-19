@@ -7,7 +7,8 @@ export function normalizeSectorEdit(raw){
  if(!Array.isArray(raw.themes)||raw.themes.length>12)throw Error('투자 테마는 최대 12개까지 입력하세요.');
  const themes=[...new Set(raw.themes.map(t=>text(t,'투자 테마',40)))];
  if(typeof raw.editedAt!=='string'||!Number.isFinite(Date.parse(raw.editedAt)))throw Error('수정 시각이 올바르지 않습니다.');
- return {symbol:raw.symbol,name,market:raw.market,sector,subSector,themes,editedAt:raw.editedAt};
+ if(raw.baseRevision!==undefined&&raw.baseRevision!==null&&(typeof raw.baseRevision!=='string'||!Number.isFinite(Date.parse(raw.baseRevision))))throw Error('초안 기준 버전이 올바르지 않습니다.');
+ return {symbol:raw.symbol,name,market:raw.market,sector,subSector,themes,editedAt:raw.editedAt,...(raw.baseRevision!==undefined?{baseRevision:raw.baseRevision}:{})};
 }
 export function parseSectorEdits(raw){
  if(!raw||raw.version!==1||!Array.isArray(raw.entries)||raw.entries.length>5000)throw Error('분류 파일 형식이 올바르지 않습니다.');

@@ -21,7 +21,7 @@ function StandaloneStockSectorMap({discovered}:{discovered:StockMapEntry[]}){
  const classification=useStockClassification(discovered);return <StockSectorMapContent classification={classification}/>;
 }
 function StockSectorMapContent({classification}:{classification:StockClassification}){
- const {registry,registryError,checkedAt,local}=classification;
+ const {registry,registryError,checkedAt,local,history=[]}=classification;
  const [editing,setEditing]=useState<StockMapEntry|null>(null),[onlyPending,setOnlyPending]=useState(false);
  const autoVerified=registry.filter(x=>x.verification?.status==='verified').length;
  const pending=registry.filter(x=>x.reviewRequired||pendingClassification(x.sector)||pendingClassification(x.subSector)).length;
@@ -67,7 +67,7 @@ function StockSectorMapContent({classification}:{classification:StockClassificat
   </div>
 
   <p className="muted" role="status" style={{fontSize:11,margin:'0 0 14px'}}>기존 분류 {STOCK_MAP.length}종목 · 동일 체계 추가 분류 {autoVerified}종목 · 검토 대기 {pending}종목{checkedAt&&Number.isFinite(Date.parse(checkedAt))&&` · 공통 분류 갱신 ${new Date(checkedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`}{registryError&&' · 자동 분류 연결 지연, 마지막 정상 분류 표시'}</p>
-  <SectorEditTransfer count={local.edits.length} onExport={local.exportFile} onImport={local.importFile}/>{local.notice&&<p className="sector-edit-notice" role="status">{local.notice}</p>}
+  <details className="classification-history"><summary>공통 분류 변경 이력 · 초안과 충돌 확인</summary><p>섹터맵·주도 섹터·거래대금·캘린더는 같은 공통 분류를 사용합니다. 브라우저 초안은 자동 적용되지 않습니다.</p>{history.length?<ol>{[...history].reverse().slice(0,20).map((h:any,i:number)=><li key={i}><strong>{h.name}</strong> · {h.operation==='reset'?'공통 수정 해제':h.after?.sector+' / '+h.after?.subSector} · {new Date(h.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}{h.sourceUrl&&<a href={h.sourceUrl} target="_blank" rel="noreferrer"> 변경 근거</a>}</li>)}</ol>:<p>기록된 공통 분류 변경 이력이 없습니다. 앞으로의 저장·해제부터 누적합니다.</p>}{local.edits.map((draft:any)=>{const current:any=registry.find(x=>x.symbol===draft.symbol);const conflict=(draft.baseRevision||null)!==(current?.sharedRevision||current?.sharedEditedAt||null);return <div key={draft.symbol} className="draft-warning"><strong>{draft.name} 초안</strong> · {draft.sector} / {draft.subSector} · {conflict?'공통 분류가 변경됨 · 최신 분류를 확인해 초안을 다시 작성하세요':'공통 저장 대기'}<button type="button" className="text-link" onClick={()=>current&&setEditing(conflict?current:{...current,...draft})}>{conflict?'최신 분류로 검토':'초안 열기'}</button></div>;})}</details><SectorEditTransfer count={local.edits.length} onExport={local.exportFile} onImport={local.importFile}/>{local.notice&&<p className="sector-edit-notice" role="status">{local.notice}</p>}
   <div className="panel sector-map-controls">
    <div className="stock-scope-tabs" aria-label="섹터맵 보기 방식">
     <button className={mode==='stocks'?'active':''} aria-pressed={mode==='stocks'} onClick={()=>setMode('stocks')}><ListFilter size={13}/>종목별 보기</button>

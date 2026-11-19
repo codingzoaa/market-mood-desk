@@ -1,3 +1,4 @@
+import DataQuality from './data-quality';
 import {SignalPanel} from './signal-panel';
 import { useEffect, useMemo, useState } from 'react';
 import MarketBreadthChart from './market-breadth-chart';
@@ -43,7 +44,7 @@ export default function MarketBreadthPanel({ url, asOf }: {url: string; asOf?: s
         </div>
         {error && <p className="muted" role="status">새 자료 확인에 실패해 마지막 정상 자료를 표시합니다.</p>}
         {data.source && <p className="muted" style={{fontSize:11,padding:'0 12px 8px'}}>출처: {data.source} · {data.autoUpdate}{data.updatedAt && ` · 갱신 ${new Date(data.updatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`}</p>}
-        <MarketBreadthChart rows={chartRows} asOf={asOf}/>
+        <DataQuality rows={chartRows} field="below20Pct" status={data.status} source={data.source||'종목별 종가 기반 하락비율'} scope="코스피 유효 종목 표본 · 검증 제외일은 결측으로 표시"/><MarketBreadthChart rows={chartRows} asOf={asOf}/>
         <details style={{margin:'6px 12px 10px', padding:'10px 12px', background:'#f8faf7',
           border:'1px solid #e9eee9', borderRadius:8, color:'#66766c', fontSize:11}}>
           <summary style={{cursor:'pointer', color:'#496755'}}>데이터 검증 및 음영 표시 기준</summary>

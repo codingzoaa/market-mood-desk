@@ -1,3 +1,5 @@
+import ChartControls from './chart-controls';
+import {navigateChart} from './chart-navigation.mjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -203,7 +205,7 @@ export default function MarketBreadthChart({ rows, height = 520, asOf }: MarketB
     });
   }, [period, clean, showRatio]);
 
-  return <div className="market-breadth-chart">
+  return <div className="market-breadth-chart"><ChartControls onCommand={command=>{if(command==='reset')setPeriod('ALL');navigateChart(chartRef.current,command);}}/>
     <div style={{display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:10, margin:'4px 12px 6px'}}>
       <div style={{display:'flex', flexWrap:'wrap', gap:6}} role="group" aria-label="차트 조회 기간">
         {ranges.map(p => <button key={p.value} type="button" aria-pressed={period === p.value}

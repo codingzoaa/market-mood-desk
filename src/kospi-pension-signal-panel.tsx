@@ -1,3 +1,6 @@
+import DataQuality from './data-quality';
+import ChartControls from './chart-controls';
+import {navigateChart} from './chart-navigation.mjs';
 import {SignalPanel,signalChartStyle} from './signal-panel';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
@@ -150,7 +153,7 @@ function KospiPensionSignalChart({ points }: {points: Point[]}) {
       </div>
       <span style={{fontSize:12, color:'#637569'}}>{points.length.toLocaleString('ko-KR')}거래일 · <span style={{background:'rgba(228,93,75,.18)',padding:'3px 5px',borderRadius:3}}>조건 충족 음영</span> {signals.length}일</span>
     </div>
-    <div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 세로 음영 표시"
+    <DataQuality rows={points} field="netBuyBillion" source="KRX 과거 이력 · LS증권 연기금 순매수"/><ChartControls onCommand={command=>{if(command==='reset')setPeriod('ALL');navigateChart(chart.current,command);}}/><div ref={host} role="img" aria-label="코스피 종가 차트, RSI 35 이하이면서 연기금 1,000억원 이상 순매수한 날짜에 세로 음영 표시"
       style={signalChartStyle}/>
     {selected && <section aria-live="polite" style={{margin:'8px 14px 16px',padding:'14px',border:'1px solid #d7e3db',borderRadius:10,background:'#f8fbf8'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>

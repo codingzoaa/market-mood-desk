@@ -78,7 +78,7 @@ jobs:
           npm test
           npx tsc --noEmit
           npm run build
-      - name: Create PR, verify CI, merge and deploy existing Pages
+      - name: Create reviewed calendar PR
         if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,6 +99,15 @@ jobs:
           COMMIT="$(git rev-parse HEAD)"
           PR="$(gh pr create --base main --head "$BRANCH" --title "data: verified sector calendar $REVIEW_DATE" --body "Evidence-gated 17:00 KST editorial calendar update; pending runs change verification status only and never publish an unverified review. Same-day LS regular-session stocks and timestamped trusted press headlines required. Missing data remains pending; no synthetic score or sector count. Requires successful dispatched Pages CI before merging and Pages deployment afterwards.")"
           echo "SECTOR_PR_CREATED $PR"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          echo "PR=$PR" >> "$GITHUB_ENV"
+          echo "COMMIT=$COMMIT" >> "$GITHUB_ENV"
+      - name: Run independent calendar CI
+        if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
           # PRs written with GITHUB_TOKEN do not trigger pull_request workflows.
           # Dispatch the existing Pages workflow explicitly against the PR branch
           # to run npm tests + TypeScript + build as a separate CI run.
@@ -112,6 +121,12 @@ jobs:
           [[ -n "$CI_RUN" ]] || { echo 'SECTOR_PR_CI_MISSING';exit 1; }
           echo "SECTOR_PR_CI_RUN $CI_RUN"
           gh run watch "$CI_RUN" --exit-status
+      - name: Merge verified calendar PR
+        if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
           # Guard against concurrent main updates and accidental unverified changes.
           git fetch origin main
           gh pr view "$PR" --json mergeable --jq .mergeable | grep -qx MERGEABLE
@@ -119,6 +134,14 @@ jobs:
           git fetch origin main
           MERGED="$(git rev-parse origin/main)"
           echo "SECTOR_PR_MERGED sha=$MERGED"
+          echo "MERGED=$MERGED" >> "$GITHUB_ENV"
+      - name: Deploy verified calendar to Pages
+        if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_DATE: ${{ steps.review.outputs.date }}
+        run: |
+          set -euo pipefail
           # Merges performed using GITHUB_TOKEN suppress normal push workflows.
           # Explicitly dispatch Pages and block until its deploy job completes.
           gh workflow run pages.yml --ref main

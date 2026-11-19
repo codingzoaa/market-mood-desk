@@ -60,7 +60,7 @@ export async function readStockRegistry(env){
  for(const entry of official.entries||[])if(sectorCandidate(entry)&&!CURATED.has(entry.symbol)){const prior=merged.get(entry.symbol);merged.set(entry.symbol,{...entry,...(entry.reviewRequired&&prior?.nextRetryAt?{nextRetryAt:prior.nextRetryAt,lastAttemptAt:prior.lastAttemptAt}: {})});}
  for(const entry of businessReviews){const prior=merged.get(entry.symbol);if(!CURATED.has(entry.symbol)&&(!prior||prior.market===entry.market&&identityName(prior.name)===identityName(entry.name)))merged.set(entry.symbol,{...prior,...entry});}
  const entries=applySharedSectorEdits([...merged.values()].filter(x=>!CURATED.has(x.symbol)),shared.entries).slice(0,5000);
- return {version:1,entries,sharedEdits:shared.entries,updatedAt:[stored?.updatedAt,official.checkedAt,...businessReviews.map(e=>e.verification.checkedAt),...shared.entries.map(e=>e.editedAt)].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
+ return {version:1,entries,sharedEdits:shared.entries,sharedHistory:shared.history||[],sharedRevisions:shared.revisions||{},updatedAt:[stored?.updatedAt,official.checkedAt,...businessReviews.map(e=>e.verification.checkedAt),...shared.entries.map(e=>e.editedAt)].filter(Boolean).sort().at(-1)||null,verification:{method:official.method,checkedAt:official.checkedAt,checkedDate:official.checkedDate,sourceSha256:official.sourceSha256,sourceUrl:official.sourceUrl,...official.summary}};
 }
 export async function syncStockRegistry(env,snapshot,request,wait){
  const registry=await readStockRegistry(env);
