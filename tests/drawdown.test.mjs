@@ -25,3 +25,11 @@ test('LS normalization retains positive daily closes, validates symbols and sepa
 });
 
 test('a response for a different stock cannot be rendered under the selected name',()=>{const p={symbol:'005930',adjusted:true,points:points([100,90])};assert.equal(validatePrices(p,'005930').length,2);assert.throws(()=>validatePrices(p,'000660'),/종목이 다릅니다/);});
+
+test('index prices use point units and cannot bypass adjusted-stock validation',()=>{
+ const raw={symbol:'KOSPI',kind:'INDEX',unit:'P',adjusted:false,points:points([3000,2400,2700])};
+ assert.equal(validatePrices(raw,'KOSPI').length,3);assert.equal(drawdownAnalysis(validatePrices(raw)).mdd,-19.999999999999996);
+ assert.throws(()=>validatePrices(raw,'KOSDAQ'));
+ assert.throws(()=>validatePrices({...raw,symbol:'005930'}));assert.throws(()=>validatePrices({...raw,unit:'KRW'}));
+ assert.equal(validSymbol('KOSPI'),true);assert.equal(validSymbol('KOSDAQ'),true);assert.equal(validSymbol('INDEX:001'),false);
+});

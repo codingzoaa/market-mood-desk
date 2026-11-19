@@ -4,7 +4,8 @@ import {createSession} from './tls.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
 const get=async(env,key)=>{const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();return r?JSON.parse(r.payload):null;};
 const put=(env,key,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify(value)).run();
-export const validSymbol=s=>typeof s==='string'&&/^[0-9A-Z]{6}$/.test(s);
+export const INDEX_TARGETS={KOSPI:{name:'코스피',shcode:'001'},KOSDAQ:{name:'코스닥',shcode:'301'}};
+export const validSymbol=s=>typeof s==='string'&&(Object.hasOwn(INDEX_TARGETS,s)||/^[0-9A-Z]{6}$/.test(s));
 export function priceRows(rows){
  if(!Array.isArray(rows))throw Error('PRICE_SHAPE');
  return rows.map(r=>{const date=String(r.date);if(!/^\d{8}$/.test(date))throw Error('PRICE_DATE');const iso=date.slice(0,4)+'-'+date.slice(4,6)+'-'+date.slice(6);if(new Date(iso+'T00:00:00Z').toISOString().slice(0,10)!==iso)throw Error('PRICE_DATE');return {date:iso,close:number(r.close,0,1e9)};}).filter(r=>r.close>0);
@@ -15,6 +16,8 @@ export function drawdownScope(now=new Date()){
 }
 export async function stockSearch(env,query){
  if(!query||query.length>40)return [];
+ const indexMatches=Object.entries(INDEX_TARGETS).filter(([symbol,x])=>[symbol,x.name,'지수'].some(v=>v.toLowerCase().includes(query.replaceAll(' ','').toLowerCase()))).map(([symbol,x])=>({symbol,name:x.name,market:symbol,kind:'INDEX'}));
+ if(indexMatches.length)return indexMatches;
  let master=await get(env,'drawdown:master');
  if(master?.date!==kst().date){let session;try{
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);
@@ -42,19 +45,26 @@ export async function collectDrawdown(env,symbol){
  let session;const statusId='drawdown:progress:'+symbol;
  try{
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);
-  const prices=new Map(),seen=new Set();let cursor='',continuation,complete=false;
+  const target=INDEX_TARGETS[symbol],code=target?'t8429':'t8410';
+  const prices=new Map(),seen=new Set();let cursor='',continuation,complete=false,indexEnd=scope.date.replaceAll('-','');
   for(let page=0;page<18;page++){
-   const result=await tr(token,'t8410',{shcode:symbol,gubun:'2',qrycnt:500,sdate:scope.from.replaceAll('-',''),edate:scope.date.replaceAll('-',''),cts_date:cursor,comp_yn:'N',sujung:'Y'},continuation,session.fetch);
-   const rows=priceRows(result.data.t8410OutBlock1);
+   const result=await tr(token,code,{shcode:target?.shcode||symbol,gubun:'2',qrycnt:500,sdate:scope.from.replaceAll('-',''),edate:target?indexEnd:scope.date.replaceAll('-',''),cts_date:target?'':cursor,comp_yn:'N',...(!target?{sujung:'Y'}:{})},continuation,session.fetch);
+   const rows=priceRows(result.data[code+'OutBlock1']);
    for(const r of rows)if(r.date>=scope.from&&r.date<=scope.date&&(r.date<scope.date||scope.time>=timeOf(minutes(marketSession(scope.date).close)+10))){if(prices.has(r.date)&&prices.get(r.date)!==r.close)throw Error('PRICE_CONFLICT');prices.set(r.date,r.close);}
-   const next=String(result.data.t8410OutBlock?.cts_date||'').trim();
+   const next=String(result.data[code+'OutBlock']?.cts_date||'').trim();
    await put(env,statusId,{status:'RUNNING',pages:page+1,rows:prices.size,checkedAt:new Date().toISOString()});
+   if(target){
+    const oldest=rows.map(r=>r.date).sort()[0];
+    if(!oldest||rows.length<500||oldest<=scope.from){complete=true;break;}
+    const before=new Date(oldest+'T00:00:00Z');before.setUTCDate(before.getUTCDate()-1);const end=before.toISOString().slice(0,10).replaceAll('-','');
+    if(end>=indexEnd)throw Error('PRICE_CURSOR_REPEAT');indexEnd=end;await pause();continue;
+   }
    if(!next||!rows.length||rows.some(r=>r.date<=scope.from)){complete=true;break;}
    if(seen.has(next))throw Error('PRICE_CURSOR_REPEAT');seen.add(next);cursor=next;continuation=result.continuation;await pause();
   }
   if(!complete)throw Error('PRICE_HISTORY_INCOMPLETE');if(prices.size<2)throw Error('PRICE_HISTORY_EMPTY');
   const points=[...prices].map(([date,close])=>({date,close})).sort((a,b)=>a.date.localeCompare(b.date));
-  const value={symbol,cacheDay:scope.cacheDay,requestedFrom:scope.from,firstDate:points[0].date,lastDate:points.at(-1).date,asOf:new Date().toISOString(),adjusted:true,source:'LS증권 t8410 · 수정주가(Y) · 일별 종가 · 배당 재투자 제외',points};
+  const value={symbol,cacheDay:scope.cacheDay,requestedFrom:scope.from,firstDate:points[0].date,lastDate:points.at(-1).date,asOf:new Date().toISOString(),kind:target?'INDEX':'STOCK',unit:target?'P':'KRW',adjusted:!target,source:target?'LS증권 t8429 · '+target.name+' · 일별 종가(P)':'LS증권 t8410 · 수정주가(Y) · 일별 종가 · 배당 재투자 제외',points};
   await put(env,id,value);await put(env,statusId,{status:'COMPLETE',rows:points.length,checkedAt:new Date().toISOString()});
  }catch(e){await put(env,statusId,{status:'FAILED',error:e.code||(/^[A-Z_]+$/.test(e.message)?e.message:'PRICE_FETCH_FAILED'),checkedAt:new Date().toISOString()});}
  finally{if(session)await session.close();await env.DB.prepare("UPDATE state SET payload='0' WHERE id=? AND payload=?").bind(leaseId,lease).run();}
