@@ -14,7 +14,7 @@ on:
         default: false
   # A completed close-data update is a second wake-up path if cron is delayed.
   workflow_run:
-    workflows: ['Update KOSPI pension signal data', 'Relay Naver sector news to Cloudflare', 'Refresh Naver industry heatmap', 'Verify missing stock classifications']
+    workflows: ['Update KOSPI pension signal data', 'Relay Naver sector news to Cloudflare', 'Refresh Naver industry heatmap', 'Verify missing stock classifications', 'Recover delayed KRX session data']
     types: [completed]
     branches: [main]
   push:
@@ -50,7 +50,7 @@ jobs:
       - name: Generate same-day evidence-gated editorial review
         id: review
         env:
-          REVIEW_REBUILD: ${{ (github.event_name == 'push' || inputs.rebuild == true) && 'true' || 'false' }}
+          REVIEW_REBUILD: ${{ (github.event_name == 'push' || inputs.rebuild == true || github.event.workflow_run.name == 'Recover delayed KRX session data') && 'true' || 'false' }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
