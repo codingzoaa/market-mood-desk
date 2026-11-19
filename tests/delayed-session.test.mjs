@@ -30,3 +30,5 @@ test('session recovery requires a fresh path-bound signature and never starts co
  assert.equal((await handleSessionRecovery(new Request(url,{method:'POST',headers}),env,{},now)).status,403);delete headers.origin;
  assert.equal((await handleSessionRecovery(new Request(url,{method:'POST',headers}),env,{},new Date(+now+600000))).status,401);
 });
+
+ test('drawdown cache does not finalize before the delayed close and invalidates the earlier provisional cache',async()=>{const {drawdownScope}=await import('../worker/drawdown.mjs');assert.equal(drawdownScope(new Date('2026-11-19T16:00:00+09:00')).cacheDay,'2026-11-19:previous');assert.equal(drawdownScope(new Date('2026-11-19T17:00:00+09:00')).cacheDay,'2026-11-19:closed-delayed');});
