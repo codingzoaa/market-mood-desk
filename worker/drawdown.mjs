@@ -10,9 +10,9 @@ export function priceRows(rows){
  if(!Array.isArray(rows))throw Error('PRICE_SHAPE');
  return rows.map(r=>{const date=String(r.date);if(!/^\d{8}$/.test(date))throw Error('PRICE_DATE');const iso=date.slice(0,4)+'-'+date.slice(4,6)+'-'+date.slice(6);if(new Date(iso+'T00:00:00Z').toISOString().slice(0,10)!==iso)throw Error('PRICE_DATE');return {date:iso,close:number(r.close,0,1e9)};}).filter(r=>r.close>0);
 }
-export function drawdownScope(now=new Date()){
+export function drawdownScope(now=new Date(),symbol){
  const d=kst(now),from=new Date(d.date+'T00:00:00Z');from.setUTCFullYear(from.getUTCFullYear()-20);from.setUTCDate(from.getUTCDate()-14);
- return {...d,from:from.toISOString().slice(0,10),cacheDay:d.date+(d.time>=timeOf(minutes(marketSession(d.date).close)+10)?(marketSession(d.date).shift?':closed-delayed':':closed'):':previous')};
+ return {...d,from:INDEX_TARGETS[symbol]?'1980-01-01':from.toISOString().slice(0,10),cacheDay:(INDEX_TARGETS[symbol]?'index-1980:':'')+d.date+(d.time>=timeOf(minutes(marketSession(d.date).close)+10)?(marketSession(d.date).shift?':closed-delayed':':closed'):':previous')};
 }
 export async function stockSearch(env,query){
  if(!query||query.length>40)return [];
@@ -30,7 +30,7 @@ export async function stockSearch(env,query){
 }
 export async function drawdownFeed(env,symbol){
  if(!validSymbol(symbol))return {http:400,error:'INVALID_SYMBOL'};
- const scope=drawdownScope(),saved=await get(env,'drawdown:prices:'+symbol),progress=await get(env,'drawdown:progress:'+symbol);
+ const scope=drawdownScope(new Date(),symbol),saved=await get(env,'drawdown:prices:'+symbol),progress=await get(env,'drawdown:progress:'+symbol);
  if(saved?.cacheDay===scope.cacheDay)return {http:200,...saved};
  if(progress?.status==='FAILED'&&Date.now()-Date.parse(progress.checkedAt)<60000)return {http:503,error:progress.error||'PRICE_FETCH_FAILED',message:'일봉 수집을 완료하지 못했습니다. 잠시 후 다시 시도하세요.'};
  if(env.COLLECTOR){const id=env.COLLECTOR.idFromName('drawdown-'+symbol);await env.COLLECTOR.get(id).fetch('https://collector.internal/drawdown?symbol='+symbol,{method:'POST'});}
@@ -38,7 +38,7 @@ export async function drawdownFeed(env,symbol){
 }
 export async function collectDrawdown(env,symbol){
  if(!validSymbol(symbol))return;
- const scope=drawdownScope(),id='drawdown:prices:'+symbol,existing=await get(env,id);if(existing?.cacheDay===scope.cacheDay)return;
+ const scope=drawdownScope(new Date(),symbol),id='drawdown:prices:'+symbol,existing=await get(env,id);if(existing?.cacheDay===scope.cacheDay)return;
  const now=Date.now(),leaseId='drawdown:lease:'+symbol,lease=String(now+240000);
  await env.DB.prepare('INSERT OR IGNORE INTO state(id,payload) VALUES(?,?)').bind(leaseId,'0').run();
  if(!await env.DB.prepare('UPDATE state SET payload=? WHERE id=? AND CAST(payload AS INTEGER) < ? RETURNING id').bind(lease,leaseId,now).first())return;
@@ -47,7 +47,7 @@ export async function collectDrawdown(env,symbol){
   session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);
   const target=INDEX_TARGETS[symbol],code=target?'t8429':'t8410';
   const prices=new Map(),seen=new Set();let cursor='',continuation,complete=false,indexEnd=scope.date.replaceAll('-','');
-  for(let page=0;page<18;page++){
+  for(let page=0;page<(target?40:18);page++){
    const result=await tr(token,code,{shcode:target?.shcode||symbol,gubun:'2',qrycnt:500,sdate:scope.from.replaceAll('-',''),edate:target?indexEnd:scope.date.replaceAll('-',''),cts_date:target?'':cursor,comp_yn:'N',...(!target?{sujung:'Y'}:{})},continuation,session.fetch);
    const rows=priceRows(result.data[code+'OutBlock1']);
    for(const r of rows)if(r.date>=scope.from&&r.date<=scope.date&&(r.date<scope.date||scope.time>=timeOf(minutes(marketSession(scope.date).close)+10))){if(prices.has(r.date)&&prices.get(r.date)!==r.close)throw Error('PRICE_CONFLICT');prices.set(r.date,r.close);}

@@ -33,3 +33,11 @@ test('index prices use point units and cannot bypass adjusted-stock validation',
  assert.throws(()=>validatePrices({...raw,symbol:'005930'}));assert.throws(()=>validatePrices({...raw,unit:'KRW'}));
  assert.equal(validSymbol('KOSPI'),true);assert.equal(validSymbol('KOSDAQ'),true);assert.equal(validSymbol('INDEX:001'),false);
 });
+
+test('index history starts at 1980 with a separate cache and supports over 10000 daily points',()=>{
+ const now=new Date('2026-11-19T18:00:00+09:00');const index=drawdownScope(now,'KOSPI'),stock=drawdownScope(now,'005930');
+ assert.equal(index.from,'1980-01-01');assert.equal(drawdownScope(now,'KOSDAQ').from,'1980-01-01');assert.notEqual(index.cacheDay,stock.cacheDay);assert.ok(stock.from>'2000-01-01');
+ const history=Array.from({length:12000},(_,i)=>({date:new Date(Date.UTC(1980,0,1+i)).toISOString().slice(0,10),close:100+i}));
+ assert.equal(validatePrices({symbol:'KOSPI',kind:'INDEX',unit:'P',adjusted:false,points:history},'KOSPI').length,12000);
+ assert.throws(()=>validatePrices({symbol:'005930',adjusted:true,points:history},'005930'));
+});
