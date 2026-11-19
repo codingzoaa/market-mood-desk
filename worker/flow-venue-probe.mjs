@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {createSession} from './tls.mjs';
 import {accessToken,tr,kst,number} from './ls.mjs';
 
@@ -40,7 +41,7 @@ const reason=e=>{
 };
 export async function probeVenueFlows(env,now=new Date(),dependencies={}){
  const t=kst(now),date=t.date;
- if(['Sat','Sun'].includes(t.weekday)||t.time<'1620'||t.time>'1700')return {status:'outside-probe-window'};
+ if(['Sat','Sun'].includes(t.weekday)||!sessionRecoveryAllowed(env)&&(t.time<timeOf(minutes(marketSession(date).flowEnd)+5)||t.time>timeOf(minutes(marketSession(date).flowEnd)+45)))return {status:'outside-probe-window'};
  const key='investor-flow-venue:'+date;
  const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();
  if(row?.payload && JSON.parse(row.payload).status==='verified')return {status:'already-verified'};
@@ -66,3 +67,4 @@ export async function probeVenueFlows(env,now=new Date(),dependencies={}){
   return {status:'unverified',error:failure.error};
  }finally{if(session&&!dependencies.session)await session.close();}
 }
+

@@ -1,3 +1,4 @@
+import {marketSession} from '../shared/market-session.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 const source='LS증권 KRX t1511 + t1601(기금 06)';
 const script=new URL('../scripts/update-kospi-pension.mjs',import.meta.url).href;
-function run(date,{knownSource=source,observedTime='16:15:05'}={}){
+function run(date,{knownSource=source,observedTime=marketSession(date).flowEnd.slice(0,2)+':'+marketSession(date).flowEnd.slice(2)+':05'}={}){
  const dir=mkdtempSync(join(tmpdir(),'pension-refresh-'));mkdirSync(join(dir,'public'));
  const path=join(dir,'public/kospi-pension-rsi.json');
  const before={schemaVersion:1,pensionUnit:'십억원',rows:[[date,5000,10]],latestDataSource:knownSource,latestDataObservedAt:date+'T16:10:00+09:00'};
@@ -25,3 +26,4 @@ test('historical or unknown-source pension rows cannot be silently revised',()=>
  const {result,saved}=run(date,options);assert.notEqual(result.status,0);assert.equal(saved.rows[0][2],10);
  }
 });
+

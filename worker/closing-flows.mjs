@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {accessToken,tr,kst,collectionFetch} from './ls.mjs';
 import {archivePutClose} from './put-daily.mjs';
 import {appendFlowHistory} from './flow-history.mjs';
@@ -6,10 +7,10 @@ import {createSession} from './tls.mjs';
 
 // Capture the final flow/index sample; today alone can recover a missed closing sample.
 export function closingFlowRecoveryWindow(now=new Date()){
- const k=kst(now);return k.date==='2026-11-13'&&k.time>'1615'&&k.time<='2359';
+ const k=kst(now);return ['2026-11-13','2026-11-19'].includes(k.date)&&k.time>marketSession(k.date).flowEnd&&k.time<='2359';
 }
 export function closingFlowWindow(now=new Date()){
- const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time==='1615';
+ const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time===marketSession(k.date).flowEnd;
 }
 export async function collectClosingFlows(env,{clock=()=>new Date(),openSession=createSession}={}){
  if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!(closingFlowWindow(clock())||closingFlowRecoveryWindow(clock())))return;
@@ -19,7 +20,7 @@ export async function collectClosingFlows(env,{clock=()=>new Date(),openSession=
  const old=JSON.parse(row.payload);
  const recovery=closingFlowRecoveryWindow(clock());
  if(recovery&&old.closingRecovery?.tradeDate===date)return;
- if(old.flows?.asOf&&kst(new Date(old.flows.asOf)).date===date&&kst(new Date(old.flows.asOf)).time==='1615')return;
+ if(old.flows?.asOf&&kst(new Date(old.flows.asOf)).date===date&&kst(new Date(old.flows.asOf)).time===marketSession(date).flowEnd)return;
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('closing-flow-lease','0')").run();
  const now=clock().getTime(),lease=String(now+60000);
  if(!await env.DB.prepare("UPDATE state SET payload=? WHERE id='closing-flow-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first())return;
@@ -41,7 +42,7 @@ export async function collectClosingFlows(env,{clock=()=>new Date(),openSession=
   const flows={asOf:observedAt,unit:'억원',source:'LS증권 KRX · t1601 금액 순매수'+(recovery?' · 마감 후 재조회':''),segments:rawFlows(data)};
   const merged={...old,asOf:flows.asOf,checkedAt:flows.asOf,flows,indices,errors:{...old.errors}};
   for(const key of ['flows','ls','KOSPI','KOSDAQ'])delete merged.errors[key];
-  if(recovery)merged.closingRecovery={method:'LS_KRX_CLOSING_RECOVERY_V1',tradeDate:date,observedAt:flows.asOf,targetClose:'16:15 KST',note:'마감 이후 재조회 · 실제 관측 시각 보존'};
+  if(recovery)merged.closingRecovery={method:'LS_KRX_CLOSING_RECOVERY_V1',tradeDate:date,observedAt:flows.asOf,targetClose:marketSession(date).flowEnd.slice(0,2)+':'+marketSession(date).flowEnd.slice(2)+' KST',note:'마감 이후 재조회 · 실제 관측 시각 보존'};
   else merged.flowHistory=appendFlowHistory(old.flowHistory,merged);
   // JSON patch preserves independently enriched charts and history on a late recovery.
   const patch={asOf:merged.asOf,checkedAt:merged.checkedAt,flows,indices,errors:{flows:null,ls:null,KOSPI:null,KOSDAQ:null},...(recovery?{closingRecovery:merged.closingRecovery}:{flowHistory:merged.flowHistory})};
@@ -54,3 +55,4 @@ export async function collectClosingFlows(env,{clock=()=>new Date(),openSession=
   await env.DB.prepare("UPDATE state SET payload='0' WHERE id='closing-flow-lease' AND payload=?").bind(lease).run();
  }
 }
+

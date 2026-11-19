@@ -1,3 +1,5 @@
+import {handleSessionRecovery} from './session-recovery.mjs';
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {relayNewsStatus} from './sector-news-cache.mjs';
 import {handleSectorRecovery} from './sector-recovery.mjs';
 import {stockSearch,drawdownFeed,collectDrawdown,validSymbol} from './drawdown.mjs';
@@ -23,7 +25,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET);
 async function state(env,id,value){await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();}
 export async function collect(env){
- if(!READY(env)||!collectWindow())return;
+ if(!READY(env)||!collectWindow()&&!sessionRecoveryAllowed(env))return;
  const now=Date.now();
  const lease=await env.DB.prepare("UPDATE state SET payload=? WHERE id='lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(String(now+300000),now).first();
  if(!lease)return;
@@ -32,7 +34,7 @@ export async function collect(env){
   await state(env,'progress',{stage:'AUTH',startedAt:new Date(now).toISOString()});
   session=await createSession();
   stage='AUTH';
-  const fetcher=collectionFetch(session.fetch);
+  const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch);
   const token=await accessToken(env,fetcher,Date.now(),false);
   const requestTR=(code,body,continuation)=>tr(token,code,body,continuation,fetcher);
   stage='CHART';
@@ -65,7 +67,7 @@ export async function collect(env){
   for(const [upcode,key] of [['001','kospi'],['301','kosdaq']]){stage='INDEX_'+key;const data=(await requestTR('t1511',{upcode})).data;const row=data.t1511OutBlock;if(!row)throw new LSFailure('LS_RESPONSE_INVALID');metrics[key]=number(row.pricejisu,0,1e7);metrics[key+'ChangePct']=signed(row.diffjisu,row.sign);}
   // Persist only if collection started and ended on the same verified trading day.
   const end=kst();if(end.date!==kst(new Date(now)).date)throw new LSFailure('COLLECTION_DAY_CHANGED');
-  assertCollectionWindow();
+  if(!sessionRecoveryAllowed(env))assertCollectionWindow();
   stage='STORE';
   const asOf=new Date(now).toISOString();
   const registry=await readStockRegistry(env).catch(()=>({entries:[]}));
@@ -89,16 +91,17 @@ export function closingPoints(rows,now=new Date()){
  const current=kst(now),seen=new Set();
  const recovered=p=>{
   if(p.recoveryMethod!=='LS_KRX_CLOSING_RECOVERY_V1'||p.recoveryDate!==p.date||typeof p.recoveryAt!=='string'||!Number.isFinite(Date.parse(p.recoveryAt))||Date.parse(p.recoveryAt)>now.getTime())return false;
-  const at=kst(new Date(p.recoveryAt));return at.date===p.date&&at.time>'1615';
+  const at=kst(new Date(p.recoveryAt));return at.date===p.date&&at.time>marketSession(p.date).flowEnd;
  };
  const closing=(value,p)=>{
   if(typeof value!=='string'||!Number.isFinite(Date.parse(value))||Date.parse(value)>now.getTime())return false;
-  const t=kst(new Date(value));return t.date===p.date&&t.time>='1530'&&(t.time<='1615'||recovered(p)&&Date.parse(value)<=Date.parse(p.recoveryAt));
+  const t=kst(new Date(value));return t.date===p.date&&t.time>=marketSession(p.date).close&&(t.time<=marketSession(p.date).flowEnd||recovered(p)&&Date.parse(value)<=Date.parse(p.recoveryAt));
  };
- return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<='1530')||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(validOHLC(p.ohlc,p.kospi)?{ohlc:validOHLC(p.ohlc,p.kospi),ohlcSource:'LS증권 t1511 · KRX',ohlcAsOf:p.indexAt}:{}),...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
+ return rows.filter(p=>{if(!p||typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)||seen.has(p.date)||p.date>current.date||(p.date===current.date&&current.time<=marketSession(p.date).close)||!closing(p.indexAt,p)||!closing(p.flowAt,p)||typeof p.kospi!=='number'||!Number.isFinite(p.kospi)||p.kospi<=0||p.kospi>1e7||typeof p.changePct!=='number'||!Number.isFinite(p.changePct)||Math.abs(p.changePct)>100||typeof p.individual!=='number'||!Number.isFinite(p.individual)||Math.abs(p.individual)>1e10)return false;seen.add(p.date);return true;}).map(p=>({date:p.date,kospi:p.kospi,changePct:p.changePct,individual:p.individual,...(validOHLC(p.ohlc,p.kospi)?{ohlc:validOHLC(p.ohlc,p.kospi),ohlcSource:'LS증권 t1511 · KRX',ohlcAsOf:p.indexAt}:{}),...(recovered(p)?{recoveredAt:p.recoveryAt}:{})})).sort((a,b)=>a.date.localeCompare(b.date)).slice(-365);
 }
 export default {
  async fetch(request,env,ctx){
+  if(new URL(request.url).pathname==='/internal/session-recovery')return handleSessionRecovery(request,env,{collect,enrichDetails,collectClosingFlows,recoverIntradayFlows,collectProgramFlow,safeCollectSectorEtfs,probeVenueFlows});
   if(new URL(request.url).pathname==='/internal/sector-recovery')return handleSectorRecovery(request,env);
   const origin=request.headers.get('origin');const allowed=env.ALLOWED_ORIGIN||'https://codingzoaa.github.io';
   const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Origin'};
@@ -108,6 +111,7 @@ export default {
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
   if(request.method!=='GET')return reply({error:'METHOD_NOT_ALLOWED'},405);
   const path=new URL(request.url).pathname;
+  if(path==='/api/session-recovery-status'){const date=new URL(request.url).searchParams.get('date');if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return reply({error:'DATE'},400);const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('session-recovery:'+date).first();return reply(row?JSON.parse(row.payload):{date,status:'not_attempted'});}
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
   if(!['/api/drawdown','/api/stock-search','/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
@@ -209,7 +213,7 @@ export default {
   if(event.cron==='*/5 7 * * MON-FRI'&&['1620','1625','1630','1635','1640','1700'].includes(kst().time))ctx.waitUntil(probeVenueFlows(env));
   // Reuse existing cron slots; the Naver-only coordinator never starts LS work.
   if(env.COLLECTOR&&naverHeatmapWindow()){const id=env.COLLECTOR.idFromName('naver-heatmap-v2');await env.COLLECTOR.get(id).fetch('https://collector.internal/naver',{method:'POST'});}
-  if(event.cron==='*/5 8-14 * * MON-FRI'){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
+  if(event.cron==='*/5 8-14 * * MON-FRI'&&!collectWindow()){if(kst().time>='2100'&&kst().time<='2159')await recoverPensionAfterClose(env);if(env.COLLECTOR&&breadthCloseWindow()){const id=env.COLLECTOR.idFromName('breadth-close-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/breadth',{method:'POST'});}return;}
   if(event.cron==='*/5 12 * * MON-FRI'){await recoverPensionAfterClose(env);return;}
   await collectDetails(env);
   // Cron performs the short, clock-aligned flow sample immediately. Long stock,
@@ -236,4 +240,5 @@ export class CollectorAlarm {
  }
  async alarm(){const drawdownSymbol=this.state.storage.get&&await this.state.storage.get('drawdown-symbol');if(drawdownSymbol){await collectDrawdown(this.env,drawdownSymbol);return;}if(this.state.storage.get&&await this.state.storage.get('program-only')){await collectProgramFlow(this.env);return;}if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await collectProgramFlow(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
+
 

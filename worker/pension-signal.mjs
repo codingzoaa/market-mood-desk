@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {kst} from './ls.mjs';
 
 // t1601 stock amount mode is stored by Market Note in 억원.
@@ -18,7 +19,7 @@ export function pensionDailyFeed(details) {
   for (const stamp of [quote.asOf, flows.asOf]) {
     if (typeof stamp !== 'string' || !Number.isFinite(Date.parse(stamp))) return null;
     const observed = kst(new Date(stamp));
-    if (observed.date !== details.date || observed.time < '1550') return null;
+    if (observed.date !== details.date || observed.time < marketSession(details.date).pensionAfter) return null;
   }
   return {
     date: details.date,
@@ -32,3 +33,4 @@ export function pensionDailyFeed(details) {
     note: '정규장 마감 후 LS 수급 스냅샷(최종 KRX 정산치는 이후 조정될 수 있음)'
   };
 }
+

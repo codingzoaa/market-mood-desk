@@ -1,3 +1,4 @@
+import {marketSession} from '../shared/market-session.mjs';
 export type Board='KOSPI'|'KOSDAQ';
 export type IndexDetail={value:number;change:number;changePct:number;advances:number;unchanged:number;declines:number;asOf:string;series:{time:string;value:number}[]};
 export type Flow={foreign:number;institution:number;individual:number;financial:number;pension?:number};
@@ -30,8 +31,8 @@ export function validateDetails(raw:any,date:string):MarketDetails{
  }
  if(raw.flowHistory!==undefined){
   if(!Array.isArray(raw.flowHistory)||raw.flowHistory.length>100)throw Error('수급 이력 오류');
-  const times=new Set<string>();result.flowHistory=raw.flowHistory.map((p:any)=>{
-   if(!/^(09[0-5]\d|1[0-5][0-5]\d|16(0[05]|1[05]))$/.test(p.time)||Number(p.time.slice(2))%5!==0||times.has(p.time))throw Error('수급 이력 시각 오류');times.add(p.time);
+  const times=new Set<string>();result.flowHistory=raw.flowHistory.filter((p:any)=>date!=='2026-11-19'||typeof p.time!=='string'||!/^\d{4}$/.test(p.time)||p.time>='1000').map((p:any)=>{
+   if((!/^\d{4}$/.test(p.time)||p.time<marketSession(date).open||p.time>marketSession(date).flowEnd)||Number(p.time.slice(2))%5!==0||times.has(p.time))throw Error('수급 이력 시각 오류');times.add(p.time);
    const asOf=timestamp(p.asOf,date);if(new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(asOf))!==date)throw Error('수급 이력 날짜 오류');
    const markets={} as FlowPoint['markets'];for(const b of ['KOSPI','KOSDAQ'] as const){const m=p.markets?.[b];markets[b]={individual:num(m?.individual),foreign:num(m?.foreign),institution:m?.institution==null?null:num(m.institution),changePct:num(m?.changePct,-100,10000)};}
    return {time:p.time,asOf,markets};
@@ -41,7 +42,7 @@ export function validateDetails(raw:any,date:string):MarketDetails{
   const p=raw.programFlow;if(p.date!==date||p.unit!=='억원')throw Error('비차익 기준일·단위 오류');
   const markets:ProgramFeed['markets']={};
   for(const b of ['KOSPI','KOSDAQ'] as const){const rows=p.markets?.[b];if(!rows)continue;if(!Array.isArray(rows)||rows.length>100)throw Error('비차익 이력 오류');const seen=new Set<string>();
-   markets[b]=rows.map((r:any)=>{if(!/^(09[0-5]\d|1[0-5][0-5]\d|16(0[05]|1[05]))$/.test(r.time)||Number(r.time.slice(2))%5||seen.has(r.time))throw Error('비차익 시각 오류');seen.add(r.time);const timeSeconds=(t:string)=>Number(t.slice(0,2))*3600+Number(t.slice(2,4))*60+Number(t.slice(4));const source=(t:any)=>{if(typeof t!=='string'||!/^([01]\d|2[0-3])[0-5]\d[0-5]\d$/.test(t))throw Error('비차익 원본 시각 오류');const age=timeSeconds(r.time+'00')-timeSeconds(t);if(age<0||age>=300)throw Error('비차익 관측 지연 오류');return t;};return {time:r.time,netBuy:num(r.netBuy),changePct:r.changePct===null?null:num(r.changePct,-100,10000),...(r.sourceTime===undefined?{}:{sourceTime:source(r.sourceTime),sourceAgeSeconds:num(r.sourceAgeSeconds,0,299)}),...(r.indexSourceTime===undefined?{}:{indexSourceTime:r.indexSourceTime===null?null:source(r.indexSourceTime)})};}).sort((a,b)=>a.time.localeCompare(b.time));
+   markets[b]=rows.filter((r:any)=>date!=='2026-11-19'||typeof r.time!=='string'||!/^\d{4}$/.test(r.time)||r.time>='1000').map((r:any)=>{if((!/^\d{4}$/.test(r.time)||r.time<marketSession(date).open||r.time>marketSession(date).flowEnd)||Number(r.time.slice(2))%5||seen.has(r.time))throw Error('비차익 시각 오류');seen.add(r.time);const timeSeconds=(t:string)=>Number(t.slice(0,2))*3600+Number(t.slice(2,4))*60+Number(t.slice(4));const source=(t:any)=>{if(typeof t!=='string'||!/^([01]\d|2[0-3])[0-5]\d[0-5]\d$/.test(t))throw Error('비차익 원본 시각 오류');const age=timeSeconds(r.time+'00')-timeSeconds(t);if(age<0||age>=300)throw Error('비차익 관측 지연 오류');return t;};return {time:r.time,netBuy:num(r.netBuy),changePct:r.changePct===null?null:num(r.changePct,-100,10000),...(r.sourceTime===undefined?{}:{sourceTime:source(r.sourceTime),sourceAgeSeconds:num(r.sourceAgeSeconds,0,299)}),...(r.indexSourceTime===undefined?{}:{indexSourceTime:r.indexSourceTime===null?null:source(r.indexSourceTime)})};}).sort((a,b)=>a.time.localeCompare(b.time));
   }
   result.programFlow={asOf:timestamp(p.asOf,date),unit:'억원',markets,errors:Object.fromEntries(Object.entries(p.errors||{}).map(([k,v])=>[str(k,30),str(v,100)]))};
  }
@@ -63,4 +64,5 @@ export function demoMarketDetails(s:{date:string;asOf:string;metrics:any;stocks:
  const flow=(a:number,b:number,c:number,d:number):Flow=>({foreign:a,institution:b,individual:c,financial:d});
  return {date:s.date,asOf:s.asOf,indices,errors:{},flows:{asOf:s.asOf,unit:'억원',source:'시뮬레이션 · 실제 수급 아님',segments:{KOSPI:flow(-360,5782,-10895,1389),KOSDAQ:flow(-1437,669,640,704),FUTURES:flow(-2234,2153,257,0),CALL:flow(9,-2,-6,0),PUT:flow(-21,4,13,0)}},heatmap:{asOf:s.asOf,source:'시뮬레이션 · 가상 업종·시가총액',stocks:s.stocks.map((item,i)=>({symbol:item.symbol,name:item.name,market:item.market,sector:item.themes[0]||'기타',changePct:i%4===0?-1.5-item.changePct/4:item.changePct,marketCap:(15-i)*1e12}))}};
 }
+
 

@@ -1,0 +1,36 @@
+name: Recover delayed KRX session data
+on:
+  workflow_run:
+    workflows: ['Deploy LS Cloudflare Worker']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: delayed-session-recovery
+  cancel-in-progress: false
+jobs:
+  recover:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && startsWith(github.event.workflow_run.head_commit.message, 'ops: recover delayed session'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Recover verified originals without sending Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node scripts/recover-delayed-session.mjs
+      - name: Refresh dependent daily signals and calendar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run kospi-pension-daily.yml --ref main
+          gh workflow run breadth-refresh.yml --ref main
+          gh workflow run sector-calendar-publish.yml --ref main

@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 const BASE = 'https://openapi.ls-sec.co.kr:8080';
 const ROUTES = { t1662:'/stock/program', t2424:'/futureoption/market-data', t8436:'/stock/etc', t8407:'/stock/market-data', t1617:'/stock/investor', t1665:'/stock/chart', t1904:'/stock/etf', t8429:'/indtp/chart', t1463:'/stock/high-item', t1511:'/indtp/market-data', t1532:'/stock/sector', t8410:'/stock/chart', t8409:'/indtp/chart', t1602:'/stock/investor', t1601:'/stock/investor' };
 export class LSFailure extends Error { constructor(code){ super(code); this.code=code; } }
@@ -46,7 +47,7 @@ export function normalizeStock(row,market,themes=[]){
  return {symbol:row.shcode,name:row.hname.trim(),market,themes:themes.slice(0,5),price:number(row.price,0,1e9),changePct:signed(row.diff,row.sign),turnoverKRW:number(row.value,0,1e9)*1000000};
 }
 export function kst(now=new Date()){return {date:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(now),time:new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(now).replace(':',''),weekday:new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',weekday:'short'}).format(now)};}
-export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<='1610';}
+export function collectWindow(now=new Date()){const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>=marketSession(k.date).open&&k.time<=marketSession(k.date).collectEnd;}
 export function verifySession(data,now=new Date()){
  const rows=data.t8410OutBlock1;if(!Array.isArray(rows)||!rows.length){const e=new LSFailure('LS_RESPONSE_INVALID');e.safeDetail='Chart rows are missing';throw e;}
  const latest=rows.map(x=>x.date).sort().at(-1);const k=kst(now);if(latest!==k.date.replaceAll('-',''))return false;
@@ -57,7 +58,7 @@ export function verifySession(data,now=new Date()){
 // 16:10 is the final collection minute; reject requests/responses from16:11.
 export function assertCollectionWindow(now=new Date()){if(!collectWindow(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');}
 export function collectionFetch(fetcher,clock=()=>new Date(),finalMinute='1610'){
- const allowed=now=>{const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>='0900'&&k.time<=finalMinute;};
+ const allowed=now=>{const k=kst(now);return !['Sat','Sun'].includes(k.weekday)&&k.time>=marketSession(k.date).open&&k.time<=(finalMinute==='1610'?marketSession(k.date).collectEnd:finalMinute==='1615'?marketSession(k.date).flowEnd:finalMinute);};
  const assertAllowed=now=>{if(!allowed(now))throw new LSFailure('COLLECTION_WINDOW_CLOSED');};
  return async(url,options={})=>{
   const now=clock();assertAllowed(now);
@@ -70,4 +71,5 @@ export function collectionFetch(fetcher,clock=()=>new Date(),finalMinute='1610')
   assertAllowed(clock());return response;
  };
 }
+
 

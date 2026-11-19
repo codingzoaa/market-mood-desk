@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {fetchHoldings} from './etf-holdings.mjs';
 import {SECTOR_ETFS,normalizeDaily,sectorRotation} from '../shared/sector-etfs.mjs';
 import {createSession} from './tls.mjs';
@@ -10,16 +11,16 @@ export async function safeCollectSectorEtfs(env){try{return await collectSectorE
 export async function etfHoldingsPayload(env,symbol){if(!SECTOR_ETFS.some(e=>e.symbol===symbol))return null;const saved=await read(env);return {symbol,...(saved.holdings?.[symbol]||{holdings:[],date:null,asOf:null}),status:saved.holdings?.[symbol]?'READY':'PENDING',error:saved.holdingErrors?.[symbol]||null};}
 export async function sectorEtfPayload(env,date){return sectorRotation(await read(env),date);}
 export async function collectSectorEtfs(env){
- if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
+ if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow()&&!sessionRecoveryAllowed(env))return;
  let session;
  await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('sector-etf-lease','0')").run();
  const started=Date.now(),lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='sector-etf-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(String(started+240000),started).first();if(!lock)return;
  let saved;
  try{
-  saved=await read(env);const {date,time}=kst(),phase=refreshPhase(date,time);saved.mode=time<'1530'?'INTRADAY':'CLOSE';
+  saved=await read(env);const {date,time}=kst(),phase=refreshPhase(date,time);saved.mode=time<marketSession(date).close?'INTRADAY':'CLOSE';
   const targets=SECTOR_ETFS.filter(e=>saved.quotes?.[e.symbol]?.phase!==phase);
   if(saved.phase===phase&&!targets.length)return;
-  session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
+  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
   const request=(code,body,continuation)=>tr(token,code,body,continuation,fetcher);
   const stamp=()=>new Date().toISOString();
   if(saved.phase!==phase){
@@ -30,7 +31,7 @@ export async function collectSectorEtfs(env){
   saved.quotes||={};
   // At most four ETFs and one benchmark per invocation; never repeat a completed five-minute phase.
   for(const etf of targets.slice(0,4)){
-   if(!collectWindow())break;
+   if(!collectWindow()&&!sessionRecoveryAllowed(env))break;
    await new Promise(r=>setTimeout(r,1100));
    const r=await request('t8410',{shcode:etf.symbol,gubun:'2',qrycnt:saved.quotes[etf.symbol]?.historyDate===date?3:80,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'Y'});
    const bars=mergeDailyHistory(saved.quotes[etf.symbol]?.bars,normalizeDaily(r.data.t8410OutBlock1,{date,closed:true,turnoverScale:1e6}));if(!bars.length)throw Error('ETF_DAILY_EMPTY');
@@ -50,3 +51,4 @@ export async function collectSectorEtfs(env){
  }
  return !saved?.error&&SECTOR_ETFS.some(e=>saved?.quotes?.[e.symbol]?.phase!==saved?.phase);
 }
+

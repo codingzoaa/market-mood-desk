@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {applySharedSectorEdits} from '../src/shared-sector-edits.mjs';
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -27,7 +28,7 @@ export function reviewNewsUrl(date){
  u.searchParams.set('hl','ko');u.searchParams.set('gl','KR');u.searchParams.set('ceid','KR:ko');return u.href;
 }
 
-const checkedTime=(value,date)=>{if(!value||Number.isNaN(Date.parse(value))||day(value)!==date)return false;const p=dateParts(value);return p.hour+p.minute>='1530';};
+const checkedTime=(value,date)=>{if(!value||Number.isNaN(Date.parse(value))||day(value)!==date)return false;const p=dateParts(value);return p.hour+p.minute>=marketSession(date).close;};
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,240);
 const aliases={
  '엔터·콘텐츠':['엔터','엔터테인먼트','K팝','K-팝'],
@@ -120,7 +121,7 @@ async function checkedFetch(url,mode='json'){
 export async function main({date=reviewTargetDate(),readData=checkedFetch,readNews=checkedFetch,readNaver=collectNaverSectorNews,rebuild=process.env.REVIEW_REBUILD==='true'}={}){
  if(!iso.test(date)||date>currentDay())throw Error('INVALID_OR_FUTURE_DATE');
  const clock=dateParts(new Date()),time=clock.hour+clock.minute;
- if(process.env.GITHUB_EVENT_NAME==='workflow_run'&&time>='0900'&&time<'1700')return {status:'not_due',date,changed:false,reason:'17:00 KST 검증 시작 전 · 다음 완료 이벤트에서 재확인'};
+ if(process.env.GITHUB_EVENT_NAME==='workflow_run'&&time>='0900'&&time<marketSession(currentDay()).reviewAt)return {status:'not_due',date,changed:false,reason:'17:00 KST 검증 시작 전 · 다음 완료 이벤트에서 재확인'};
  const indexPath=path('src/close-reviews.ts'),index=readFileSync(indexPath,'utf8');
  if(index.includes('review'+date.replaceAll('-',''))&&!rebuild){console.log('SECTOR_ALREADY_PUBLISHED '+date);return {status:'already_published',date};}
  let review=null,headlines=[],reason='당일 종가 또는 기사 검증에 필요한 자료 부족';
@@ -169,5 +170,6 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main({date:
  writeFileSync(path('work/sector-calendar-result.json'),JSON.stringify({...result,invokedAt:new Date().toISOString()},null,2)+'\n');
  console.log('SECTOR_RUN_OUTCOME '+JSON.stringify(result));
 }).catch(e=>{console.error('SECTOR_REVIEW_PIPELINE_FAILED',e.message);process.exitCode=1;});
+
 
 

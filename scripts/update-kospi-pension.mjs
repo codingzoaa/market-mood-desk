@@ -1,3 +1,4 @@
+import {marketSession} from '../shared/market-session.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 const path='public/kospi-pension-rsi.json';
 const current=JSON.parse(readFileSync(path,'utf8'));
@@ -17,7 +18,7 @@ const {date,kospiClose,pensionNetBuyBillion,regularSessionClosed,source,pensionU
 if(regularSessionClosed!==true||source!=='LS증권 KRX t1511 + t1601(기금 06)'||pensionUnit!=='십억원'||typeof observedAt!=='string'||!Number.isFinite(Date.parse(observedAt))||typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date)throw Error('Unverified LS regular-session close or invalid date');
 const observedKst = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(observedAt));
 const observedTime = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(observedAt));
-if(observedKst!==date||observedTime<'15:50')throw Error('Intraday or mismatched LS data');
+if(observedKst!==date||observedTime<marketSession(date).pensionAfter.slice(0,2)+':'+marketSession(date).pensionAfter.slice(2))throw Error('Intraday or mismatched LS data');
 if(!Number.isFinite(kospiClose)||kospiClose<=0||kospiClose>100000||!Number.isFinite(pensionNetBuyBillion)||Math.abs(pensionNetBuyBillion)>100000)throw Error('Invalid final KOSPI / pension flow or unit');
 if(current.schemaVersion!==1||current.pensionUnit!=='십억원'||!Array.isArray(current.rows))throw Error('Existing data schema invalid');
 const last=current.rows.at(-1);
@@ -42,3 +43,4 @@ current.latestDataSource=source;
 current.latestDataObservedAt=observedAt;
 writeFileSync(path,JSON.stringify(current));
 console.log('Added LS verified post-close day '+date+'; '+current.rows.length+' rows');
+

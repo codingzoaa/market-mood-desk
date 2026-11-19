@@ -1,3 +1,4 @@
+import {marketSession,minutes} from '../shared/market-session.mjs';
 import {readSectorNews} from './sector-news-cache.mjs';
 import catalog from '../src/data/stock-map.json' with {type:'json'};
 import {kst} from './ls.mjs';
@@ -12,17 +13,17 @@ const sanitize=e=>String(e?.message||e).replace(/https?:\/\/\S+/g,'[source]').re
 
 export function allowedDelivery(event,now=new Date()){
  const k=kst(now);
- return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&['00','30'].includes(k.time.slice(2))&&slotMinutes(k.time)>=990&&slotMinutes(k.time)<=1170;
+ return DELIVERY_CRONS.includes(event.cron)&&!['Sat','Sun'].includes(k.weekday)&&['00','30'].includes(k.time.slice(2))&&slotMinutes(k.time)>=minutes(marketSession(k.date).briefingAt)&&slotMinutes(k.time)<=1170;
 }
 export function formatClose(date,d,integrated=null){
  assert(d?.date===date,'CLOSE_DATE_MISMATCH');
  assert(!d.errors?.KOSPI&&!d.errors?.KOSDAQ&&!d.errors?.flows&&!d.errors?.ls,'CLOSE_COLLECTION_ERROR');
  const i=d.indices||{},f=d.flows;
  assert(f?.unit==='억원'&&f.segments&&dateLocal(f.asOf)===date,'CLOSE_FLOWS_INVALID');
- assert(slotMinutes(kst(new Date(f.asOf)).time)>=930,'CLOSE_FLOWS_PRE_CLOSE');
+ assert(slotMinutes(kst(new Date(f.asOf)).time)>=minutes(marketSession(date).close),'CLOSE_FLOWS_PRE_CLOSE');
  for(const market of ['KOSPI','KOSDAQ']){
   const x=i[market];
-  assert(x&&dateLocal(x.asOf)===date&&slotMinutes(kst(new Date(x.asOf)).time)>=930,'CLOSE_INDEX_STALE');
+  assert(x&&dateLocal(x.asOf)===date&&slotMinutes(kst(new Date(x.asOf)).time)>=minutes(marketSession(date).close),'CLOSE_INDEX_STALE');
   assert(['value','changePct','advances','unchanged','declines'].every(v=>valid(x[v])),'CLOSE_INDEX_INVALID');
  }
  for(const market of ['KOSPI','KOSDAQ','FUTURES','CALL','PUT'])
@@ -35,7 +36,7 @@ export function formatClose(date,d,integrated=null){
  const foreignSpot=spot('KOSPI').foreign+spot('KOSDAQ').foreign,future=f.segments.FUTURES.foreign;
  const direction=foreignSpot>0&&future>0?'상방 우위':foreignSpot<0&&future<0?'하방 우위':'현물·선물 혼조';
  const oi=d.oi?.futures;
- const oiValid=oi?.source==='LS t2424'&&dateLocal(oi.asOf)===date&&slotMinutes(kst(new Date(oi.asOf)).time)>=930&&valid(oi.openInterest)&&Number.isInteger(oi.change)&&/^[A-Z0-9]{8}$/.test(oi.contract||'');
+ const oiValid=oi?.source==='LS t2424'&&dateLocal(oi.asOf)===date&&slotMinutes(kst(new Date(oi.asOf)).time)>=minutes(marketSession(date).close)&&valid(oi.openInterest)&&Number.isInteger(oi.change)&&/^[A-Z0-9]{8}$/.test(oi.contract||'');
  return [
   date+' 국내 증시 장 마감·수급 브리핑','',
   index('KOSPI'),index('KOSDAQ'),'',
@@ -73,7 +74,7 @@ export function filterNews(xml,date){
  }).filter(x=>x.title.length>10&&newsSource.test(x.source)&&/^https:\/\//.test(x.link)&&Number.isFinite(Date.parse(x.pubDate))&&dateLocal(x.pubDate)===date).slice(0,4);
 }
 export function formatSector(date,snapshot,news){
- assert(snapshot?.date===date&&dateLocal(snapshot.asOf)===date&&slotMinutes(kst(new Date(snapshot.asOf)).time)>=930,'SECTOR_NOT_CLOSED');
+ assert(snapshot?.date===date&&dateLocal(snapshot.asOf)===date&&slotMinutes(kst(new Date(snapshot.asOf)).time)>=minutes(marketSession(date).close),'SECTOR_NOT_CLOSED');
  assert(snapshot.stocks?.length>=10,'SECTOR_STOCKS_MISSING');
  assert(news.length>0,'SECTOR_NEWS_MISSING');
  const groups=sectorGroups(snapshot);
@@ -150,10 +151,11 @@ export async function deliverScheduled(event,env,now=new Date(),dependencies={})
 // It cannot re-send a successful briefing or affect the market-close briefing.
 export async function recoverSectorDelivery(env,date,now=new Date(),dependencies={}){
  const k=kst(now);
- assert(date===k.date&&!['Sat','Sun'].includes(k.weekday)&&slotMinutes(k.time)>=990,'SECTOR_RECOVERY_DATE_OR_TIME_INVALID');
+ assert(date===k.date&&!['Sat','Sun'].includes(k.weekday)&&slotMinutes(k.time)>=minutes(marketSession(k.date).briefingAt),'SECTOR_RECOVERY_DATE_OR_TIME_INVALID');
  const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('telegram:v3:'+date+':sector').first();
  const previous=row?.payload?JSON.parse(row.payload):null;
  if(previous?.status==='sent')return {kind:'sector',status:'already-sent'};
  assert(previous?.status==='failed','SECTOR_RECOVERY_REQUIRES_FAILED_RECORD');
  return attempt(env,'sector',date,now,dependencies);
 }
+

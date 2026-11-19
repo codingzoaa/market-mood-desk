@@ -1,3 +1,4 @@
+import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {collectNaverHeatmap} from './naver-heatmap.mjs';
 import {normalizeFuturesOi} from './futures-oi.mjs';
 import {archivePutClose} from './put-daily.mjs';
@@ -14,7 +15,7 @@ export function indexQuote(row){
 }
 export function indexSeries(rows,date){
  if(!Array.isArray(rows))throw new Error('CHART_SHAPE');
- const points=rows.filter(r=>r.date===date.replaceAll('-','')).map(r=>{if(!/^\d{6}$/.test(r.time))throw new Error('CHART_TIME');return {time:r.time,value:number(r.close,0,1e7)};}).filter(p=>p.time<='161000').sort((a,b)=>a.time.localeCompare(b.time));
+ const points=rows.filter(r=>r.date===date.replaceAll('-','')).map(r=>{if(!/^\d{6}$/.test(r.time))throw new Error('CHART_TIME');return {time:r.time,value:number(r.close,0,1e7)};}).filter(p=>p.time>=marketSession(date).open+'00'&&p.time<=marketSession(date).collectEnd+'00').sort((a,b)=>a.time.localeCompare(b.time));
  if(!points.length)throw new Error('CHART_DATE');return points;
 }
 export function rawFlows(data){
@@ -46,7 +47,7 @@ export async function collectDetails(env){
  let session;
  const details={date,collectorRevision:'clock-aligned-flow-v1',asOf:new Date(now).toISOString(),checkedAt:new Date(now).toISOString(),indices:{...(old.indices||{})},...(old.flows?{flows:old.flows}:{}),...(old.oi?{oi:old.oi}:{}),errors:{}};
  try{
-  session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(code,body)=>tr(token,code,body,undefined,fetcher);
+  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(code,body)=>tr(token,code,body,undefined,fetcher);
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
   if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-',''))throw new Error('TRADE_DATE');
   for(const [code,market] of [['001','KOSPI'],['301','KOSDAQ']]){
@@ -67,7 +68,7 @@ export async function collectDetails(env){
  }catch(e){details.errors.ls=e instanceof LSFailure?e.code:String(e.message).slice(0,80);}
  finally{if(session)await session.close();}
  try{
-  if(!collectWindow())return;
+  if(!collectWindow()&&!sessionRecoveryAllowed(env))return;
   // Do not label a request that overran into the next bucket as the old slot.
   const current=flowBucket();if(current?.date!==bucket.date||current.time!==bucket.time)return;
   const latestRow=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first(),latest=latestRow?JSON.parse(latestRow.payload):old;
@@ -93,7 +94,7 @@ export async function collectDetails(env){
 }
 
 export async function enrichDetails(env){
- if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow())return;
+ if(!env.LS_APP_KEY||!env.LS_APP_SECRET||!collectWindow()&&!sessionRecoveryAllowed(env))return;
  const date=kst().date,now=Date.now(),row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+date).first();if(!row)return;
  const old=JSON.parse(row.payload);
  if(old.enrichedBucket===flowBucket()?.time)return;
@@ -101,14 +102,14 @@ export async function enrichDetails(env){
  const lease=String(now+120000),lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='details-enrichment-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first();if(!lock)return;
  let session;const patch={},errors={};
  try{
-  session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
+  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
   for(const [code,market] of [['001','KOSPI'],['301','KOSDAQ']]){
-   try{const r=await tr(token,'t8409',{shcode:code,ncnt:5,qrycnt:100,nday:'1',sdate:date.replaceAll('-',''),stime:'',edate:date.replaceAll('-',''),etime:'161000',cts_date:'',cts_time:'',comp_yn:'N'},undefined,fetcher);patch[market]=indexSeries(r.data.t8409OutBlock1,date);}catch(e){errors['chart'+market]=e.code||String(e.message).slice(0,80);}
+   try{const r=await tr(token,'t8409',{shcode:code,ncnt:5,qrycnt:100,nday:'1',sdate:date.replaceAll('-',''),stime:'',edate:date.replaceAll('-',''),etime:marketSession(date).flowEnd+'00',cts_date:'',cts_time:'',comp_yn:'N'},undefined,fetcher);patch[market]=indexSeries(r.data.t8409OutBlock1,date);}catch(e){errors['chart'+market]=e.code||String(e.message).slice(0,80);}
    await pause();
   }
  }catch(e){errors.enrichment=e.code||String(e.message).slice(0,80);}finally{if(session)await session.close();}
  try{
-  if(!collectWindow())return;
+  if(!collectWindow()&&!sessionRecoveryAllowed(env))return;
   // JSON path updates preserve a newer core collection and its history.
   const paths=[],values=[];
   for(const market of ['KOSPI','KOSDAQ'])if(patch[market]){paths.push("'$.indices."+market+".series',json(?)");values.push(JSON.stringify(patch[market]));}
@@ -138,3 +139,4 @@ export async function collectHeatmap(env,date){
  if(!result.complete)throw Error('CLASSIFICATION_LOADING');
  return result.heatmap;
 }
+
