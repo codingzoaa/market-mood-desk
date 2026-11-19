@@ -1,7 +1,7 @@
 // The original 145-stock catalog is the naming baseline. These rules translate
 // verified business/product evidence into that same three-level presentation.
 // New industries extend it explicitly; an exchange industry is never a theme.
-export const TAXONOMY_VERSION=3;
+export const TAXONOMY_VERSION=4;
 export const ISSUER_ALIASES={
  '261780':{market:'KOSDAQ',quote:'아리바이오랩',issuer:'아리바이오LAB',sourceUrl:'https://kind.krx.co.kr/external/2026/05/26/000652/20260526001497/70765.htm'},
  '000810':{market:'KOSPI',quote:'삼성화재',issuer:'삼성화재해상보험'},
@@ -17,6 +17,34 @@ export const SHARE_LINKS={
 const r=(id,pattern,sector,subSector,themes)=>({id,pattern,sector,subSector,themes});
 // First matching product rule wins. Specific products precede broad industries.
 const PRODUCTS=[
+ r("daily-resort",/리조트 운영/i,"소비재","호텔·리조트",["리조트", "관광숙박"]),
+ r("daily-vfx",/\bVFX\b/i,"엔터·콘텐츠","영상콘텐츠·VFX",["VFX", "영상콘텐츠"]),
+ r("daily-wireless-security",/무선도청탐지/i,"사이버보안","보안 탐지장비",["도청탐지", "물리보안"]),
+ r("daily-fashion",/패션의류|패션내의/i,"소비재","의류·패션",["의류", "패션"]),
+ r("daily-ev-thermal",/전기차용 방열/i,"자동차","자동차 부품",["전기차", "방열소재"]),
+ r("daily-passive-component",/칩바리스터/i,"전자부품","전자부품·소재",["수동부품", "회로보호"]),
+ r("daily-alloy",/Ni계 합금/i,"소재","첨단금속·합금",["특수합금", "스퍼터링타겟"]),
+ r("daily-advertising",/광고대행/i,"엔터·콘텐츠","광고·마케팅",["광고", "마케팅"]),
+ r("daily-robot-sensor",/로봇용 힘\/토크센서/i,"로봇","로봇 부품",["힘토크센서", "로봇제어"]),
+ r("daily-power-tools",/전동공구/i,"기계","전동공구·모터",["전동공구", "자동차모터"]),
+ r("daily-optical-transceiver",/광트랜시버/i,"통신","광통신·네트워크",["광트랜시버", "광통신"]),
+ r("daily-record-label",/음반\(CD,MC\),연예 대리/i,"엔터·콘텐츠","음악·엔터테인먼트",["음반", "아티스트매니지먼트"]),
+ r("daily-drama",/드라마 제작/i,"엔터·콘텐츠","드라마·영상콘텐츠",["드라마", "영상콘텐츠"]),
+ r("daily-webtoon",/웹툰,웹소설/i,"엔터·콘텐츠","웹툰·웹소설",["웹툰", "웹소설"]),
+ r("daily-dutyfree",/면세판매,관광숙박/i,"소비재","면세·호텔",["면세점", "호텔"]),
+ r("daily-department",/백화점/i,"소비재","백화점·유통",["백화점", "유통"]),
+ r("daily-fan-platform",/DearU bubble/i,"엔터·콘텐츠","팬 플랫폼",["팬플랫폼", "구독서비스"]),
+ r("daily-game-titles",/미르의전설|미르4|실크로드 온라인|게임 개발 서비스/i,"인터넷","게임·콘텐츠",["게임개발", "온라인게임"]),
+ r("daily-cosmetics",/^화장품$/i,"화장품","화장품 브랜드",["K뷰티", "화장품브랜드"]),
+ r("daily-rail-signal",/철도신호제어/i,"기계","철도 시스템",["철도신호", "철도인프라"]),
+ r("daily-gas-scrubber",/GasScrubber/i,"반도체","반도체 장비",["스크러버", "칠러"]),
+ r("daily-semi-display",/반도체 및 디스플레이 제조 장비|반도체, 디스플레이 제조 장비/i,"반도체","반도체·디스플레이 장비",["반도체장비", "디스플레이장비"]),
+ r("daily-botox",/보툴리눔톡신/i,"바이오","미용의약품",["보툴리눔톡신", "필러"]),
+ r("daily-cro",/임상 CRO/i,"바이오","임상시험·CRO",["임상시험", "CRO"]),
+ r("daily-tax-refund",/환급창구운영/i,"소비재","관광 서비스",["택스리펀드", "외국인관광"]),
+ r("daily-aesthetic",/미용의료기기/i,"바이오","진단·의료기기",["미용의료기기", "피부미용"]),
+ r("daily-pcb-board",/인쇄회로기판 제조업/i,"반도체","PCB·반도체 기판",["PCB", "전자기판"]),
+ r("daily-robot-platform",/로봇 모듈화 플랫폼/i,"로봇","로봇·자동화",["로봇플랫폼", "자동화"]),
  r('vaccine',/백신 및 면역증강제/,'바이오','백신·면역 플랫폼',['백신','면역증강제']),
  r("products-logistics",/포장화물|택배산업/i,"운송","육상물류·택배",["택배", "항만물류"]),
  r("products-insurance-auto",/자동차보험/i,"금융·증권","보험",["손해보험"]),
@@ -165,7 +193,7 @@ export function businessTaxonomy(issuer){
  if(review&&review.name===issuer.name&&review.industry===issuer.industry)return {...review,businessReviewedAt:review.businessReviewedAt||'2026-11-09',ruleId:'review-'+issuer.symbol};
  // Products referring to unrelated legacy businesses must not generate an
  // investment exposure merely from the current company name.
- if(['290690','475150'].includes(issuer.symbol))return null;
+ if(['290690','475150','037270','035760','006730','115450'].includes(issuer.symbol))return null;
  const rule=PRODUCTS.find(x=>x.pattern.test(issuer.products))||INDUSTRIES.find(x=>x.pattern.test(issuer.industry));
  // A generic industry alone must not be relabeled as an investment theme.
  if(!rule||rule.themes.length===1&&rule.themes[0]===rule.sector)return null;

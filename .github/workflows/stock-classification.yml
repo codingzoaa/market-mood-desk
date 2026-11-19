@@ -11,9 +11,10 @@ on:
       - 'worker/stock-registry.mjs'
       - 'src/data/stock-map.json'
   schedule:
-    - cron: '10 0-11 * * 1-5'
+    - cron: '10 0-14 * * 1-5'
 permissions:
   contents: write
+  actions: write
 concurrency:
   group: stock-classification-verification
   cancel-in-progress: false
@@ -77,6 +78,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,3 +108,8 @@ jobs:
           if(actual.verification?.checkedAt!==expected.checkedAt||actual.verification?.sourceSha256!==expected.sourceSha256)throw Error('REGISTRY_DEPLOYMENT_NOT_CURRENT');
           console.log(JSON.stringify({verified:actual.verification.verified,pending:actual.verification.pending,checkedAt:actual.verification.checkedAt}));
           JS
+
+      - name: Refresh the published site with verified classifications
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main

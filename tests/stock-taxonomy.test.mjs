@@ -55,3 +55,14 @@ test('published taxonomy uses three distinct fields and keeps every original mem
 });
 
 test('generic industry identical to a lone theme remains pending instead of breaking verification',()=>{assert.equal(businessTaxonomy({symbol:'799998',name:'검토종목',industry:'전자부품 제조업',products:'확인되지 않은 사업'}),null);});
+
+test('new daily candidates classify only product-evidenced exposure and retain identity checks',()=>{
+ for(const [symbol,name,industry,products,sector,subSector] of [
+ ['041510','에스엠','오디오물 출판 및 원판 녹음업','음반(CD,MC),연예 대리','엔터·콘텐츠','음악·엔터테인먼트'],
+ ['138080','오이솔루션','통신 및 방송 장비 제조업','광트랜시버','통신','광통신·네트워크'],
+ ['083450','GST','특수 목적용 기계 제조업','GasScrubber,Chiller','반도체','반도체 장비'],
+ ['123690','한국화장품','생활용품 도매업','화장품','화장품','화장품 브랜드'],
+ ['476080','M83','영화, 비디오물, 방송프로그램 제작 및 배급업','VFX','엔터·콘텐츠','영상콘텐츠·VFX']
+ ]){const official={symbol,name,market:'KOSDAQ',industry,products};const stock={symbol,name,market:'KOSDAQ'};const x=verifyKindIdentity(stock,official,now);assert.equal(x.sector,sector);assert.equal(x.subSector,subSector);assert.ok(x.themes.length);assert.equal(verifyKindIdentity({...stock,name:'다른회사'},official,now).reviewRequired,true);}
+ assert.equal(businessTaxonomy({symbol:'037270',name:'YG PLUS',industry:'자료처리업',products:'광고대행,광고물 제작'}),null);
+});

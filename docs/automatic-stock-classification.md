@@ -1,6 +1,6 @@
 # Automatic classification verification
 
-The hourly `stock-classification.yml` job checks missing classifications on trading weekdays at 09:10–20:10 KST. GitHub scheduled runs may be delayed. The first code publication and manual dispatch also run verification.
+The hourly `stock-classification.yml` job checks missing classifications on trading weekdays at 09:10–23:10 KST. GitHub scheduled runs may be delayed. The first code publication and manual dispatch also run verification.
 
 Source: the exchange's public KIND listed-company download, https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13 . The job decodes its EUC-KR/CP949 bytes strictly, validates required columns, duplicate codes and coverage (at least 2,000 listed issuers, including at least 500 KOSPI and 1,000 KOSDAQ issuers), and records the source SHA256 and actual retrieval time. The retrieval time is not represented as the source's publication date.
 
@@ -21,3 +21,5 @@ The older LS discovery stage now retries pending records instead of treating the
 Checks: `node --test tests/stock-verification.test.mjs`, `npm test`, `npx tsc --noEmit`, `npm run build`. Workflow reports retain verification counts and pending-reason counts for seven days, without credentials.
 
 Taxonomy changes trigger the existing verification workflow. Its generated data is recomputed through the same rules on subsequent hourly runs, so automation does not revert to raw industry labels. The UI exposes official-industry provenance and separate corporate business evidence where applicable.
+
+The daily retry includes product-evidenced music, dramas/VFX, cosmetics, games, robotics, optical networking and semiconductor equipment. Successful verification deploys the shared Worker registry and dispatches Pages so all views use the same classifications. Manual and shared edits keep precedence. Stale products and identity mismatches remain pending.
