@@ -44,7 +44,7 @@ export async function probeVenueFlows(env,now=new Date(),dependencies={}){
  if(['Sat','Sun'].includes(t.weekday)||!sessionRecoveryAllowed(env)&&(t.time<timeOf(minutes(marketSession(date).flowEnd)+5)||t.time>timeOf(minutes(marketSession(date).flowEnd)+45)))return {status:'outside-probe-window'};
  const key='investor-flow-venue:'+date;
  const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();
- if(row?.payload && JSON.parse(row.payload).status==='verified')return {status:'already-verified'};
+ if(row?.payload && JSON.parse(row.payload).status==='verified'&&!sessionRecoveryAllowed(env,now))return {status:'already-verified'};
  // No external/public parameter is allowed to trigger an LS query.
  let session;
  try{
