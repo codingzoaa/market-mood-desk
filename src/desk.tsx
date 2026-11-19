@@ -115,7 +115,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='stockmap'&&<StockSectorMap classification={classification}/>}
     {view==='drawdown'&&<DrawdownPanel/>}
     {view==='data'&&dataPage()}
-    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>{view==='drawdown'?'LS 수정종가 · 선택 기간 고점 기준':'KRX · 수급·시장 신호 {marketSession(selected).flowEnd.slice(0,2)}:{marketSession(selected).flowEnd.slice(2)} 마감 · KST'}</span></footer>}
+    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>{view==='drawdown'?'LS 수정종가 · 선택 기간 고점 기준':`KRX · 수급·시장 신호 ${marketSession(selected).flowEnd.slice(0,2)}:${marketSession(selected).flowEnd.slice(2)} 마감 · KST`}</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}
