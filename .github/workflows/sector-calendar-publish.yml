@@ -7,6 +7,11 @@ on:
     - cron: '7 10 * * 1-5'
     - cron: '17 11-14 * * 1-5'
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Revalidate the selected daily review after corrected source data
+        type: boolean
+        default: false
   # A completed close-data update is a second wake-up path if cron is delayed.
   workflow_run:
     workflows: ['Update KOSPI pension signal data', 'Relay Naver sector news to Cloudflare', 'Refresh Naver industry heatmap', 'Verify missing stock classifications']
@@ -45,7 +50,7 @@ jobs:
       - name: Generate same-day evidence-gated editorial review
         id: review
         env:
-          REVIEW_REBUILD: ${{ github.event_name == 'push' && 'true' || 'false' }}
+          REVIEW_REBUILD: ${{ (github.event_name == 'push' || inputs.rebuild == true) && 'true' || 'false' }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
@@ -142,4 +147,5 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## 강세 섹터 리뷰\n대상 거래일: ${r.date}\n결과: ${r.status}\n${r.reason||'이미 등록된 리뷰를 확인했습니다.'}\n`);
           if(r.status==='pending'){console.error('SECTOR_VERIFICATION_PENDING '+r.date);process.exit(1);}
           JS
+
 
