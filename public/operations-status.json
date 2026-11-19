@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-19T20:58:42.868Z",
+  "observedAt": "2026-11-19T21:43:44.579Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -454,6 +454,39 @@
       ]
     },
     {
+      "id": 44621444015,
+      "name": "Refresh verified KOSPI breadth",
+      "event": "schedule",
+      "branch": "main",
+      "sha": "30e676f5f5604f86e8a8725f7e7ef3ec1c202417",
+      "status": "completed",
+      "conclusion": "success",
+      "createdAt": "2026-11-19T21:42:22Z",
+      "startedAt": "2026-11-19T21:42:22Z",
+      "completedAt": "2026-11-19T21:43:28Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44621444015",
+      "jobs": [
+        {
+          "name": "refresh",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-19T21:42:24Z",
+          "completedAt": "2026-11-19T21:42:46Z",
+          "stages": [],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-19T21:42:54Z",
+          "completedAt": "2026-11-19T21:43:27Z",
+          "stages": [],
+          "steps": []
+        }
+      ]
+    },
+    {
       "id": 44578970089,
       "name": "Refresh verified KOSPI breadth",
       "event": "schedule",
@@ -537,31 +570,48 @@
       ]
     },
     {
-      "id": 44614048150,
+      "id": 44614097822,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "49c42d922b0a1f6a2b86f651393a77eab12a083e",
-      "status": "in_progress",
-      "conclusion": null,
-      "createdAt": "2026-11-19T20:58:28Z",
-      "startedAt": "2026-11-19T20:58:28Z",
-      "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44614048150",
+      "sha": "30e676f5f5604f86e8a8725f7e7ef3ec1c202417",
+      "status": "completed",
+      "conclusion": "success",
+      "createdAt": "2026-11-19T20:58:48Z",
+      "startedAt": "2026-11-19T20:58:48Z",
+      "completedAt": "2026-11-19T20:59:28Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44614097822",
       "jobs": [
         {
           "name": "build",
-          "status": "in_progress",
-          "conclusion": null,
-          "startedAt": "2026-11-19T20:58:34Z",
-          "completedAt": null,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-19T20:58:57Z",
+          "completedAt": "2026-11-19T20:59:13Z",
           "stages": [
             {
               "name": "Check TypeScript",
-              "status": "pending",
-              "conclusion": null,
-              "startedAt": null,
-              "completedAt": null
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-19T20:59:07Z",
+              "completedAt": "2026-11-19T20:59:10Z"
+            }
+          ],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-19T20:59:17Z",
+          "completedAt": "2026-11-19T20:59:27Z",
+          "stages": [
+            {
+              "name": "Deploy dashboard",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-19T20:59:19Z",
+              "completedAt": "2026-11-19T20:59:26Z"
             }
           ],
           "steps": []
@@ -569,31 +619,31 @@
       ]
     },
     {
-      "id": 44613993620,
+      "id": 44614048150,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "8202806d40f53999d865ef03acc38857d9da04f8",
+      "sha": "49c42d922b0a1f6a2b86f651393a77eab12a083e",
       "status": "completed",
       "conclusion": "cancelled",
-      "createdAt": "2026-11-19T20:58:08Z",
-      "startedAt": "2026-11-19T20:58:08Z",
-      "completedAt": "2026-11-19T20:58:33Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44613993620",
+      "createdAt": "2026-11-19T20:58:28Z",
+      "startedAt": "2026-11-19T20:58:28Z",
+      "completedAt": "2026-11-19T20:58:55Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44614048150",
       "jobs": [
         {
           "name": "build",
           "status": "completed",
           "conclusion": "cancelled",
-          "startedAt": "2026-11-19T20:58:15Z",
-          "completedAt": "2026-11-19T20:58:32Z",
+          "startedAt": "2026-11-19T20:58:34Z",
+          "completedAt": "2026-11-19T20:58:54Z",
           "stages": [
             {
               "name": "Check TypeScript",
               "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-19T20:58:26Z",
-              "completedAt": "2026-11-19T20:58:28Z"
+              "conclusion": "skipped",
+              "startedAt": "2026-11-19T20:58:52Z",
+              "completedAt": "2026-11-19T20:58:52Z"
             }
           ],
           "steps": []
@@ -602,8 +652,8 @@
           "name": "deploy",
           "status": "completed",
           "conclusion": "cancelled",
-          "startedAt": "2026-11-19T20:58:32Z",
-          "completedAt": "2026-11-19T20:58:32Z",
+          "startedAt": "2026-11-19T20:58:55Z",
+          "completedAt": "2026-11-19T20:58:55Z",
           "stages": [],
           "steps": []
         }
