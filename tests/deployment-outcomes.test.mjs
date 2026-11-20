@@ -19,4 +19,7 @@ test('a successful calendar invocation without deployment never appears as publi
  assert.equal(operationState(normalize([{name:'Deploy verified calendar to Pages',conclusion:'skipped'}])),'배포 미실행');
  assert.equal(operationState(normalize([{name:'Deploy verified calendar to Pages',conclusion:'success'}])),'발행·배포 완료');
  assert.equal(operationState(normalizeRun({...run,conclusion:'failure'},[{name:'publish',steps:[{name:'Deploy verified calendar to Pages',conclusion:'success'}]}])),'실패');
+ const pending=[{name:'Calendar review awaiting verified inputs',conclusion:'success'},{name:'Report publication result and expose verification failures',conclusion:'failure'}];
+ assert.equal(operationState(normalizeRun({...run,conclusion:'failure'},[{name:'publish',steps:pending}])),'자료 검증 보류');
+ assert.equal(operationState(normalizeRun({...run,conclusion:'failure'},[{name:'publish',steps:[...pending,{name:'Run independent calendar CI',conclusion:'failure'}]}])),'실패');
 });

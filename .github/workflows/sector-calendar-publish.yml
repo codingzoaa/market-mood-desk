@@ -77,6 +77,9 @@ jobs:
       - name: Calendar review already published
         if: steps.review.outputs.result == 'already_published'
         run: echo 'SECTOR_REVIEW_UNCHANGED; no new publication or deployment needed'
+      - name: Calendar review awaiting verified inputs
+        if: steps.review.outputs.result == 'pending'
+        run: echo 'SECTOR_REVIEW_PENDING; unverified editorial content will not be published'
       - name: Validate review or status-only update with full test, type check and build
         if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
         run: |
