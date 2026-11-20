@@ -20,7 +20,7 @@ function source(){const rows=[{time:'09050000',sv_08:10000,sv_17:-20000},{time:'
 test('backfill joins exact same-date market timestamps, keeps live observations, and never interpolates',()=>{
  const s=source(),p=historicalFlowPoints(s);assert.equal(p.length,2);assert.equal(p[0].markets.KOSPI.individual,100);assert.ok(Math.abs(p[0].markets.KOSPI.changePct+.5)<1e-9);assert.ok(p[0].source.includes('t1602'));
  const existing={...p[0],markets:{KOSPI:{individual:123,foreign:4,changePct:5},KOSDAQ:{individual:2,foreign:3,changePct:4}}};assert.equal(historicalFlowPoints({...s,previous:[existing]})[0].markets.KOSPI.individual,123);
- s.indices.KOSDAQ.series=s.indices.KOSDAQ.series.slice(1);assert.equal(historicalFlowPoints(s).length,1);
+ s.indices.KOSDAQ.series=s.indices.KOSDAQ.series.slice(1);assert.equal(historicalFlowPoints(s).length,2);assert.equal(historicalFlowPoints(s)[0].markets.KOSDAQ.changePct,null);
  assert.equal(sourceTime('09103000'),'091030');assert.throws(()=>sourceTime('09600000'));
 });
 test('backfill rejects incremental quantities, unknown units, duplicate timestamps and future observations',()=>{

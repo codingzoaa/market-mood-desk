@@ -15,10 +15,10 @@ export function personalFlowDeviation(history:FlowPoint[]){
  const points=ordered.map((p,i)=>{
   const prev=ordered[i-1],current=p.markets.KOSPI,prior=prev?.markets.KOSPI;
   const contiguous=!!prev&&minuteOf(p.time)-minuteOf(prev.time)===5;
-  const valid=contiguous&&[current?.individual,prior?.individual,current?.changePct,prior?.changePct].every(Number.isFinite)&&current.changePct> -100&&prior.changePct> -100;
+  const valid=contiguous&&[current?.individual,prior?.individual,current?.changePct,prior?.changePct].every(Number.isFinite)&&current.changePct!==null&&prior.changePct!==null&&current.changePct> -100&&prior.changePct> -100;
   // Both daily returns have the same previous-close denominator. Their ratio
   // recovers the 5-minute index return (subject to source percentage rounding).
-  const indexReturn=valid?((100+current.changePct)/(100+prior.changePct)-1)*100:null;
+  const indexReturn=valid?((100+current.changePct!)/(100+prior.changePct!)-1)*100:null;
   const actual=valid?current.individual-prior.individual:null;
   const reference=indexReturn===null?null:-PERSONAL_FLOW_REFERENCE*indexReturn;
   return {time:p.time,actual,indexReturn,reference,deviation:actual===null||reference===null?null:actual-reference};

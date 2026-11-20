@@ -20,7 +20,7 @@ const click = async el => { assert.ok(el, 'click target exists'); await act(asyn
 const button = text => [...document.querySelectorAll('button')].find(b => b.textContent.includes(text));
 
 test('automatic live data, header date and intraday flows, workspace separation and fullscreen restoration',async()=>{
- localStorage.clear();const previous=globalThis.fetch;const record={...demoSnapshots(new Date(Date.now()-86400000).toISOString().slice(0,10)).at(-1),source:'LS증권 KRX · 테스트',note:''};
+ localStorage.clear();const previous=globalThis.fetch;const record={...demoSnapshots('2026-11-18').at(-1),source:'LS증권 KRX · 테스트',note:''};
  record.details=demoMarketDetails(record);
  record.details.flowHistory=['0900','0905','0910'].map((time,i)=>({time,asOf:record.date+'T09:'+String(i*5).padStart(2,'0')+':00+09:00',markets:{KOSPI:{individual:i*100,foreign:-i*80,changePct:i*.1},KOSDAQ:{individual:i*10,foreign:-i*8,changePct:-i*.2}}}));
  globalThis.fetch=async url=>Response.json(String(url).includes('market-details')?{details:record.details}:{schemaVersion:2,snapshots:[record],feed:{}});

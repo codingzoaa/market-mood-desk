@@ -2,7 +2,7 @@ import {marketSession} from '../shared/market-session.mjs';
 export type Board='KOSPI'|'KOSDAQ';
 export type IndexDetail={value:number;change:number;changePct:number;advances:number;unchanged:number;declines:number;asOf:string;series:{time:string;value:number}[]};
 export type Flow={foreign:number;institution:number;individual:number;financial:number;pension?:number};
-export type FlowPoint={time:string;asOf:string;markets:Record<Board,{individual:number;foreign:number;institution?:number|null;changePct:number}>};
+export type FlowPoint={time:string;asOf:string;markets:Record<Board,{individual:number;foreign:number;institution?:number|null;changePct:number|null}>};
 export type HeatStock={symbol:string;name:string;market:Board;sector:string;changePct:number;marketCap:number};
 export type IntegratedFlows={date:string;asOf:string;scope:'KRX+NXT';status:'verified';unit:'억원';segments:Record<Board,Pick<Flow,'individual'|'foreign'|'institution'>>};
 export type ProgramPoint={time:string;netBuy:number;changePct:number|null;sourceTime?:string;sourceAgeSeconds?:number;indexSourceTime?:string|null};
@@ -34,7 +34,7 @@ export function validateDetails(raw:any,date:string):MarketDetails{
   const times=new Set<string>();result.flowHistory=raw.flowHistory.filter((p:any)=>date!=='2026-11-19'||typeof p.time!=='string'||!/^\d{4}$/.test(p.time)||p.time>='1000').map((p:any)=>{
    if((!/^\d{4}$/.test(p.time)||p.time<marketSession(date).open||p.time>marketSession(date).flowEnd)||Number(p.time.slice(2))%5!==0||times.has(p.time))throw Error('수급 이력 시각 오류');times.add(p.time);
    const asOf=timestamp(p.asOf,date);if(new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date(asOf))!==date)throw Error('수급 이력 날짜 오류');
-   const markets={} as FlowPoint['markets'];for(const b of ['KOSPI','KOSDAQ'] as const){const m=p.markets?.[b];markets[b]={individual:num(m?.individual),foreign:num(m?.foreign),institution:m?.institution==null?null:num(m.institution),changePct:num(m?.changePct,-100,10000)};}
+   const markets={} as FlowPoint['markets'];for(const b of ['KOSPI','KOSDAQ'] as const){const m=p.markets?.[b];markets[b]={individual:num(m?.individual),foreign:num(m?.foreign),institution:m?.institution==null?null:num(m.institution),changePct:m?.changePct===null?null:num(m?.changePct,-100,10000)};}
    return {time:p.time,asOf,markets};
   }).sort((a,b)=>a.time.localeCompare(b.time));
  }
