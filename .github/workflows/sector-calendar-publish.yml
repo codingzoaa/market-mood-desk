@@ -71,6 +71,12 @@ jobs:
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Calendar waiting for scheduled review time
+        if: steps.review.outputs.result == 'not_due'
+        run: echo 'SECTOR_WAITING_FOR_REVIEW_TIME; no publication or deployment attempted'
+      - name: Calendar review already published
+        if: steps.review.outputs.result == 'already_published'
+        run: echo 'SECTOR_REVIEW_UNCHANGED; no new publication or deployment needed'
       - name: Validate review or status-only update with full test, type check and build
         if: steps.review.outputs.changed == 'true' && (steps.review.outputs.result == 'published' || steps.review.outputs.result == 'pending')
         run: |
@@ -129,7 +135,14 @@ jobs:
           set -euo pipefail
           # Guard against concurrent main updates and accidental unverified changes.
           git fetch origin main
-          gh pr view "$PR" --json mergeable --jq .mergeable | grep -qx MERGEABLE
+          MERGEABLE="UNKNOWN"
+          for i in $(seq 1 20); do
+            MERGEABLE="$(gh pr view "$PR" --json mergeable --jq .mergeable)"
+            [[ "$MERGEABLE" == "MERGEABLE" ]] && break
+            [[ "$MERGEABLE" == "CONFLICTING" ]] && { echo 'SECTOR_PR_MERGE_CONFLICT'; exit 1; }
+            sleep 3
+          done
+          [[ "$MERGEABLE" == "MERGEABLE" ]] || { echo 'SECTOR_PR_MERGE_STATE_UNAVAILABLE'; exit 1; }
           gh pr merge "$PR" --merge --delete-branch
           git fetch origin main
           MERGED="$(git rev-parse origin/main)"
