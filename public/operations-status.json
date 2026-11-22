@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-22T02:16:40.198Z",
+  "observedAt": "2026-11-22T09:53:23.957Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -543,40 +543,6 @@
     },
     {
       "publicationStatus": null,
-      "id": 44769493591,
-      "name": "Verify missing stock classifications",
-      "event": "schedule",
-      "branch": "main",
-      "sha": "44a06ec6ecd3db1ad7e12324f7e847cb5346f505",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-20T16:03:33Z",
-      "startedAt": "2026-11-20T16:03:33Z",
-      "completedAt": "2026-11-20T16:04:42Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44769493591",
-      "jobs": [
-        {
-          "name": "verify",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-20T16:03:35Z",
-          "completedAt": "2026-11-20T16:04:06Z",
-          "stages": [],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-20T16:04:08Z",
-          "completedAt": "2026-11-20T16:04:41Z",
-          "stages": [],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
       "id": 44813832978,
       "name": "Relay Naver sector news to Cloudflare",
       "event": "workflow_run",
@@ -627,6 +593,56 @@
     },
     {
       "publicationStatus": null,
+      "id": 44975333614,
+      "name": "Build and deploy dashboard",
+      "event": "workflow_dispatch",
+      "branch": "main",
+      "sha": "31e35bed3169e34ef2fe7487db04c588901f0a69",
+      "status": "completed",
+      "conclusion": "success",
+      "createdAt": "2026-11-22T02:16:43Z",
+      "startedAt": "2026-11-22T02:16:43Z",
+      "completedAt": "2026-11-22T02:17:22Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44975333614",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-22T02:16:46Z",
+          "completedAt": "2026-11-22T02:17:07Z",
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-22T02:17:00Z",
+              "completedAt": "2026-11-22T02:17:03Z"
+            }
+          ],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-22T02:17:11Z",
+          "completedAt": "2026-11-22T02:17:21Z",
+          "stages": [
+            {
+              "name": "Deploy dashboard",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-22T02:17:13Z",
+              "completedAt": "2026-11-22T02:17:20Z"
+            }
+          ],
+          "steps": []
+        }
+      ]
+    },
+    {
+      "publicationStatus": null,
       "id": 44954095161,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
@@ -669,56 +685,6 @@
               "conclusion": "success",
               "startedAt": "2026-11-21T21:56:50Z",
               "completedAt": "2026-11-21T21:56:57Z"
-            }
-          ],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 44926613370,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
-      "branch": "main",
-      "sha": "37077e9466a1523360575584c155888d54911943",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-21T16:48:55Z",
-      "startedAt": "2026-11-21T16:48:55Z",
-      "completedAt": "2026-11-21T16:49:42Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/44926613370",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-21T16:48:58Z",
-          "completedAt": "2026-11-21T16:49:25Z",
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-21T16:49:17Z",
-              "completedAt": "2026-11-21T16:49:20Z"
-            }
-          ],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-21T16:49:30Z",
-          "completedAt": "2026-11-21T16:49:41Z",
-          "stages": [
-            {
-              "name": "Deploy dashboard",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-21T16:49:33Z",
-              "completedAt": "2026-11-21T16:49:39Z"
             }
           ],
           "steps": []
