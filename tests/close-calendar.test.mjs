@@ -16,6 +16,17 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
  const React=await import('react'),{createRoot}=await import('react-dom/client');
  const root=createRoot(document.getElementById('root'));
  const click=async selector=>React.act(async()=>document.querySelector(selector).click());
+ const showDate=async(date,suffix='장 마감 리뷰')=>{
+  const selector='[aria-label="'+date+' '+suffix+'"]';
+  for(let attempt=0;attempt<80&&!document.querySelector(selector);attempt++){
+   const labels=[...document.querySelectorAll('.close-day[aria-label]')].map(x=>x.getAttribute('aria-label').slice(0,10)).sort();
+   assert.ok(labels.length,'calendar must retain visible dated cells');
+   await click('[aria-label="'+(date<labels[0]?'이전 4주':'다음 4주')+'"]');
+  }
+  assert.ok(document.querySelector(selector),'calendar date must be reachable: '+date);return selector;
+ };
+ const clickDate=async(date,suffix='장 마감 리뷰')=>click(await showDate(date,suffix));
+
  try{
   await React.act(async()=>root.render(React.createElement(Calendar)));
   assert.match(document.querySelector('.close-calendar-grid-panel h2').textContent,/강세 섹터 캘린더/);
@@ -39,45 +50,53 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelector('.close-market'),null); // No index-summary header; provenance may mention the index.
   assert.equal(document.querySelector('.close-market-flow'),null); // No market-index summary above detail cards.
   assert.equal(document.querySelector('[aria-label="'+newest.date+' 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,Math.min(3,newest.sectors.length));
+  await showDate('2026-11-04');
   assert.equal(document.querySelector('[aria-label="2026-11-04 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
+  await showDate('2026-11-02');
   assert.equal(document.querySelector('[aria-label="2026-11-02 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
+  await showDate('2026-10-30');
   assert.equal(document.querySelector('[aria-label="2026-10-30 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
+  await showDate('2026-10-29');
   assert.equal(document.querySelector('[aria-label="2026-10-29 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,1);
+  await showDate('2026-10-28');
   assert.equal(document.querySelector('[aria-label="2026-10-28 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
+  await showDate('2026-10-27');
   assert.equal(document.querySelector('[aria-label="2026-10-27 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
+  await showDate('2026-10-26');
   assert.equal(document.querySelector('[aria-label="2026-10-26 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,2);
-  await click('[aria-label="2026-10-29 장 마감 리뷰"]');
+  await clickDate('2026-10-29','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   assert.ok(document.querySelector('.close-review').textContent.includes('NH투자증권 +2.52%'));
-  await click('[aria-label="2026-10-29 장 마감 리뷰"]');
+  await clickDate('2026-10-29','장 마감 리뷰');
   assert.equal(document.querySelector('.close-review'),null);
   assert.equal(document.querySelector('[aria-label="2026-10-29 장 마감 리뷰"]').getAttribute('aria-expanded'),'false');
-  await click('[aria-label="2026-10-29 장 마감 리뷰"]');
+  await clickDate('2026-10-29','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
-  await click('[aria-label="2026-10-28 장 마감 리뷰"]');
+  await clickDate('2026-10-28','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,4);
   assert.ok(document.querySelector('.close-review').textContent.includes('SK하이닉스 +10.89%'));
   assert.ok(document.querySelector('.close-review').textContent.includes('삼성전자 +9.01%'));
-  await click('[aria-label="2026-10-27 장 마감 리뷰"]');
+  await clickDate('2026-10-27','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,5);
-  await click('[aria-label="2026-10-26 장 마감 리뷰"]');
+  await clickDate('2026-10-26','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,2);
   assert.match(document.querySelector('.close-review').textContent,/루닛 \+30.00%/);
   // The latest review can shift October 23 outside the rolling four-week page.
-  if(!document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]'))await click('[aria-label="이전 4주"]');
+  await showDate('2026-10-23','장 마감 리뷰');
+  await showDate('2026-10-23');
   assert.equal(document.querySelector('[aria-label="2026-10-23 장 마감 리뷰"]').querySelectorAll('.close-day-sector').length,3);
-  await click('[aria-label="2026-10-23 장 마감 리뷰"]');
+  await clickDate('2026-10-23','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,5);
   assert.match(document.querySelector('.close-review').textContent,/SK하이닉스 \+4.42%/);
-  if(!document.querySelector('[aria-label="2026-10-15 장 마감 리뷰"]'))await click('button[aria-label="이전 4주"]');
-  await click('[aria-label="2026-10-15 장 마감 리뷰"]');
+  await showDate('2026-10-15','장 마감 리뷰');
+  await clickDate('2026-10-15','장 마감 리뷰');
   assert.equal(document.querySelectorAll('.close-sector').length,1);
   assert.match(document.querySelector('.close-review').textContent,/확인 1개/);
   assert.equal(document.querySelectorAll('.close-day').length,20);
   assert.equal([...document.querySelectorAll('a')].every(x=>x.href.startsWith('https://')),true);
-  if(!document.querySelector('[aria-label="2026-09-28 리뷰 미등록"]'))await click('button[aria-label="이전 4주"]');
+  await showDate('2026-09-28','리뷰 미등록');
   assert.match(document.querySelector('[aria-label="2026-10-09 리뷰 미등록"]').textContent,/휴장/);
-  await click('[aria-label="2026-09-28 리뷰 미등록"]');
+  await clickDate('2026-09-28','리뷰 미등록');
   assert.equal(document.querySelectorAll('.close-sector').length,0);
   assert.match(document.querySelector('.close-review').textContent,/2026-09-28/);
   await React.act(async()=>[...document.querySelectorAll('button')].find(x=>x.textContent==='최신 리뷰').click());

@@ -1,8 +1,9 @@
 // The original 145-stock catalog is the naming baseline. These rules translate
 // verified business/product evidence into that same three-level presentation.
 // New industries extend it explicitly; an exchange industry is never a theme.
-export const TAXONOMY_VERSION=4;
+export const TAXONOMY_VERSION=5;
 export const ISSUER_ALIASES={
+ '950260':{market:'KOSDAQ',quote:'인제니아테라퓨틱스(R',issuer:'인제니아테라퓨틱스',sourceUrl:'https://www.samsungpop.com/ux/kor/customer/notice/notice/noticeViewContent.do?MenuSeqNo=24310'},
  '261780':{market:'KOSDAQ',quote:'아리바이오랩',issuer:'아리바이오LAB',sourceUrl:'https://kind.krx.co.kr/external/2026/05/26/000652/20260526001497/70765.htm'},
  '000810':{market:'KOSPI',quote:'삼성화재',issuer:'삼성화재해상보험'},
  '015760':{market:'KOSPI',quote:'한국전력',issuer:'한국전력공사'},
@@ -11,12 +12,31 @@ export const ISSUER_ALIASES={
  '445680':{market:'KOSDAQ',quote:'큐리옥스바이오시스템',issuer:'큐리옥스바이오시스템즈'}
 };
 export const SHARE_LINKS={
+ '005385':{name:'현대차우',market:'KOSPI',issuerSymbol:'005380',issuerName:'현대자동차',sourceUrl:'https://www.hyundai.com/worldwide/ko/company/ir/stock-information/shareholder-return-policy'},
  '003495':{name:'대한항공우',market:'KOSPI',issuerSymbol:'003490',issuerName:'대한항공',sourceUrl:'https://www.koreanair.com/contents/footer/about-us/investor-relations/shareholder-information/details'},
  '005935':{name:'삼성전자우',market:'KOSPI',issuerSymbol:'005930',issuerName:'삼성전자',sourceUrl:'https://www.samsung.com/global/ir/stock-information/listing-Info/'}
 };
 const r=(id,pattern,sector,subSector,themes)=>({id,pattern,sector,subSector,themes});
 // First matching product rule wins. Specific products precede broad industries.
 const PRODUCTS=[
+ r("verified-energy-trade",/천연가스 발전.*트레이딩/i,"소재","종합상사·에너지",["천연가스", "트레이딩"]),
+ r("verified-air-jig",/항공기 치공구/i,"우주항공","항공우주 부품",["항공기부품", "항공기조립"]),
+ r("verified-gene-reagent",/합성유전자/i,"바이오","진단·의료기기",["유전자분석", "시약"]),
+ r("verified-industrial-service-robot",/제조업용로봇및서비스로봇/i,"로봇","로봇·자동화",["산업용로봇", "서비스로봇"]),
+ r("verified-osteoarthritis",/골관절염 치료제/i,"바이오","재생의료",["골관절염치료", "신약개발"]),
+ r("verified-wearable-robot",/웨어러블 로봇/i,"로봇","재활·의료로봇",["웨어러블로봇", "의료로봇"]),
+ r("verified-cell-culture",/3D 세포배양/i,"바이오","바이오 플랫폼",["3D세포배양", "신약평가"]),
+ r("verified-mobile-shield",/휴대폰부품\(SHIELD, BRACKET\)/i,"전자부품","전자부품·소재",["휴대폰부품", "정밀부품"]),
+ r("verified-auto-it-precision",/내연기관 부품.*IT 부품/i,"자동차","자동차 부품",["정밀부품", "IT부품"]),
+ r("verified-cleaning-robot",/청소로봇/i,"로봇","로봇·자동화",["청소로봇", "서비스로봇"]),
+ r("verified-semi-fpd-robot",/반도체 및 FPD용 로봇/i,"로봇","로봇·자동화",["반도체로봇", "디스플레이로봇"]),
+ r("verified-smart-key",/스마트키,스위치/i,"자동차","자동차 SW·전장",["스마트키", "스위치"]),
+ r("verified-semi-distribution",/반도체\(메모리,비메모리\)/i,"반도체","반도체 유통",["메모리", "반도체유통"]),
+ r("verified-small-molecule",/저분자 혁신신약/i,"바이오","신약·제약",["신약개발"]),
+ r("verified-game-publishing",/게임 퍼블리싱/i,"인터넷","게임·콘텐츠",["게임", "퍼블리싱"]),
+ r("verified-robot-software",/로봇 소프트웨어/i,"로봇","로봇 소프트웨어",["로봇제어", "자율주행"]),
+ r("verified-ophthalmic-drug",/안구망막질환 치료제/i,"바이오","신약·제약",["안과신약", "신약개발"]),
+ r("verified-automaker",/자동차\(승용차,버스,트럭/i,"자동차","완성차",["승용차", "상용차"]),
  r("daily-resort",/리조트 운영/i,"소비재","호텔·리조트",["리조트", "관광숙박"]),
  r("daily-vfx",/\bVFX\b/i,"엔터·콘텐츠","영상콘텐츠·VFX",["VFX", "영상콘텐츠"]),
  r("daily-wireless-security",/무선도청탐지/i,"사이버보안","보안 탐지장비",["도청탐지", "물리보안"]),
@@ -176,6 +196,11 @@ const INDUSTRIES=[
 // listing's legacy product field cannot describe adequately. Exact symbol,
 // issuer name AND unchanged official industry remain mandatory.
 const REVIEWS={
+ '115450':{"name": "HLB테라퓨틱스", "industry": "기타 전문 도매업", "sector": "바이오", "subSector": "신약·제약", "themes": ["신약개발", "콜드체인"], "sourceUrl": "https://kind.krx.co.kr/external/2026/05/15/003316/20260515007601/11013.htm", "businessReviewedAt": "2026-11-24"},
+ '067630':{"name": "HLB생명과학", "industry": "의료용품 및 기타 의약 관련제품 제조업", "sector": "바이오", "subSector": "진단·의료기기", "themes": ["메디케어", "신약개발"], "sourceUrl": "https://kind.krx.co.kr/external/2026/05/15/001556/20260515003417/11013.htm", "businessReviewedAt": "2026-11-24"},
+ '037270':{"name": "YG PLUS", "industry": "자료처리, 호스팅, 포털 및 기타 인터넷 정보매개 서비스업", "sector": "엔터·콘텐츠", "subSector": "음악·엔터테인먼트", "themes": ["음악유통", "아티스트IP"], "sourceUrl": "https://www.ygplus.com/business/music", "businessReviewedAt": "2026-11-24"},
+ '035760':{"name": "CJ ENM", "industry": "텔레비전 방송업", "sector": "엔터·콘텐츠", "subSector": "방송·콘텐츠", "themes": ["방송콘텐츠", "음악", "커머스"], "sourceUrl": "https://www.cjenm.com/ko/", "businessReviewedAt": "2026-11-24"},
+ '006730':{"name": "서부T&D", "industry": "일반 및 생활 숙박시설 운영업", "sector": "소비재", "subSector": "호텔·리조트", "themes": ["호텔", "복합쇼핑몰"], "sourceUrl": "https://www.seobutnd.com/company/company_01.php", "businessReviewedAt": "2026-11-24"},
  '027360':{"name": "아주IB투자", "industry": "기타 금융업", "sector": "금융·증권", "subSector": "벤처투자", "themes": ["벤처캐피탈", "사모투자"], "sourceUrl": "https://kind.krx.co.kr/external/2026/03/19/001877/20260319007737/11011.htm", "businessReviewedAt": "2026-11-16"},
  '138360':{"name": "앤로보틱스", "industry": "특수 목적용 기계 제조업", "sector": "로봇", "subSector": "로봇·자동화", "themes": ["식품자동화", "로봇시스템"], "sourceUrl": "https://kind.krx.co.kr/external/2026/05/15/002782/20260515006335/11013.htm", "businessReviewedAt": "2026-11-16"},
  '290690':{"name": "아리바이오홀딩스", "industry": "전구 및 조명장치 제조업", "sector": "전자부품", "subSector": "조명·LED", "themes": ["LED", "조명"], "sourceUrl": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13", "businessReviewedAt": "2026-11-16"},

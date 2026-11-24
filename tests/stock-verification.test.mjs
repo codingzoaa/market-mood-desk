@@ -57,3 +57,18 @@ test('an existing pending entry is not mistaken for resolved and retries upsert 
  assert.equal(stored.entries.filter(x=>x.symbol===stock.symbol).length,1);const row=stored.entries.find(x=>x.symbol===stock.symbol);assert.equal(row.reviewRequired,true);assert.ok(Date.parse(row.nextRetryAt)>Date.now());
  await syncStockRegistry(env,{date:'2026-11-09',stocks:[stock],etfs:[]},request,async()=>{});assert.equal(calls,1);
 });
+
+test('new product evidence resolves robot, precision component and platform listings without relaxing identity checks',()=>{
+ const cases=[['090710','휴림로봇','특수 목적용 기계 제조업','제조업용로봇및서비스로봇','로봇'],['466100','클로봇','소프트웨어 개발 및 공급업','로봇 소프트웨어(카멜레온, 크롬스)','로봇'],['232680','라온로보틱스','특수 목적용 기계 제조업','반도체 및 FPD용 로봇시스템','로봇'],['448900','한국피아이엠','자동차 신품 부품 제조업','내연기관 부품(터보차저), IT 부품(스마트워치)','자동차'],['293490','카카오게임즈','소프트웨어 개발 및 공급업','모바일, PC게임 퍼블리싱','인터넷'],['439960','코스모로보틱스','의료용 기기 제조업','웨어러블 로봇','로봇']];
+ for(const [symbol,name,industry,products,sector] of cases){const evidence={symbol,name,industry,products,market:'KOSDAQ'};const result=verifyKindIdentity(quote(symbol,name,'KOSDAQ'),evidence,now);assert.equal(result.sector,sector);assert.equal(result.reviewRequired,false);assert.ok(result.subSector&&result.themes.length);assert.equal(verifyKindIdentity(quote(symbol,'다른회사','KOSDAQ'),evidence,now).reviewRequired,true);}
+});
+test('legacy product overrides require exact issuer identity and retain primary business provenance',()=>{
+ const evidence={symbol:'037270',name:'YG PLUS',market:'KOSPI',industry:'자료처리, 호스팅, 포털 및 기타 인터넷 정보매개 서비스업',products:'광고대행,광고물 제작'};
+ const result=verifyKindIdentity(quote('037270','YG PLUS'),evidence,now);assert.equal(result.sector,'엔터·콘텐츠');assert.equal(result.verification.businessSourceUrl,'https://www.ygplus.com/business/music');
+ assert.equal(verifyKindIdentity(quote('037270','YG PLUS'),{...evidence,industry:'변경된 업종'},now).reviewRequired,true);
+});
+test('documented truncated issuer alias is exact and never enables arbitrary prefix matches',()=>{
+ const evidence={symbol:'950260',name:'인제니아테라퓨틱스',market:'KOSDAQ',industry:'자연과학 및 공학 연구개발업',products:'IGT-427(안구망막질환 치료제)'};
+ const result=verifyKindIdentity(quote('950260','인제니아테라퓨틱스(R','KOSDAQ'),evidence,now);assert.equal(result.sector,'바이오');assert.equal(result.verification.identityAlias,true);
+ assert.equal(verifyKindIdentity(quote('950260','인제니아','KOSDAQ'),evidence,now).reviewRequired,true);
+});
