@@ -1,3 +1,4 @@
+import Robot2027Roadmap from './robot-2027-roadmap';
 import {SectorNoteFeed} from './sector-note-pages';
 import {useEffect,useRef} from 'react';
 const sources=[
@@ -34,12 +35,13 @@ export default function RobotSector(){
   <nav aria-label="섹터 상세 경로"><a href="#stockmap">종목 섹터맵</a><span>/</span><span>로봇 · 휴머노이드</span></nav>
   <header className="panel robot-intro"><span className="eyebrow">SECTOR NOTE · ROBOTICS</span><h2 ref={heading} tabIndex={-1}>휴머노이드 로봇 로드맵</h2><p>제품 공개에서 공장 실증, 양산 확대로. 기업별 일정과 핵심 부품을 함께 살펴봅니다.</p><small>자료 정리 기준일 <time dateTime="2026-11-24">2026. 11. 24.</time> · 사용자 제공 자료와 기업 발표 기반</small></header>
   <section className="panel robot-section"><h3>핵심 요약</h3><p>2027년 공개 일정과 2028년 공장 투입·생산 체계 목표를 연결해 관찰합니다. 관련 종목은 실제 부품 채택, 공급 계약, 로봇 매출 발생 여부를 확인합니다.</p></section>
+  <Robot2027Roadmap/>
   <section className="robot-section"><h3>기업별 로드맵</h3><div className="robot-roadmaps">{roadmaps.map(r=><article className="panel robot-roadmap" key={r.company}><div className="robot-card-top"><h4>{r.company}</h4><span className="robot-status">{r.status}</span></div><strong className="robot-date">{r.when}</strong><p>{r.body}</p><p className="robot-check"><b>확인할 내용</b> {r.check}</p><div className="robot-links">{r.refs.map(i=><a key={i} href={sources[i].url} target="_blank" rel="noopener noreferrer">{sources[i].name}</a>)}</div></article>)}</div></section>
   <section className="panel robot-section"><h3>기업별 관심 종목</h3><p className="robot-note">사용자가 제공한 관심 목록입니다. 기업별 연결은 확정 납품 관계를 뜻하지 않으며, 기존 종목 분류를 변경하지 않습니다.</p><dl className="robot-companies">{companies.map(([name,stocks])=><div key={name}><dt>{name}</dt><dd>{stocks}</dd></div>)}</dl><p className="robot-note">보스턴다이나믹스는 현대차그룹 로봇 사업의 핵심 기업으로 별도 관찰합니다. 국내 상장 종목 목록에는 포함하지 않습니다.</p></section>
   <section className="panel robot-section"><h3>핵심 부품별 관심 목록</h3><div className="robot-parts">{parts.map(([name,stocks,check])=><article key={name}><h4>{name}</h4><p>{stocks}</p><small>확인할 내용 · {check}</small></article>)}</div></section>
   <section className="panel robot-section"><h3>추가 검증할 내용</h3><ul><li>KH바텍의 삼성 휴머노이드용 힌지 기술 적용 여부는 공식 근거 확인이 필요합니다.</li><li>최대주주·2대주주 등 지분 관계는 기준일과 공시를 확인한 뒤 표시합니다.</li><li>전고체 배터리는 장기 기술 테마이며, 실제 휴머노이드 납품 여부와 구분합니다.</li><li>같은 종목이 여러 기업·부품 관심 목록에 등장할 수 있습니다.</li></ul></section>
   <section className="panel robot-section"><h3>출처·자료 이력</h3><p className="robot-note">2026. 11. 24. · 로봇 로드맵과 관심 목록 최초 정리. 공식 발표와 보도·미확인 내용을 구분했습니다.</p><ul className="robot-sources">{sources.map(s=><li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.name} · {s.title}</a></li>)}</ul></section>
-  <p><a href="#stockmap/write?sector=%EB%A1%9C%EB%B4%87">로봇 자료 추가</a></p><SectorNoteFeed sector="로봇"/>
+  <SectorNoteFeed sector="로봇"/>
   <a className="robot-back" href="#stockmap">종목 섹터맵으로 돌아가기</a>
  </article>;
 }

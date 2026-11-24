@@ -1,4 +1,4 @@
-import {SectorNoteEditor,SectorNoteDetail} from './sector-note-pages';
+import {SectorNoteDetail} from './sector-note-pages';
 import {sectorNoteHref} from './sector-notes.mjs';
 import RobotSector from './robot-sector';
 import {useStockClassification,type StockClassification} from './use-stock-classification';
@@ -21,9 +21,8 @@ export default function StockSectorMap({classification,discovered=[]}:{classific
  const [hash,setHash]=useState(()=>typeof window!=='undefined'?window.location.hash:'');
  useEffect(()=>{const route=()=>setHash(window.location.hash);window.addEventListener('hashchange',route);return()=>window.removeEventListener('hashchange',route);},[]);
  let sector='';try{if(hash.startsWith('#stockmap/sector/'))sector=decodeURIComponent(hash.slice('#stockmap/sector/'.length)).slice(0,60);}catch{}
- const writing=hash.split('?')[0]==='#stockmap/write',robot=hash==='#stockmap/robot',detail=writing||robot||Boolean(sector);
- const initialSector=writing?new URLSearchParams(hash.split('?')[1]||'').get('sector')||'':'';
- return <><div hidden={detail}>{classification?<StockSectorMapContent classification={classification}/>:<StandaloneStockSectorMap discovered={discovered}/>}</div>{writing?<SectorNoteEditor registry={classification?.registry||STOCK_MAP} initialSector={initialSector}/>:robot?<RobotSector/>:sector?<SectorNoteDetail sector={sector}/>:null}</>;
+ const robot=hash==='#stockmap/robot',detail=robot||Boolean(sector);
+ return <><div hidden={detail}>{classification?<StockSectorMapContent classification={classification}/>:<StandaloneStockSectorMap discovered={discovered}/>}</div>{robot?<RobotSector/>:sector?<SectorNoteDetail sector={sector}/>:null}</>;
 
 }
 function StandaloneStockSectorMap({discovered}:{discovered:StockMapEntry[]}){
@@ -70,7 +69,6 @@ function StockSectorMapContent({classification}:{classification:StockClassificat
  const resetSub=(next:string)=>{setSector(next);setSubSector('ALL');};
 
  return <section className="sector-map-page" aria-label="종목 섹터맵">
-  <a className="panel sector-note-entry note-add-entry" href="#stockmap/write"><span><span className="eyebrow">ADD SECTOR NOTE</span><strong>자료를 섹터에 정리하기</strong><small>텍스트·기사 본문 입력 · 내용 검토 · 상세 페이지에 저장</small></span><span className="sector-note-action">자료 등록</span></a>
   <a className="panel sector-note-entry" href="#stockmap/robot"><span><span className="eyebrow">SECTOR NOTE</span><strong>로봇 · 휴머노이드</strong><small>기업별 로드맵 · 관심 종목 · 핵심 부품</small></span><span className="sector-note-action">상세 보기</span></a>
   <div className="sector-map-summary">
    <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>기존 {STOCK_MAP.length}종목의 분류 체계를 기준으로 대분류 · 세부섹터 · 투자 테마를 정리합니다. 추가 종목은 거래소 사업·제품과 기업 공식 자료를 확인해 같은 체계에 연결합니다.</p></div>
