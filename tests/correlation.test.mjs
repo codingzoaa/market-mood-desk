@@ -10,7 +10,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'https://codingzoaa.github.io/m
 for(const key of ['window','document','HTMLElement','MouseEvent','KeyboardEvent'])globalThis[key]=dom.window[key];
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const React=await import('react'),{createRoot}=await import('react-dom/client'),{act}=React;
-const {default:Correlation,validateClosePoints,correlationStats}=await import('../work/correlation.js');
+const {default:Correlation,validateClosePoints,correlationStats,residualExtremes}=await import('../work/correlation.js');
 const rows=[{date:'2026-10-16',kospi:2700,changePct:-2,individual:10000},{date:'2026-10-19',kospi:2750,changePct:0,individual:0},{date:'2026-10-20',kospi:2800,changePct:2,individual:-10000}];
 test('closing points exclude intraday, mismatched-date, future and invalid flows, including enrichment-only updates',()=>{
  const row={...rows[2],indexAt:'2026-10-20T15:30:05+09:00',flowAt:'2026-10-20T15:30:25+09:00'};
@@ -24,6 +24,12 @@ test('Pearson fit and public point validation handle sparse, constant and invali
  assert.deepEqual(validateClosePoints(rows.slice().reverse()),rows);
  assert.throws(()=>validateClosePoints([...rows,rows[0]]));assert.throws(()=>validateClosePoints([{...rows[0],date:'2026-02-30'}]));assert.throws(()=>validateClosePoints([{...rows[0],individual:Infinity}]));
 });
+test('extreme dates use signed vertical regression residuals, not raw investor totals',()=>{
+ const points=[{...rows[0],changePct:-2,individual:0},{...rows[1],changePct:5,individual:60000},{...rows[2],changePct:5,individual:0}];
+ const selected=residualExtremes(points,{r:0,slope:1,intercept:0});
+ assert.deepEqual(selected.map(x=>[x.point.date,x.side]),[['2026-10-16','above'],['2026-10-20','below']]);
+ assert.deepEqual(residualExtremes(rows),[]);
+});
 test('toggle loads only on opening; scatter selection highlights the same day in the KOSPI chart',async()=>{
  let calls=0;const previous=globalThis.fetch;globalThis.fetch=async()=>{calls++;return Response.json({points:rows});};
  const root=createRoot(document.getElementById('root'));
@@ -31,6 +37,9 @@ test('toggle loads only on opening; scatter selection highlights the same day in
  try{
   await act(async()=>root.render(React.createElement(Correlation)));assert.equal(calls,0);assert.equal(document.querySelector('.correlation-toggle').getAttribute('aria-expanded'),'false');
   await click(document.querySelector('.correlation-toggle'));assert.equal(calls,1);assert.equal(document.querySelectorAll('.correlation-svg').length,2);
+  assert.ok(document.querySelector('.kospi-close-line'));assert.equal(document.querySelectorAll('.candle-body').length,0);
+  await click([...document.querySelectorAll('[aria-label="차트 조회 기간"] button')].find(b=>b.textContent==='3개월'));
+  assert.ok(document.querySelector('.kospi-close-line'));
   assert.match(document.querySelector('[role=status]').textContent,/2026-10-20/);
   const point=document.querySelectorAll('.correlation-svg')[0].querySelector('[role=button]');await click(point);
   assert.match(document.querySelector('.correlation-selection').textContent,/2026-10-16/);
@@ -47,6 +56,7 @@ test('real OHLC candles and close-only days share scatter selection and keyboard
  try{
   await act(async()=>root.render(React.createElement(Correlation)));
   await act(async()=>document.querySelector('.correlation-toggle').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+  await act(async()=>[...document.querySelectorAll('.signal-periods button, [aria-label="차트 조회 기간"] button')].find(b=>b.textContent==='1개월').dispatchEvent(new MouseEvent('click',{bubbles:true})));
   assert.equal(document.querySelectorAll('.candle-body').length,1);assert.equal(document.querySelectorAll('[data-candle=false]').length,2);
   await act(async()=>document.querySelector('.correlation-svg [role=button]').dispatchEvent(new MouseEvent('click',{bubbles:true})));
   assert.equal(document.querySelector('.kospi-history [aria-pressed=true]').dataset.date,'2026-10-16');
