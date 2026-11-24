@@ -1,5 +1,4 @@
 import Robot2027Roadmap from './robot-2027-roadmap';
-import {SectorNoteFeed} from './sector-note-pages';
 import {useEffect,useRef} from 'react';
 const sources=[
  {name:'삼성전자 뉴스룸 · 2024-12-31',title:'레인보우로보틱스 지분 35% 확보·미래로봇 개발',url:'https://news.samsung.com/global/samsung-electronics-to-become-largest-shareholder-in-rainbow-robotics-accelerating-future-robot-development'},
@@ -41,7 +40,7 @@ export default function RobotSector(){
   <section className="panel robot-section"><h3>핵심 부품별 관심 목록</h3><div className="robot-parts">{parts.map(([name,stocks,check])=><article key={name}><h4>{name}</h4><p>{stocks}</p><small>확인할 내용 · {check}</small></article>)}</div></section>
   <section className="panel robot-section"><h3>추가 검증할 내용</h3><ul><li>KH바텍의 삼성 휴머노이드용 힌지 기술 적용 여부는 공식 근거 확인이 필요합니다.</li><li>최대주주·2대주주 등 지분 관계는 기준일과 공시를 확인한 뒤 표시합니다.</li><li>전고체 배터리는 장기 기술 테마이며, 실제 휴머노이드 납품 여부와 구분합니다.</li><li>같은 종목이 여러 기업·부품 관심 목록에 등장할 수 있습니다.</li></ul></section>
   <section className="panel robot-section"><h3>출처·자료 이력</h3><p className="robot-note">2026. 11. 24. · 로봇 로드맵과 관심 목록 최초 정리. 공식 발표와 보도·미확인 내용을 구분했습니다.</p><ul className="robot-sources">{sources.map(s=><li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer">{s.name} · {s.title}</a></li>)}</ul></section>
-  <SectorNoteFeed sector="로봇"/>
+  
   <a className="robot-back" href="#stockmap">종목 섹터맵으로 돌아가기</a>
  </article>;
 }
