@@ -24,10 +24,10 @@ test('Pearson fit and public point validation handle sparse, constant and invali
  assert.deepEqual(validateClosePoints(rows.slice().reverse()),rows);
  assert.throws(()=>validateClosePoints([...rows,rows[0]]));assert.throws(()=>validateClosePoints([{...rows[0],date:'2026-02-30'}]));assert.throws(()=>validateClosePoints([{...rows[0],individual:Infinity}]));
 });
-test('extreme dates use signed vertical regression residuals, not raw investor totals',()=>{
- const points=[{...rows[0],changePct:-2,individual:0},{...rows[1],changePct:5,individual:60000},{...rows[2],changePct:5,individual:0}];
- const selected=residualExtremes(points,{r:0,slope:1,intercept:0});
- assert.deepEqual(selected.map(x=>[x.point.date,x.side]),[['2026-10-16','above'],['2026-10-20','below']]);
+test('extreme dates are restricted to quadrants one and three, excluding axes and larger residuals elsewhere',()=>{
+ const points=[{...rows[0],changePct:-2,individual:1000000},{...rows[1],changePct:1,individual:10000},{...rows[2],changePct:-1,individual:-20000},{...rows[0],date:'2026-10-21',changePct:3,individual:10000},{...rows[0],date:'2026-10-22',changePct:2,individual:-1000000},{...rows[0],date:'2026-10-23',changePct:0,individual:1000000}];
+ const selected=residualExtremes(points,{r:0,slope:-1,intercept:0});
+ assert.deepEqual(selected.map(x=>[x.point.date,x.quadrant,x.side]),[['2026-10-21',1,'above'],['2026-10-20',3,'below']]);
  assert.deepEqual(residualExtremes(rows),[]);
 });
 test('toggle loads only on opening; scatter selection highlights the same day in the KOSPI chart',async()=>{
