@@ -95,6 +95,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelectorAll('.close-day').length,20);
   assert.equal([...document.querySelectorAll('a')].every(x=>x.href.startsWith('https://')),true);
   await showDate('2026-09-28','리뷰 미등록');
+  await showDate('2026-10-09','리뷰 미등록');
   assert.match(document.querySelector('[aria-label="2026-10-09 리뷰 미등록"]').textContent,/휴장/);
   await clickDate('2026-09-28','리뷰 미등록');
   assert.equal(document.querySelectorAll('.close-sector').length,0);
