@@ -10,7 +10,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'https://codingzoaa.github.io/m
 for(const key of ['window','document','HTMLElement','MouseEvent','KeyboardEvent'])globalThis[key]=dom.window[key];
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const React=await import('react'),{createRoot}=await import('react-dom/client'),{act}=React;
-const {default:Correlation,validateClosePoints,correlationStats,residualExtremes}=await import('../work/correlation.js');
+const {default:Correlation,validateClosePoints,correlationStats,residualExtremes,residualRadii}=await import('../work/correlation.js');
 const rows=[{date:'2026-10-16',kospi:2700,changePct:-2,individual:10000},{date:'2026-10-19',kospi:2750,changePct:0,individual:0},{date:'2026-10-20',kospi:2800,changePct:2,individual:-10000}];
 test('closing points exclude intraday, mismatched-date, future and invalid flows, including enrichment-only updates',()=>{
  const row={...rows[2],indexAt:'2026-10-20T15:30:05+09:00',flowAt:'2026-10-20T15:30:25+09:00'};
@@ -29,6 +29,14 @@ test('extreme dates are restricted to quadrants one and three, excluding axes an
  const selected=residualExtremes(points,{r:0,slope:-1,intercept:0});
  assert.deepEqual(selected.map(x=>[x.point.date,x.quadrant,x.side]),[['2026-10-21',1,'above'],['2026-10-20',3,'below']]);
  assert.deepEqual(residualExtremes(rows),[]);
+});
+test('bubble area grows with regression distance only in quadrants one and three and stays bounded',()=>{
+ const points=[{...rows[0],changePct:1,individual:10000},{...rows[1],changePct:1,individual:30000},{...rows[2],changePct:-1,individual:-60000},{...rows[0],date:'2026-10-21',changePct:-1,individual:1000000},{...rows[0],date:'2026-10-22',changePct:0,individual:-1000000}];
+ const sizes=residualRadii(points,{r:0,slope:0,intercept:0});
+ assert.ok(sizes.get(points[0].date)<sizes.get(points[1].date));assert.ok(sizes.get(points[1].date)<sizes.get(points[2].date));
+ assert.equal(sizes.get(points[2].date),12);assert.equal(sizes.get('2026-10-21'),4);assert.equal(sizes.get('2026-10-22'),4);
+ assert.ok([...sizes.values()].every(r=>r>=4&&r<=12));
+ assert.ok([...residualRadii(points,null).values()].every(r=>r===4));
 });
 test('toggle loads only on opening; scatter selection highlights the same day in the KOSPI chart',async()=>{
  let calls=0;const previous=globalThis.fetch;globalThis.fetch=async()=>{calls++;return Response.json({points:rows});};

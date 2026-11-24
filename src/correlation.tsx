@@ -21,6 +21,12 @@ export function residualExtremes(points:ClosePoint[],stats=correlationStats(poin
  const pick=(quadrant:1|3)=>residuals.filter(({point:p,residual})=>Math.abs(residual)>1e-9&&(quadrant===1?p.changePct>0&&p.individual>0:p.changePct<0&&p.individual<0)).sort((a,b)=>Math.abs(b.residual)-Math.abs(a.residual)||a.point.date.localeCompare(b.point.date))[0];
  return ([1,3] as const).flatMap(quadrant=>{const p=pick(quadrant);return p?[{...p,quadrant,side:p.residual>0?'above' as const:'below' as const}]:[];});
 }
+export function residualRadii(points:ClosePoint[],stats=correlationStats(points)){
+ const distance=(p:ClosePoint)=>stats&&((p.changePct>0&&p.individual>0)||(p.changePct<0&&p.individual<0))?Math.abs(p.individual/10000-(stats.intercept+stats.slope*p.changePct)):0;
+ const max=Math.max(0,...points.map(distance));
+ // Bubble area, rather than radius, scales with the regression distance.
+ return new Map(points.map(p=>[p.date,max>1e-9?Math.sqrt(16+128*Math.min(1,distance(p)/max)):4]));
+}
 const signed=(n:number,d=2)=>(n>0?'+':'')+n.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const short=(date:string)=>date.slice(5).replace('-','/');
 export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
@@ -39,7 +45,7 @@ export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
  const stats=correlationStats(points),W=layout.width,H=layout.height,L=62,R=22,T=24,B=48,pw=W-L-R,ph=H-T-B;
  const xr=Math.max(1,...points.map(p=>Math.abs(p.changePct)))*1.15,yr=Math.max(.1,...points.map(p=>Math.abs(p.individual/10000)))*1.15;
  const sx=(v:number)=>L+(v+xr)/(2*xr)*pw,sy=(v:number)=>T+(yr-v)/(2*yr)*ph;
- const showLine=period!=='1M',extremes=residualExtremes(points,stats);
+ const showLine=period!=='1M',extremes=residualExtremes(points,stats),pointRadii=residualRadii(points,stats);
  const candleCount=points.filter(p=>p.ohlc).length;
  const min=Math.min(...points.map(p=>showLine?p.kospi:(p.ohlc?.low??p.kospi))),max=Math.max(...points.map(p=>showLine?p.kospi:(p.ohlc?.high??p.kospi))),pad=Math.max((max-min)*.12,max*.005),low=min-pad,high=max+pad;
  const tx=(i:number)=>L+(i+.5)/points.length*pw,ty=(v:number)=>T+(high-v)/(high-low)*ph;
@@ -53,9 +59,9 @@ export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
  <line x1={sx(0)} x2={sx(0)} y1={T} y2={H-B} stroke="#919da9"/><line x1={L} x2={W-R} y1={sy(0)} y2={sy(0)} stroke="#919da9"/>
  <text x={L} y={14}>개인 순매수 (조원)</text><text x={W-R} y={H-7} textAnchor="end">코스피 일간 등락률 (%)</text>
  {stats&&<line clipPath="url(#correlation-plot)" x1={sx(-xr)} x2={sx(xr)} y1={sy(stats.intercept-stats.slope*xr)} y2={sy(stats.intercept+stats.slope*xr)} stroke="#3977e8" strokeWidth="2" strokeDasharray="3 4"/>}
- {points.map(p=><g key={p.date} role="button" tabIndex={0} aria-label={`${p.date} 코스피 ${signed(p.changePct)}%, 개인 ${signed(p.individual,0)}억원`} aria-pressed={p.date===selected.date} onClick={()=>choose(p,true)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(p,true);}}}><title>{p.date} · {signed(p.changePct)}% · {signed(p.individual,0)}억원</title><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r="12" fill="transparent"/><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r={p.date===selected.date?6:4} fill={color(p)} stroke={p.date===selected.date?'#172f46':'#62798e'} strokeWidth={p.date===selected.date?2:1}/></g>)}
- {extremes.map(({point:p,side,residual,quadrant})=><text key={p.date} data-residual-side={side} data-quadrant={quadrant} data-date={p.date} x={Math.max(L+22,Math.min(W-R-22,sx(p.changePct)))} y={Math.max(T+12,Math.min(H-B-5,sy(p.individual/10000)+(side==='above'?-11:17)))} textAnchor="middle" style={{fontSize:10,fill:'#62798e',paintOrder:'stroke',stroke:'#fff',strokeWidth:3,pointerEvents:'none'}}><title>{p.date} · {quadrant}사분면 · 회귀선 {side==='above'?'위':'아래'} 최대 이탈 · {signed(residual,2)}조원</title>{short(p.date)}</text>)}
- {!extremes.some(p=>p.point.date===selected.date)&&<text x={Math.max(L+22,Math.min(W-R-22,sx(selected.changePct)))} y={Math.max(T+12,sy(selected.individual/10000)-12)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>}
+ {points.map(p=><g key={p.date} role="button" tabIndex={0} aria-label={`${p.date} 코스피 ${signed(p.changePct)}%, 개인 ${signed(p.individual,0)}억원`} aria-pressed={p.date===selected.date} onClick={()=>choose(p,true)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(p,true);}}}><title>{p.date} · {signed(p.changePct)}% · {signed(p.individual,0)}억원</title><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r={Math.max(12,(pointRadii.get(p.date)||4)+3)} fill="transparent"/><circle cx={sx(p.changePct)} cy={sy(p.individual/10000)} r={pointRadii.get(p.date)||4} data-residual-radius={pointRadii.get(p.date)||4} fill={color(p)} stroke={p.date===selected.date?'#172f46':'#62798e'} strokeWidth={p.date===selected.date?2:1}/></g>)}
+ {extremes.map(({point:p,side,residual,quadrant})=><text key={p.date} data-residual-side={side} data-quadrant={quadrant} data-date={p.date} x={Math.max(L+22,Math.min(W-R-22,sx(p.changePct)))} y={Math.max(T+12,Math.min(H-B-5,sy(p.individual/10000)+(side==='above'?-(pointRadii.get(p.date)||4)-7:(pointRadii.get(p.date)||4)+13)))} textAnchor="middle" style={{fontSize:10,fill:'#62798e',paintOrder:'stroke',stroke:'#fff',strokeWidth:3,pointerEvents:'none'}}><title>{p.date} · {quadrant}사분면 · 회귀선 {side==='above'?'위':'아래'} 최대 이탈 · {signed(residual,2)}조원</title>{short(p.date)}</text>)}
+ {!extremes.some(p=>p.point.date===selected.date)&&<text x={Math.max(L+22,Math.min(W-R-22,sx(selected.changePct)))} y={Math.max(T+12,sy(selected.individual/10000)-(pointRadii.get(selected.date)||4)-8)} textAnchor="middle" className="correlation-selected-label">{short(selected.date)}</text>}
  </svg>
  <div className="correlation-selection" role="status"><strong>{selected.date}</strong><span>코스피 {selected.kospi.toLocaleString('ko-KR',{maximumFractionDigits:2})} <b className={selected.changePct>=0?'flow-positive':'flow-negative'}>{signed(selected.changePct)}%</b></span><span>개인 {signed(selected.individual,0)}억원</span><span>출처: {selected.source==='NAVER'?'네이버 금융':selected.source==='LS_HISTORY'?'LS증권 · 과거 조회':'LS증권'}</span>{selected.ohlc&&<span className="correlation-ohlc">시가 {selected.ohlc.open.toLocaleString('ko-KR')} · 고가 {selected.ohlc.high.toLocaleString('ko-KR')} · 저가 {selected.ohlc.low.toLocaleString('ko-KR')} · 종가 {selected.ohlc.close.toLocaleString('ko-KR')}</span>}{selected.ohlcSource&&<span>일봉 출처: {selected.ohlcSource}</span>}{!selected.ohlc&&<span>시가·고가·저가 미확보 · 종가만 표시</span>}{selected.recoveredAt&&<span>마감 후 보충 · {new Date(selected.recoveredAt).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'})} 조회</span>}</div>
  <svg ref={priceHost} style={signalChartStyle} viewBox={`0 0 ${W} ${H}`} className="correlation-svg kospi-history" role="group" aria-label={showLine?"선택 날짜가 표시된 코스피 종가 선차트":"선택 날짜가 표시된 코스피 일봉·종가 차트"}>
@@ -70,7 +76,7 @@ export function CorrelationCharts({points:history}:{points:ClosePoint[]}){
  <rect x={tx(i)-Math.max(12,candleWidth/2)} y={T} width={Math.max(24,candleWidth)} height={ph} fill="transparent"/>
  </g>;})}
  {[0,Math.floor((points.length-1)/2),points.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=><text key={i} x={tx(i)} y={H-B+20} textAnchor="middle">{short(points[i].date)}</text>)}
- </svg><p className="correlation-help">{showLine?'3개월 이상은 표시 구간의 코스피 종가를 선으로 연결합니다.':`일봉 ${candleCount}일 · 종가만 ${points.length-candleCount}일. 빨강은 시가 대비 상승, 파랑은 하락, 회색은 보합입니다. OHLC가 없는 날은 종가 점으로 표시합니다.`} 1·3사분면에서 회귀선과 가장 멀리 떨어진 날짜를 각각 표시합니다.</p><div className="correlation-legend"><span><i style={{background:'#e7863a'}}/>상승 · 개인 순매수</span><span><i style={{background:'#e8b518'}}/>하락 · 개인 순매도</span><span><i style={{background:'#899db7'}}/>그 외</span></div><p className="footnote">KRX 정규장 마감 기록과 검증된 과거 일봉을 표시합니다. 점 하나는 한 거래일이며 개인 수급은 코스피 현물 기준입니다. 점선은 선형 추세선입니다. 상관관계는 인과관계를 뜻하지 않습니다.</p></>;
+ </svg><p className="correlation-help">{showLine?'3개월 이상은 표시 구간의 코스피 종가를 선으로 연결합니다.':`일봉 ${candleCount}일 · 종가만 ${points.length-candleCount}일. 빨강은 시가 대비 상승, 파랑은 하락, 회색은 보합입니다. OHLC가 없는 날은 종가 점으로 표시합니다.`} 1·3사분면은 회귀선에서 멀수록 점이 커지며, 최대 이탈일의 날짜를 각각 표시합니다.</p><div className="correlation-legend"><span><i style={{background:'#e7863a'}}/>상승 · 개인 순매수</span><span><i style={{background:'#e8b518'}}/>하락 · 개인 순매도</span><span><i style={{background:'#899db7'}}/>그 외</span></div><p className="footnote">KRX 정규장 마감 기록과 검증된 과거 일봉을 표시합니다. 점 하나는 한 거래일이며 개인 수급은 코스피 현물 기준입니다. 점선은 선형 추세선입니다. 상관관계는 인과관계를 뜻하지 않습니다.</p></>;
 }
 export default function Correlation(){
  const [open,setOpen]=useState(false),[points,setPoints]=useState<ClosePoint[]>([]),[status,setStatus]=useState(''),[retry,setRetry]=useState(0);
