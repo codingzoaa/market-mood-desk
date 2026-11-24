@@ -24,3 +24,5 @@ console.log('Copied sector review verification status');
 
 await copyFile('public/operations-status.json','dist/operations-status.json');
 console.log('Copied actual operations status');
+await copyFile('src/data/sector-notes.json','dist/sector-notes.json');
+console.log('Copied reviewed sector notes');

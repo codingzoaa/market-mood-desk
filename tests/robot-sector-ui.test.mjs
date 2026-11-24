@@ -13,7 +13,7 @@ test('robot detail supports navigation, return and direct entry without replacin
  const root=createRoot(document.getElementById('root'));
  try{
   await React.act(async()=>root.render(React.createElement(StockSectorMap,{classification})));
-  assert.equal(document.querySelector('.sector-note-entry').getAttribute('href'),'#stockmap/robot');
+  assert.equal(document.querySelector('.sector-note-entry[href="#stockmap/robot"]').getAttribute('href'),'#stockmap/robot');
   const mode=[...document.querySelectorAll('button')].find(x=>x.textContent==='섹터별 보기');await React.act(async()=>mode.click());
   await route('#stockmap/robot');assert.ok(document.querySelector('[aria-label="로봇 섹터 상세"]'));assert.equal(document.activeElement.textContent,'휴머노이드 로봇 로드맵');
   assert.equal(document.querySelectorAll('.robot-roadmap').length,4);assert.match(document.querySelector('.robot-sector').textContent,/확정 납품 관계를 뜻하지/);

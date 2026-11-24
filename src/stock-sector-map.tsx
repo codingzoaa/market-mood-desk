@@ -1,3 +1,5 @@
+import {SectorNoteEditor,SectorNoteDetail} from './sector-note-pages';
+import {sectorNoteHref} from './sector-notes.mjs';
 import RobotSector from './robot-sector';
 import {useStockClassification,type StockClassification} from './use-stock-classification';
 import {SectorEditDialog,SectorEditTransfer} from './sector-editor';
@@ -16,9 +18,13 @@ function businessSource(url?:string){try{const u=new URL(url||'');return u.proto
 
 
 export default function StockSectorMap({classification,discovered=[]}:{classification?:StockClassification;discovered?:StockMapEntry[]}){
- const [detail,setDetail]=useState(()=>typeof window!=='undefined'&&window.location.hash==='#stockmap/robot');
- useEffect(()=>{const route=()=>setDetail(window.location.hash==='#stockmap/robot');window.addEventListener('hashchange',route);return()=>window.removeEventListener('hashchange',route);},[]);
- return <><div hidden={detail}>{classification?<StockSectorMapContent classification={classification}/>:<StandaloneStockSectorMap discovered={discovered}/>}</div>{detail&&<RobotSector/>}</>;
+ const [hash,setHash]=useState(()=>typeof window!=='undefined'?window.location.hash:'');
+ useEffect(()=>{const route=()=>setHash(window.location.hash);window.addEventListener('hashchange',route);return()=>window.removeEventListener('hashchange',route);},[]);
+ let sector='';try{if(hash.startsWith('#stockmap/sector/'))sector=decodeURIComponent(hash.slice('#stockmap/sector/'.length)).slice(0,60);}catch{}
+ const writing=hash.split('?')[0]==='#stockmap/write',robot=hash==='#stockmap/robot',detail=writing||robot||Boolean(sector);
+ const initialSector=writing?new URLSearchParams(hash.split('?')[1]||'').get('sector')||'':'';
+ return <><div hidden={detail}>{classification?<StockSectorMapContent classification={classification}/>:<StandaloneStockSectorMap discovered={discovered}/>}</div>{writing?<SectorNoteEditor registry={classification?.registry||STOCK_MAP} initialSector={initialSector}/>:robot?<RobotSector/>:sector?<SectorNoteDetail sector={sector}/>:null}</>;
+
 }
 function StandaloneStockSectorMap({discovered}:{discovered:StockMapEntry[]}){
  const classification=useStockClassification(discovered);return <StockSectorMapContent classification={classification}/>;
@@ -64,6 +70,7 @@ function StockSectorMapContent({classification}:{classification:StockClassificat
  const resetSub=(next:string)=>{setSector(next);setSubSector('ALL');};
 
  return <section className="sector-map-page" aria-label="종목 섹터맵">
+  <a className="panel sector-note-entry note-add-entry" href="#stockmap/write"><span><span className="eyebrow">ADD SECTOR NOTE</span><strong>자료를 섹터에 정리하기</strong><small>텍스트·기사 본문 입력 · 내용 검토 · 상세 페이지에 저장</small></span><span className="sector-note-action">자료 등록</span></a>
   <a className="panel sector-note-entry" href="#stockmap/robot"><span><span className="eyebrow">SECTOR NOTE</span><strong>로봇 · 휴머노이드</strong><small>기업별 로드맵 · 관심 종목 · 핵심 부품</small></span><span className="sector-note-action">상세 보기</span></a>
   <div className="sector-map-summary">
    <div><span className="eyebrow">STOCK SECTOR MAP</span><h2>종목과 섹터 분류 기준</h2><p>기존 {STOCK_MAP.length}종목의 분류 체계를 기준으로 대분류 · 세부섹터 · 투자 테마를 정리합니다. 추가 종목은 거래소 사업·제품과 기업 공식 자료를 확인해 같은 체계에 연결합니다.</p></div>
@@ -89,7 +96,7 @@ function StockSectorMapContent({classification}:{classification:StockClassificat
   {mode==='stocks'?<div className="panel sector-map-table-panel">
    <div className="table-scroll"><table className="sector-map-table"><thead><tr><th>종목</th><th>대분류</th><th>세부섹터</th><th>투자 테마</th><th>수정</th></tr></thead><tbody>{filtered.map(item=><tr key={item.symbol}>
     <td><div className="sector-stock-name"><strong>{item.name}</strong>{item.manualEditedAt&&<span className="manual-sector-badge">직접 수정</span>}<small>{item.symbol} · {item.market}</small></div></td>
-    <td><span className="sector-chip">{item.sector}</span>{item.verification?.status==='verified'&&item.verification?.method!=='COMPANY_BUSINESS_REVIEW_V1'&&<small style={{display:'block',marginTop:4,fontSize:9}}><a title={`공식 업종: ${item.verification.industry||'확인'} · 사업·제품 기반 분류`} href="https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage" target="_blank" rel="noopener noreferrer">분류 근거</a></small>}{businessSource(item.verification?.businessSourceUrl)&&<small style={{display:'block',marginTop:4,fontSize:9}}><a href={businessSource(item.verification?.businessSourceUrl)!} target="_blank" rel="noopener noreferrer" title={item.verification?.businessReviewedAt?`사업 확인 ${item.verification.businessReviewedAt}`:undefined}>기업 사업소개</a></small>}{item.reviewRequired&&<small style={{display:'block',marginTop:4,fontSize:9}}>분류 검토 대기</small>}</td>
+    <td><a className="sector-chip" href={sectorNoteHref(item.sector)} title={item.sector+' 자료 상세 보기'}>{item.sector}</a>{item.verification?.status==='verified'&&item.verification?.method!=='COMPANY_BUSINESS_REVIEW_V1'&&<small style={{display:'block',marginTop:4,fontSize:9}}><a title={`공식 업종: ${item.verification.industry||'확인'} · 사업·제품 기반 분류`} href="https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage" target="_blank" rel="noopener noreferrer">분류 근거</a></small>}{businessSource(item.verification?.businessSourceUrl)&&<small style={{display:'block',marginTop:4,fontSize:9}}><a href={businessSource(item.verification?.businessSourceUrl)!} target="_blank" rel="noopener noreferrer" title={item.verification?.businessReviewedAt?`사업 확인 ${item.verification.businessReviewedAt}`:undefined}>기업 사업소개</a></small>}{item.reviewRequired&&<small style={{display:'block',marginTop:4,fontSize:9}}>분류 검토 대기</small>}</td>
     <td><strong className="sector-subsector">{item.subSector}</strong></td>
     <td><div className="theme-tags">{item.themes.length?item.themes.map(t=><span key={t}>{t}</span>):<span>미분류</span>}</div></td><td><button className="sector-edit-button" aria-label={item.name+' 분류 수정'} onClick={()=>setEditing(item)}>수정</button></td>
    </tr>)}</tbody></table></div>
@@ -98,7 +105,7 @@ function StockSectorMapContent({classification}:{classification:StockClassificat
    {grouped.map(([sectorName,subs])=>{
     const closed=closedSectors.has(sectorName),sectorId=groupId+'-sector-'+encodeURIComponent(sectorName);
     return <section className="panel sector-group" key={sectorName}>
-     <div className="sector-group-head">{sectorName.includes('로봇')&&<a className="robot-group-link" href="#stockmap/robot">로봇 로드맵 상세 보기</a>}<h3><button className="sector-toggle" aria-expanded={!closed} aria-controls={sectorId} aria-label={`${sectorName} 대분류 ${closed?'펼치기':'접기'}`} onClick={()=>toggle(setClosedSectors,sectorName)}><span><span className="eyebrow">SECTOR</span><strong>{sectorName}</strong></span><span className="sector-toggle-meta">{[...subs.values()].reduce((n,x)=>n+x.length,0)}종목<ChevronDown size={17} className={closed?'is-closed':''}/></span></button></h3></div>
+     <div className="sector-group-head"><a className="robot-group-link" href={sectorNoteHref(sectorName)}>{sectorName} 자료 상세 보기</a><h3><button className="sector-toggle" aria-expanded={!closed} aria-controls={sectorId} aria-label={`${sectorName} 대분류 ${closed?'펼치기':'접기'}`} onClick={()=>toggle(setClosedSectors,sectorName)}><span><span className="eyebrow">SECTOR</span><strong>{sectorName}</strong></span><span className="sector-toggle-meta">{[...subs.values()].reduce((n,x)=>n+x.length,0)}종목<ChevronDown size={17} className={closed?'is-closed':''}/></span></button></h3></div>
      <div id={sectorId} className="sector-subgroups" hidden={closed}>{[...subs.entries()].map(([sub,items])=>{
       const key=JSON.stringify([sectorName,sub]),subClosed=closedSubs.has(key),subId=groupId+'-sub-'+encodeURIComponent(key);
       return <div className="sector-subgroup" key={sub}><h4 className="sector-subgroup-title"><button className="sector-toggle" aria-expanded={!subClosed} aria-controls={subId} aria-label={`${sectorName} ${sub} 세부섹터 ${subClosed?'펼치기':'접기'}`} onClick={()=>toggle(setClosedSubs,key)}><strong>{sub}</strong><span className="sector-toggle-meta">{items.length}종목<ChevronDown size={15} className={subClosed?'is-closed':''}/></span></button></h4><div id={subId} className="sector-member-grid" hidden={subClosed}>{items.map(item=><article key={item.symbol}><div><strong>{item.name}</strong>{item.manualEditedAt&&<span className="manual-sector-badge">직접 수정</span>}<small>{item.symbol} · {item.market}</small></div><div className="theme-tags">{item.themes.slice(0,3).map(t=><span key={t}>{t}</span>)}</div><button className="sector-edit-button" aria-label={item.name+' 분류 수정'} onClick={()=>setEditing(item)}>분류 수정</button></article>)}</div></div>;
