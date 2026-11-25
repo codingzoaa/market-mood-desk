@@ -1,3 +1,4 @@
+import {publicAccountMode,publicAccountFetch} from './public-app.mjs';
 import {guardStatus,guardSave,guardReset,pollGuard} from './loss-guard.mjs';
 import {journalHistory} from './journal-history.mjs';
 import {priorJournalOnce} from './prior-once.mjs';
@@ -14,6 +15,7 @@ import {analyzeAccount} from '../../src/account/analysis.ts';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...privateHeaders,'Content-Type':'application/json; charset=utf-8'}});
 export function accountWorker({sessionFactory,verify=authenticate}={}){return {
  async fetch(request,env,ctx){
+  if(publicAccountMode(env))return publicAccountFetch(request,env,sessionFactory);
   try{await verify(request,env,fetch,Date.now(),ctx);}catch(error){
    const reason=['AUTH_NOT_CONFIGURED','AUTH_APPLICATION_MISMATCH','AUTH_OWNER_MISMATCH','AUTH_UNAVAILABLE'].includes(error?.message)?error.message:'AUTH_TOKEN_REJECTED';
    return browserLogin(request,env)||json({error:'AUTHENTICATION_REQUIRED',reason},401);
@@ -68,5 +70,5 @@ export function accountWorker({sessionFactory,verify=authenticate}={}){return {
    const asset=await env.ASSETS.fetch(request),headers=new Headers(asset.headers);for(const [k,v] of Object.entries(privateHeaders))headers.set(k,v);return new Response(asset.body,{status:asset.status,headers});
   }catch{return json({error:'ACCOUNT_DATA_UNAVAILABLE'},503);}
  },
- async scheduled(event,env,ctx){ctx.waitUntil((env.ACCOUNT_PRIOR_ONCE_CRON===event.cron?priorJournalOnce(env,sessionFactory):runScheduledAccountSync(env,sessionFactory)).catch(()=>{}));}
+ async scheduled(event,env,ctx){if(publicAccountMode(env))return;ctx.waitUntil((env.ACCOUNT_PRIOR_ONCE_CRON===event.cron?priorJournalOnce(env,sessionFactory):runScheduledAccountSync(env,sessionFactory)).catch(()=>{}));}
 };}
