@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "observedAt": "2026-11-25T21:43:45.372Z",
+  "observedAt": "2026-11-25T21:44:08.941Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
-      "publicationStatus": null,
+      "publicationStatus": "unchanged",
       "id": 45706943301,
       "name": "Publish verified sector calendar at 17 KST",
       "event": "workflow_run",
       "branch": "main",
       "sha": "2b739a941172b3a388632e72ba18aee3f030ec91",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "createdAt": "2026-11-25T21:43:28Z",
       "startedAt": "2026-11-25T21:43:28Z",
-      "completedAt": null,
+      "completedAt": "2026-11-25T21:43:40Z",
       "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45706943301",
       "jobs": [
         {
@@ -606,56 +606,64 @@
     },
     {
       "publicationStatus": null,
-      "id": 45706950451,
+      "id": 45706992834,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "3c80a8f4239254fa6c8dd6332708acc89fe8afa5",
-      "status": "pending",
+      "sha": "6cc36e6de63abf6beb8772640db18052b819c24c",
+      "status": "in_progress",
       "conclusion": null,
-      "createdAt": "2026-11-25T21:43:31Z",
-      "startedAt": "2026-11-25T21:43:31Z",
+      "createdAt": "2026-11-25T21:43:48Z",
+      "startedAt": "2026-11-25T21:43:48Z",
       "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45706950451",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45706992834",
       "jobs": [
         {
           "name": "build",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
-          "startedAt": "2026-11-25T21:43:44Z",
+          "startedAt": "2026-11-25T21:43:54Z",
           "completedAt": null,
-          "stages": [],
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "pending",
+              "conclusion": null,
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
           "steps": []
         }
       ]
     },
     {
       "publicationStatus": null,
-      "id": 45706910062,
+      "id": 45706950451,
       "name": "Build and deploy dashboard",
-      "event": "workflow_run",
+      "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "2b739a941172b3a388632e72ba18aee3f030ec91",
-      "status": "in_progress",
-      "conclusion": null,
-      "createdAt": "2026-11-25T21:43:14Z",
-      "startedAt": "2026-11-25T21:43:14Z",
-      "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45706910062",
+      "sha": "3c80a8f4239254fa6c8dd6332708acc89fe8afa5",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-25T21:43:31Z",
+      "startedAt": "2026-11-25T21:43:31Z",
+      "completedAt": "2026-11-25T21:43:52Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45706950451",
       "jobs": [
         {
           "name": "build",
           "status": "completed",
           "conclusion": "cancelled",
-          "startedAt": "2026-11-25T21:43:17Z",
-          "completedAt": "2026-11-25T21:43:44Z",
+          "startedAt": "2026-11-25T21:43:46Z",
+          "completedAt": "2026-11-25T21:43:51Z",
           "stages": [
             {
               "name": "Check TypeScript",
               "status": "completed",
               "conclusion": "skipped",
-              "startedAt": "2026-11-25T21:43:41Z",
-              "completedAt": "2026-11-25T21:43:41Z"
+              "startedAt": "2026-11-25T21:43:50Z",
+              "completedAt": "2026-11-25T21:43:50Z"
             }
           ],
           "steps": []
@@ -664,8 +672,8 @@
           "name": "deploy",
           "status": "completed",
           "conclusion": "cancelled",
-          "startedAt": "2026-11-25T21:43:44Z",
-          "completedAt": "2026-11-25T21:43:44Z",
+          "startedAt": "2026-11-25T21:43:52Z",
+          "completedAt": "2026-11-25T21:43:51Z",
           "stages": [],
           "steps": []
         }
