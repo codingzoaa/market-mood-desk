@@ -1,3 +1,4 @@
+import AccountWorkspace from './account/workspace';
 import OperationsPanel from './operations-panel';
 import {marketSession} from '../shared/market-session.mjs';
 import {useStockClassification} from './use-stock-classification';
@@ -20,8 +21,8 @@ import { localApi as api } from './storage';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layers3, Database, ArrowUpRight, ChevronLeft, ChevronRight, Search, Star, Upload, Download, X, ShieldCheck, LockKeyhole, RefreshCw, ArrowRight, Check, Clock3, WifiOff } from 'lucide-react';
 import { dayKey, shiftDay, fourWeeks, gainers, turnoverLeaders, rankSectors, rotations, demoSnapshots, kodexEtfs, rankKodex, validateImport, parseCSV, type Snapshot, type Stock } from './market';
-type View='overview'|'sectors'|'stocks'|'calendar'|'stockmap'|'signals'|'drawdown'|'data';
-const views: {key:View;name:string}[]=[{key:'overview',name:'국장'},{key:'sectors',name:'주도 섹터'},{key:'stocks',name:'거래대금'},{key:'calendar',name:'강세 섹터 캘린더'},{key:'stockmap',name:'종목 섹터맵'},{key:'signals',name:'시장 신호'},{key:'drawdown',name:'종목 낙폭 분석'}];
+type View='overview'|'sectors'|'stocks'|'calendar'|'stockmap'|'signals'|'drawdown'|'account'|'data';
+const views: {key:View;name:string}[]=[{key:'overview',name:'국장'},{key:'sectors',name:'주도 섹터'},{key:'stocks',name:'거래대금'},{key:'calendar',name:'강세 섹터 캘린더'},{key:'stockmap',name:'종목 섹터맵'},{key:'signals',name:'시장 신호'},{key:'drawdown',name:'종목 낙폭 분석'},{key:'account',name:'계좌 분석'}];
 const number=(v:number|null|undefined,d=0)=>v===undefined||v===null?'—':v.toLocaleString('ko-KR',{maximumFractionDigits:d});
 const money=(v:number)=>number(v/1e8,1)+'억';
 const pct=(v:number|null|undefined)=>v===undefined||v===null?'—':(v>0?'+':'')+number(v,2)+'%';
@@ -78,26 +79,27 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
    <header className="site-header">
     <div className="topbar">
      <a className="brand mobile-desk-brand" href="#overview" onClick={()=>go('overview')}><span className="brand-symbol">m</span><span>market<span className="brand-light">note</span></span></a>
-     {view!=='data'&&view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&<div className="header-date"><div className="date-control"><span>기준일</span><button className="icon-btn" aria-label="이전 저장일" disabled={!dates.some(d=>d<selected)} onClick={()=>setSelected(dates.filter(d=>d<selected).at(-1)!)}><ChevronLeft size={17}/></button><input type="date" aria-label="조회 기준일" value={selected} max={today} onChange={e=>{if(e.target.value){setSelected(e.target.value);if(e.target.value>end||e.target.value<shiftDay(end,-27))setEnd(e.target.value);}}}/><button className="icon-btn" aria-label="다음 저장일" disabled={!dates.some(d=>d>selected)} onClick={()=>setSelected(dates.find(d=>d>selected)!)}><ChevronRight size={17}/></button><button className="text-link" disabled={!lastDate} onClick={()=>{setSelected(lastDate!);setEnd(today);}}>최근</button></div></div>}
-     <div className="top-actions"><span className={'source-dot '+(demo?'demo':'')}/><span>{loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
+     {view!=='data'&&view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&view!=='account'&&<div className="header-date"><div className="date-control"><span>기준일</span><button className="icon-btn" aria-label="이전 저장일" disabled={!dates.some(d=>d<selected)} onClick={()=>setSelected(dates.filter(d=>d<selected).at(-1)!)}><ChevronLeft size={17}/></button><input type="date" aria-label="조회 기준일" value={selected} max={today} onChange={e=>{if(e.target.value){setSelected(e.target.value);if(e.target.value>end||e.target.value<shiftDay(end,-27))setEnd(e.target.value);}}}/><button className="icon-btn" aria-label="다음 저장일" disabled={!dates.some(d=>d>selected)} onClick={()=>setSelected(dates.find(d=>d>selected)!)}><ChevronRight size={17}/></button><button className="text-link" disabled={!lastDate} onClick={()=>{setSelected(lastDate!);setEnd(today);}}>최근</button></div></div>}
+     <div className="top-actions"><span className={'source-dot '+(demo?'demo':'')}/><span>{view==='account'?'LS 계좌':loading?'확인 중':demo?'예시':'KRX'}</span><button className="icon-btn" aria-label="저장 데이터 다시 읽기" disabled={loading} onClick={()=>view==='account'?window.dispatchEvent(new Event('market-note-account-refresh')):reload()}><RefreshCw size={16} className={loading?'spinning':''}/></button><button className={'icon-btn '+(view==='data'?'active':'')} aria-label="데이터 관리" onClick={()=>go('data')}><Database size={17}/></button></div>
     </div>
-    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}>{v.name}</a>)}<a href="https://market-note-account.kby0991.workers.dev/" aria-label="계좌 분석" title="LS 손실 감지기">계좌 분석</a></nav>
+    <nav className="workspace-nav" aria-label="WORKSPACE">{views.map(v=><a key={v.key} href={'#'+v.key} className={view===v.key?'active':''} aria-current={view===v.key?'page':undefined} onClick={()=>go(v.key)}>{v.name}</a>)}</nav>
    </header>
    <main id="main" data-workspace={view}>
 
-    {view!=='calendar'&&view!=='drawdown'&&error&&<div role="alert" className="error-banner">{error}<button className="text-link" onClick={()=>reload()}>다시 시도</button></div>}
-    <div className="page-heading"><div><span className="eyebrow">{view==='data'?'MY DATA':'WORKSPACE · '+String(Math.max(0,views.findIndex(v=>v.key===view))+1).padStart(2,'0')}</span><h1>{views.find(v=>v.key===view)?.name||'데이터 관리'}</h1><p>{view==='overview'?'국내 시장과 오늘의 핵심 흐름':view==='sectors'?'돈이 모이는 섹터와 강세의 확산':view==='stocks'?'거래대금으로 찾는 종목과 ETF':view==='calendar'?'장 마감 기준 강세 섹터 TOP5와 대표 종목':view==='stockmap'?'종목별 대분류·세부섹터·투자 테마':view==='drawdown'?'종목별 수정주가와 최대 낙폭을 살펴봅니다':view==='signals'?'수급과 지수 흐름으로 살펴보는 시장 신호':'자동 시세 수집과 기록 관리'}</p></div></div>
-    {view!=='data'&&view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&<>
+    {view!=='calendar'&&view!=='drawdown'&&view!=='account'&&error&&<div role="alert" className="error-banner">{error}<button className="text-link" onClick={()=>reload()}>다시 시도</button></div>}
+    <div className="page-heading"><div><span className="eyebrow">{view==='data'?'MY DATA':'WORKSPACE · '+String(Math.max(0,views.findIndex(v=>v.key===view))+1).padStart(2,'0')}</span><h1>{views.find(v=>v.key===view)?.name||'데이터 관리'}</h1><p>{view==='overview'?'국내 시장과 오늘의 핵심 흐름':view==='sectors'?'돈이 모이는 섹터와 강세의 확산':view==='stocks'?'거래대금으로 찾는 종목과 ETF':view==='calendar'?'장 마감 기준 강세 섹터 TOP5와 대표 종목':view==='stockmap'?'종목별 대분류·세부섹터·투자 테마':view==='drawdown'?'종목별 수정주가와 최대 낙폭을 살펴봅니다':view==='signals'?'수급과 지수 흐름으로 살펴보는 시장 신호':view==='account'?'일별 손익과 누적 변화 · LS 계좌 손실 감지':'자동 시세 수집과 기록 관리'}</p></div></div>
+    {view!=='data'&&view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&view!=='account'&&<>
      {['sectors','stocks'].includes(view)&&<div className="shared-toolbar"><div className="filters"><select aria-label="시장 선택" value={market} onChange={e=>setMarket(e.target.value)}><option value="ALL">전체 시장</option><option value="KOSPI">코스피</option><option value="KOSDAQ">코스닥</option></select><select aria-label="거래대금 상위 범위" value={topN} onChange={e=>setTopN(Number(e.target.value))}><option value="30">대금 상위 30</option><option value="50">대금 상위 50</option><option value="100">대금 상위 100</option><option value="3000">수집 범위 전체</option></select></div></div>}
      <div className="provenance"><Clock3 size={12}/><span>{snap?(demo?'가상 시세':snap.source)+' · '+asOf+' KST':'선택한 날짜는 미등록입니다.'}</span></div>
     </>}
-    {view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&!demo&&feed?.failed&&<div className="auto-market-note negative" role="status"><span>{feed.message||'연결 오류 · 마지막 정상 기록 유지'}</span></div>}
+    {view!=='calendar'&&view!=='stockmap'&&view!=='drawdown'&&view!=='account'&&!demo&&feed?.failed&&<div className="auto-market-note negative" role="status"><span>{feed.message||'연결 오류 · 마지막 정상 기록 유지'}</span></div>}
     {view==='overview'&&<>
      {metricsRow()}
      {dayLeadersPanel()}
      <SectorEtfPanels date={selected} demo={demo}/>
 
     </>}
+    {view==='account'&&<AccountWorkspace/>}
     {view==='signals'&&<>
   <MarketBreadthPanel url="./market-breadth.json" />
   <KospiPensionSignalPanel url="./kospi-pension-rsi.json" />
@@ -116,7 +118,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
     {view==='stockmap'&&<StockSectorMap classification={classification}/>}
     {view==='drawdown'&&<DrawdownPanel/>}
     {view==='data'&&dataPage()}
-    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>{view==='drawdown'?'LS 수정종가 · 선택 기간 고점 기준':`KRX · 수급·시장 신호 ${marketSession(selected).flowEnd.slice(0,2)}:${marketSession(selected).flowEnd.slice(2)} 마감 · KST`}</span></footer>}
+    {view!=='overview'&&view!=='calendar'&&<footer><span>MARKETNOTE</span><span>{view==='account'?'LS 실현손익 · 기록된 날짜 기준 · KST':view==='drawdown'?'LS 수정종가 · 선택 기간 고점 기준':`KRX · 수급·시장 신호 ${marketSession(selected).flowEnd.slice(0,2)}:${marketSession(selected).flowEnd.slice(2)} 마감 · KST`}</span></footer>}
    </main>
   </div>
   {expanded&&<FullscreenPanel title={expanded==='heatmap'?'업종 히트맵':'오늘의 시장'} onClose={()=>setExpanded(null)}>{!demo&&marketDetail?.date===selected&&marketDetail.failed&&<p className="feature-notice" role="status">시장 상세 연결 지연 · 마지막 정상 기록을 표시합니다.</p>}{expanded==='heatmap'?<HeatmapPanel snap={panelSnap} board={heatBoard} onBoard={setHeatBoard}/>:<InvestorPanel snap={panelSnap}/>}</FullscreenPanel>}

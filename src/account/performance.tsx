@@ -1,0 +1,18 @@
+import React,{useState} from 'react';
+import {performanceDays} from './performance.mjs';
+const money=(n:number)=>Math.round(n).toLocaleString('ko-KR')+'원';
+export default function AccountPerformance({history=[],state=null}:{history?:any[];state?:any}){
+ const rows=performanceDays(history,state),[selected,setSelected]=useState('');
+ const point=rows.find(r=>r.date===selected)||rows.at(-1),total=rows.at(-1)?.cumulativeKRW;
+ function chart(cumulative:boolean){const key=cumulative?'cumulativeKRW':'realizedKRW',values=rows.map(r=>r[key]),lo=Math.min(0,...values),hi=Math.max(0,...values),span=hi-lo||1,pad=Math.max(1,span*.12),min=lo-pad,max=hi+pad;
+ const y=(v:number)=>30+(max-v)/(max-min)*160,x=(i:number)=>64+(rows.length===1?250:i/(rows.length-1)*500),zero=y(0),barWidth=Math.min(34,400/Math.max(rows.length,1));
+ return <section className="panel account-performance-chart"><div className="section-title"><div><span className="eyebrow">{cumulative?'CUMULATIVE P&L':'DAILY REALIZED P&L'}</span><h2>{cumulative?'누적 손익 변화':'일별 실현손익'}</h2></div><span className="badge">원</span></div>{rows.length?<svg viewBox="0 0 600 235" role="img" aria-label={cumulative?'기록된 날짜의 누적 손익 그래프':'기록된 날짜의 일별 실현손익 그래프'}>
+ {[min,(min+max)/2,max].map((v,i)=><g key={i}><line x1="60" x2="570" y1={y(v)} y2={y(v)} className="account-chart-grid"/><text x="52" y={y(v)+4} textAnchor="end">{Math.round(v).toLocaleString('ko-KR')}</text></g>)}<line x1="60" x2="570" y1={zero} y2={zero} className="account-chart-zero"/>
+ {cumulative&&rows.length>1&&<path d={rows.map((r,i)=>(i?'L':'M')+x(i)+','+y(r[key])).join(' ')} fill="none" stroke="#25765b" strokeWidth="2.4"/>}
+ {rows.map((r,i)=><g key={r.date} role="button" tabIndex={0} aria-label={r.date+' '+(cumulative?'누적 ':'실현 ')+money(r[key])} onClick={()=>setSelected(r.date)} onFocus={()=>setSelected(r.date)} onMouseEnter={()=>setSelected(r.date)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(r.date);}}}>
+ <rect x={x(i)-Math.max(8,barWidth)/2} y="25" width={Math.max(16,barWidth)} height="170" fill="transparent"/>{cumulative?<circle cx={x(i)} cy={y(r[key])} r={point?.date===r.date?5:rows.length===1?4:2.8} fill={r[key]<0?'#3977dd':'#25765b'}/>:<rect x={x(i)-barWidth/2} y={Math.min(zero,y(r[key]))} width={barWidth} height={Math.max(2,Math.abs(zero-y(r[key])))} rx="2" fill={r[key]<0?'#3977dd':'#e96a56'} opacity={point?.date===r.date?1:.7}/>}
+ <title>{r.date} · {money(r[key])}</title></g>)}<text x="64" y="223">{rows[0].date}</text>{rows.length>1&&<text x="564" y="223" textAnchor="end">{rows.at(-1)?.date}</text>}
+ </svg>:<div className="empty-state account-chart-empty"><p>확인된 일별 실현손익이 없습니다.</p><small>감시를 시작하면 실제 관측 기록부터 표시됩니다.</small></div>}</section>;
+ }
+ return <div className="account-performance"><section className="panel account-performance-summary"><div className="section-title"><div><span className="eyebrow">ACCOUNT PERFORMANCE</span><h2>손익의 흐름</h2></div><span className="badge">{rows.length}일 기록</span></div><div className="account-performance-stats"><div><span>기록된 날짜 누적</span><strong className={typeof total==='number'&&total<0?'negative':'positive'}>{typeof total==='number'?money(total):'—'}</strong></div><div><span>{point?.date||'선택일'} 실현손익</span><strong>{point?money(point.realizedKRW):'—'}</strong></div><div><span>선택일 누적</span><strong>{point?money(point.cumulativeKRW):'—'}</strong></div></div><p className="footnote">최대 90일 동안 감시한 날짜의 마지막 실현손익 기준입니다. 장중 값은 잠정이며, 기록이 없는 날은 0원으로 채우지 않습니다. 누적은 표시된 기록의 합계이며 계좌 자산 증감률이 아닙니다.</p>{point&&<p className="footnote">선택 {point.date} · 관측 {new Date(point.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} KST · 막대나 점을 누르면 해당 날짜를 확인합니다.</p>}</section><div className="account-performance-grid">{chart(false)}{chart(true)}</div></div>;
+}

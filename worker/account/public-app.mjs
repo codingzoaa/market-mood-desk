@@ -15,7 +15,8 @@ export async function publicAccountFetch(request,env,sessionFactory){
  }
  if(request.method!=='POST')return reply({error:'METHOD_NOT_ALLOWED'},405);
  if(!['/api/lossguard/poll','/api/lossguard/settings','/api/lossguard/reset'].includes(url.pathname))return reply({error:'LEGACY_ACCOUNT_REMOVED'},410);
- if(request.headers.get('Origin')!==url.origin||request.headers.get('Sec-Fetch-Site')==='cross-site'||request.headers.get('Content-Type')!=='application/json')return reply({error:'REQUEST_REJECTED'},403);
+ const origin=request.headers.get('Origin'),embedded=origin==='https://codingzoaa.github.io';
+ if((origin!==url.origin&&!embedded)||(request.headers.get('Sec-Fetch-Site')==='cross-site'&&!embedded)||request.headers.get('Content-Type')!=='application/json')return reply({error:'REQUEST_REJECTED'},403);
  try{
   if(Number(request.headers.get('Content-Length')||0)>4096)return reply({error:'REQUEST_TOO_LARGE'},413);
   const text=await request.text();if(text.length>4096)return reply({error:'REQUEST_TOO_LARGE'},413);const input=JSON.parse(text);
