@@ -1,3 +1,4 @@
+import {removeLegacyAccount} from './maintenance.mjs';
 import {guardStatus,guardSave,guardReset,pollGuard} from './loss-guard.mjs';
 import {privateHeaders} from './security.mjs';
 export const publicAccountMode=env=>env.ACCOUNT_ACCESS_MODE==='PUBLIC_LOSS_GUARD';
@@ -5,6 +6,7 @@ const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers
 // Owner explicitly opted into unauthenticated account display. Expose only the loss-guard projection.
 export async function publicAccountFetch(request,env,sessionFactory){
  const url=new URL(request.url);
+ if(url.pathname==='/api/_maintenance/clear-legacy')return removeLegacyAccount(request,env);
  if(request.method==='GET'){
   if(url.pathname==='/api/lossguard')try{return reply({...await guardStatus(env),accessMode:'public',legacyDataRemoved:true});}catch{return reply({error:'GUARD_DATA_UNAVAILABLE'},503);}
   if(url.pathname.startsWith('/api/'))return reply({error:'LEGACY_ACCOUNT_REMOVED'},410);

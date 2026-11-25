@@ -58,7 +58,7 @@ class Application:
         self.start_button = ttk.Button(buttons, text='감시 시작', command=self.toggle)
         self.start_button.pack(side='left')
         ttk.Button(buttons, text='오늘 기준 다시 잡기', command=self.reset).pack(side='left', padx=8)
-        ttk.Button(buttons, text='계좌분석 열기', command=lambda: webbrowser.open('https://market-note-private-account.kby0991.workers.dev/#lossguard')).pack(side='right')
+        ttk.Button(buttons, text='계좌분석 열기', command=lambda: webbrowser.open('https://market-note-account.kby0991.workers.dev/#lossguard')).pack(side='right')
         tabs = ttk.Notebook(shell)
         tabs.pack(fill='both', expand=True)
         config_tab, key_tab, history_tab = (ttk.Frame(tabs, padding=15) for _ in range(3))
