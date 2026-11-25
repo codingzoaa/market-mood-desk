@@ -1,0 +1,45 @@
+name: Build LS Loss Guard for Windows
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/lossguard/**', '.github/workflows/build-ls-lossguard-windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop/lossguard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - name: Test calculations, Windows encryption and UI without account access
+        run: python -m unittest -v test_lossguard.py test_windows.py
+      - name: Build independent LS-only executable
+        run: python -m PyInstaller --clean --noconfirm --onefile --windowed --name MarketnoteLSLossGuard --collect-all keyring --hidden-import keyring.backends.Windows app.py
+      - name: Smoke test executable opens without credentials
+        shell: pwsh
+        run: |
+          $program = Start-Process -FilePath '.\dist\MarketnoteLSLossGuard.exe' -PassThru
+          Start-Sleep -Seconds 8
+          if ($program.HasExited) { throw 'Executable exited before UI smoke test' }
+          if (-not $program.CloseMainWindow()) { Stop-Process -Id $program.Id }
+      - name: Package application, documentation and editable source
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package/source | Out-Null
+          Copy-Item dist/MarketnoteLSLossGuard.exe package/
+          Copy-Item README.md package/
+          Copy-Item *.py,requirements.txt package/source/
+          Get-FileHash package/MarketnoteLSLossGuard.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  MarketnoteLSLossGuard.exe" } | Out-File package/SHA256SUMS.txt -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Marketnote-LS-LossGuard-0.1.0-win64
+          path: desktop/lossguard/package/
+          retention-days: 90
+          if-no-files-found: error
