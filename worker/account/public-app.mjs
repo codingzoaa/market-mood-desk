@@ -20,8 +20,8 @@ export async function publicAccountFetch(request,env,sessionFactory){
  const origin=request.headers.get('Origin'),embedded=origin==='https://codingzoaa.github.io';
  if((origin!==url.origin&&!embedded)||(request.headers.get('Sec-Fetch-Site')==='cross-site'&&!embedded)||request.headers.get('Content-Type')!=='application/json')return reply({error:'REQUEST_REJECTED'},403);
  try{
-  if(url.pathname.startsWith('/api/lossguard/push/'))return reply(await handlePush(request,env));
   if(Number(request.headers.get('Content-Length')||0)>4096)return reply({error:'REQUEST_TOO_LARGE'},413);
+  if(url.pathname.startsWith('/api/lossguard/push/'))return reply(await handlePush(request,env));
   const text=await request.text();if(text.length>4096)return reply({error:'REQUEST_TOO_LARGE'},413);const input=JSON.parse(text);
   if(url.pathname==='/api/lossguard/settings')return reply({settings:await guardSave(env,input)});
   if(url.pathname==='/api/lossguard/reset')return reply(await guardReset(env));
