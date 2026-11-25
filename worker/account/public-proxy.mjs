@@ -4,6 +4,7 @@ const post=new Set(['/api/lossguard/poll','/api/lossguard/settings','/api/lossgu
 export const MARKETNOTE_ORIGIN='https://codingzoaa.github.io';
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname,origin=request.headers.get('Origin'),allowed=origin===MARKETNOTE_ORIGIN||origin===url.origin;
+ if(request.method==='GET'&&['/','/index.html'].includes(path))return new Response(null,{status:302,headers:{Location:'https://codingzoaa.github.io/market-mood-desk/#account','Cache-Control':'no-store'}});
  const reply=(data,status)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
  if(origin&&!allowed)return reply({error:'ORIGIN_REJECTED'},403);
  if(request.method==='OPTIONS'){
