@@ -1,3 +1,4 @@
+import {handleLSSessionLock} from './ls-session-lock.mjs';
 import {recoverPreviousIntraday} from './previous-intraday-recovery.mjs';
 import {handleSessionRecovery} from './session-recovery.mjs';
 import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
@@ -20,7 +21,7 @@ import {collectDetails,enrichDetails} from './details.mjs';
 import {recoverIntradayFlows} from './intraday-recovery.mjs';
 import {pensionDailyFeed} from './pension-signal.mjs';
 import {recoverPensionAfterClose,composeRecoveredPension} from './pension-evening-recovery.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,normalizeStock,signed,number,kst,collectWindow,assertCollectionWindow,collectionFetch,verifySession,LSFailure} from './ls.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const READY=env=>!!(env.LS_APP_KEY&&env.LS_APP_SECRET);
@@ -33,7 +34,7 @@ export async function collect(env){
  let session,stage='TLS_CONNECT';
  try{
   await state(env,'progress',{stage:'AUTH',startedAt:new Date(now).toISOString()});
-  session=await createSession();
+  session=await createSession(env);
   stage='AUTH';
   const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch);
   const token=await accessToken(env,fetcher,Date.now(),false);
@@ -79,6 +80,7 @@ export async function collect(env){
   try{await syncStockRegistry(env,snapshot,requestTR,wait);}catch{/* Retain source snapshot and retry on next collector cycle. */}
   await state(env,'progress',{stage:'DONE',completedAt:new Date().toISOString()});
  }catch(error){
+  if(error?.code==='LS_SESSION_BUSY'){await env.DB.prepare("UPDATE state SET payload='0' WHERE id='lease' AND payload=?").bind(String(now+300000)).run();await state(env,'progress',{stage:'WAITING_FOR_LS_SESSION',checkedAt:new Date().toISOString()});return;}
   if(error instanceof LSFailure&&error.code==='COLLECTION_WINDOW_CLOSED'){await state(env,'progress',{stage:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return;}
   await state(env,'diagnostic',{code:error instanceof LSFailure?error.code:'COLLECTION_FAILED',stage,message:error instanceof LSFailure&&error.safeDetail?error.safeDetail:'Response shape validation failed',checkedAt:new Date().toISOString()});
   if(error instanceof LSFailure&&error.code==='LS_AUTH_FAILED')await env.DB.prepare("DELETE FROM state WHERE id='oauth'").run();
@@ -231,6 +233,7 @@ export default {
 export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
  async fetch(request,now=new Date()){
+  if(new URL(request.url).pathname.startsWith('/ls-session/'))return handleLSSessionLock(request,this.state,now.getTime());
   if(request.method==='POST'&&new URL(request.url).pathname==='/drawdown'){const symbol=new URL(request.url).searchParams.get('symbol');if(!validSymbol(symbol))return new Response(null,{status:400});await this.state.storage.put('drawdown-symbol',symbol);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/program'){if(!programWindow(now))return new Response(null,{status:204});await this.state.storage.put('program-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/naver'){if(!naverHeatmapWindow(now))return new Response(null,{status:204});await this.state.storage.put('naver-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}

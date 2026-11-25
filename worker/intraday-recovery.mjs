@@ -1,5 +1,5 @@
 import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,number,kst,collectWindow,collectionFetch} from './ls.mjs';
 import {indexQuote,indexSeries,rawFlows} from './details.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
@@ -50,7 +50,7 @@ export async function recoverIntradayFlows(env){
  let session;const checkedAt=new Date().toISOString();let stage='AUTH';
  try{
   await put(env,statusId,{date,status:'RUNNING',checkedAt});
-  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(c,b,cont)=>tr(token,c,b,cont,fetcher);
+  session=await createSession(env);const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false),request=(c,b,cont)=>tr(token,c,b,cont,fetcher);
   const flows={},indices={};
   for(const [b,market,upcode] of [['KOSPI','1','001'],['KOSDAQ','3','301']]){
    stage='HISTORY_'+b;await put(env,statusId,{date,status:'RUNNING',checkedAt,stage});await pause();const reference=rawFlows((await request('t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'})).data);const rows=[];let cursor='',continuation,header,scale,complete=false;const seen=new Set();

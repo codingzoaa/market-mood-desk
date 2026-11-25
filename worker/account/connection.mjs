@@ -15,7 +15,7 @@ export async function checkAccountConnection(env,sessionFactory,now=Date.now()){
   let date=new Date(Date.parse(clock.date+'T00:00:00Z')-86400000);
   while([0,6].includes(date.getUTCDay()))date=new Date(date.getTime()-86400000);
   const historicalDate=date.toISOString().slice(0,10);
-  session=await sessionFactory();
+  session=await sessionFactory(env);
   const oauth=await tokenForAccount(env,session.fetch);phase='QUERY';
   const page=await accountPage(env,{job:{from:historicalDate,to:historicalDate,continuation:{flag:'N',key:''}},token:oauth.token,fetcher:session.fetch});
   if(!page.ledgerRows)throw Error('LS_ACCOUNT_RESPONSE_INVALID');

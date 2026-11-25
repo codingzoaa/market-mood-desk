@@ -1,5 +1,5 @@
 import {accessToken,tr,kst,collectWindow,collectionFetch} from './ls.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {historicalFlowPoints,verifiedFlowScale,sourceTime} from './intraday-recovery.mjs';
 import {indexSeries} from './details.mjs';
 import {normalizeProgram,PROGRAM_ALIGNMENT_VERSION} from './program-flow.mjs';
@@ -29,7 +29,7 @@ export async function recoverPreviousIntraday(env){
  let session,date,stage='DATE';const checkedAt=new Date().toISOString();
  try{
   await put(env,statusId,{status:'RUNNING',checkedAt});
-  session=await createSession();const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
+  session=await createSession(env);const fetcher=collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
   const request=async(code,input,continuation)=>{await new Promise(r=>setTimeout(r,1150));return tr(token,code,input,continuation,fetcher);};
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:today.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
   date=previousTradeDate(daily.t8410OutBlock1,today);

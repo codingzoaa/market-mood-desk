@@ -1,4 +1,4 @@
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,number,kst} from './ls.mjs';
 const key='breadth-close:progress',pause=()=>new Promise(r=>setTimeout(r,1150));
 const put=(env,id,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();
@@ -11,7 +11,7 @@ export async function collectBreadthClose(env){
  if(!breadthCloseWindow()||!env.LS_APP_KEY||!env.LS_APP_SECRET)return 0;const date=kst().date;let p=await get(env,key);if(p?.date!==date)p=null;if(p?.date===date&&['COMPLETE','MARKET_CLOSED'].includes(p.status))return 0;
  const now=Date.now(),lease=String(now+150000);await env.DB.prepare("INSERT OR IGNORE INTO state(id,payload) VALUES('breadth-close:lease','0')").run();const lock=await env.DB.prepare("UPDATE state SET payload=? WHERE id='breadth-close:lease' AND CAST(payload AS INTEGER)<? RETURNING id").bind(lease,now).first();if(!lock)return 20000;
  let session,stage='AUTH';try{
-  session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input)=>{await pause();return tr(token,code,input,undefined,session.fetch);};
+  session=await createSession(env);const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input)=>{await pause();return tr(token,code,input,undefined,session.fetch);};
   if(p?.date!==date||!Array.isArray(p?.symbols)||!Array.isArray(p?.indices)){
    stage='TRADING_DATE';const sample=await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'});
    if(sample.data.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-','')){await put(env,key,{date,status:'MARKET_CLOSED',checkedAt:new Date().toISOString()});return 0;}

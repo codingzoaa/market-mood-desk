@@ -1,7 +1,7 @@
 import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {fetchHoldings} from './etf-holdings.mjs';
 import {SECTOR_ETFS,normalizeDaily,sectorRotation} from '../shared/sector-etfs.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,kst,collectWindow,collectionFetch} from './ls.mjs';
 const KEY='sector-etfs:v1';
 export function refreshPhase(date,time){return date+':'+time.slice(0,2)+String(Math.floor(Number(time.slice(2))/5)*5).padStart(2,'0');}
@@ -20,7 +20,7 @@ export async function collectSectorEtfs(env){
   saved=await read(env);const {date,time}=kst(),phase=refreshPhase(date,time);saved.mode=time<marketSession(date).close?'INTRADAY':'CLOSE';
   const targets=SECTOR_ETFS.filter(e=>saved.quotes?.[e.symbol]?.phase!==phase);
   if(saved.phase===phase&&!targets.length)return;
-  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
+  session=await createSession(env);const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch),token=await accessToken(env,fetcher,Date.now(),false);
   const request=(code,body,continuation)=>tr(token,code,body,continuation,fetcher);
   const stamp=()=>new Date().toISOString();
   if(saved.phase!==phase){
@@ -43,7 +43,7 @@ export async function collectSectorEtfs(env){
    }
   }
   saved.lastAttemptAt=stamp();saved.error=null;
- }catch(e){if(saved){saved.lastAttemptAt=new Date().toISOString();saved.error=typeof e.code==='string'&&/^LS_[A-Z0-9_]+$/.test(e.code)?e.code:'SECTOR_ETF_COLLECTION_FAILED';}}
+ }catch(e){if(e?.code==='LS_SESSION_BUSY')return true;if(saved){saved.lastAttemptAt=new Date().toISOString();saved.error=typeof e.code==='string'&&/^LS_[A-Z0-9_]+$/.test(e.code)?e.code:'SECTOR_ETF_COLLECTION_FAILED';}}
  finally{
   if(session)await session.close();
   if(saved)await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(KEY,JSON.stringify(saved)).run();

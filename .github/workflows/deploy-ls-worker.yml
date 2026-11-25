@@ -34,6 +34,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Test shared LS coordination before deployment
+        run: node --test tests/ls-shared-session.test.mjs tests/tls.test.mjs
       - name: Verify Cloudflare token and deploy existing Worker
         working-directory: worker
         env:

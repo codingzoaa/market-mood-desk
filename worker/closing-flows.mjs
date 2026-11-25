@@ -3,7 +3,7 @@ import {accessToken,tr,kst,collectionFetch} from './ls.mjs';
 import {archivePutClose} from './put-daily.mjs';
 import {appendFlowHistory} from './flow-history.mjs';
 import {rawFlows,indexQuote} from './details.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 
 // Capture the final flow/index sample; today alone can recover a missed closing sample.
 export function closingFlowRecoveryWindow(now=new Date()){
@@ -26,7 +26,7 @@ export async function collectClosingFlows(env,{clock=()=>new Date(),openSession=
  if(!await env.DB.prepare("UPDATE state SET payload=? WHERE id='closing-flow-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first())return;
  let session;
  try{
-  session=await openSession();const fetcher=recovery?session.fetch:collectionFetch(session.fetch,clock,'1615');
+  session=await openSession(env);const fetcher=recovery?session.fetch:collectionFetch(session.fetch,clock,'1615');
   const token=await accessToken(env,fetcher,clock().getTime(),false);
   const daily=(await tr(token,'t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'},undefined,fetcher)).data;
   if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==date.replaceAll('-',''))throw Error('TRADE_DATE');

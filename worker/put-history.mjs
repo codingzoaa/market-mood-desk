@@ -1,4 +1,4 @@
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,number,kst,collectWindow} from './ls.mjs';
 import {putDailyPoints} from './put-daily.mjs';
 const put=(env,id,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(value)).run();
@@ -47,7 +47,7 @@ export async function recoverPutHistory(env){
   const stored=await env.DB.prepare("SELECT payload FROM state WHERE id LIKE 'details:%' ORDER BY id DESC LIMIT 365").all(),references=putDailyPoints(stored.results.flatMap(r=>{try{return [JSON.parse(r.payload)];}catch{return [];}}));
   if(references.length<3)throw Error('PUT_HISTORY_REFERENCE_REQUIRED');const to=saved?.to||references.at(-1).date,from=saved?.from||String(Number(to.slice(0,4))-5)+to.slice(4),parts=historyQuarters(from,to);
   saved={...saved,revision:5,from,to,status:'RUNNING',checkedAt:new Date().toISOString(),points:saved?.points||[],completed:saved?.completed||[],source:'LS증권 t1665 풋옵션 금액 + t8429 코스피 종가',method:'LS_PUT_DAILY_V1'};await put(env,'put-history:v1',saved);
-  session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input,continuation)=>{await pause();return tr(token,code,input,continuation,session.fetch);};
+  session=await createSession(env);const token=await accessToken(env,session.fetch,Date.now(),false),request=async(code,input,continuation)=>{await pause();return tr(token,code,input,continuation,session.fetch);};
   if(!saved.calibration){stage='UNIT';const input={market:'5',upcode:'800',gubun2:'1',gubun3:'1',from_date:references.at(-Math.min(10,references.length)).date.replaceAll('-',''),to_date:to.replaceAll('-',''),exchgubun:'K'};
    const result=await request('t1665',input);const rows=result.data.t1665OutBlock1;if(!Array.isArray(rows))throw Error('PUT_HISTORY_SHAPE');saved.calibration={...calibratePutHistory(rows,references),header:result.data.t1665OutBlock};await put(env,'put-history:v1',saved);
   }

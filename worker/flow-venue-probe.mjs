@@ -1,5 +1,5 @@
 import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,kst,number} from './ls.mjs';
 
 // t1601 exchange flags K, N and U are candidates only until real LS responses
@@ -48,7 +48,7 @@ export async function probeVenueFlows(env,now=new Date(),dependencies={}){
  // No external/public parameter is allowed to trigger an LS query.
  let session;
  try{
-  session=dependencies.session||await createSession();
+  session=dependencies.session||await createSession(env);
   const fetcher=dependencies.fetcher||session.fetch;
   const token=dependencies.token||await accessToken(env,fetcher,Date.now(),false);
   const results={};

@@ -13,7 +13,7 @@ export async function priorJournalOnce(env,sessionFactory,now=Date.now()){
  let session;
  const priorAttempt=await readState(env,'priorOnceAttempt');
  if(priorAttempt?.date===date&&priorAttempt.version===version){await env.PRIVATE_DB.prepare("UPDATE account_lease SET expires=?,owner=NULL WHERE id='sync' AND owner=?").bind(now,owner).run();return {alreadyAttempted:true};}
- try{await writeState(env,'priorOnceAttempt',{date,version,at:new Date(now).toISOString()});session=await sessionFactory();const oauth=await tokenForAccount(env,session.fetch);return await collectJournal(env,{fetcher:session.fetch,token:oauth.token,date,tr:'t0151',now});}
+ try{await writeState(env,'priorOnceAttempt',{date,version,at:new Date(now).toISOString()});session=await sessionFactory(env);const oauth=await tokenForAccount(env,session.fetch);return await collectJournal(env,{fetcher:session.fetch,token:oauth.token,date,tr:'t0151',now});}
  catch{await writeState(env,'journalPreviousError',{code:'JOURNAL_SYNC_FAILED',date,at:new Date(now).toISOString()});return {ok:false};}
  finally{try{if(session)await session.close();}finally{await env.PRIVATE_DB.prepare("UPDATE account_lease SET expires=?,owner=NULL WHERE id='sync' AND owner=?").bind(now+Math.floor(performance.now()-started)+30000,owner).run();}}
 }

@@ -34,7 +34,7 @@ export async function syncAccount(env,sessionFactory,now=Date.now()){
   if(!job.to)job.to=[shift(job.from,c.maxRangeDays-1),today].sort()[0];
   // A delayed scheduled event must never start shared-key OAuth during quotes.
   if(['AFTER_CLOSE','DAILY_1630'].includes(env.ACCOUNT_SYNC_MODE))check(accountSyncWindow(env,Date.now()),'ACCOUNT_SYNC_WINDOW_CLOSED');
-  session=await sessionFactory();
+  session=await sessionFactory(env);
   // LS tokens can be bound to the egress IP: acquire and use in the same TLS session.
   // No account OAuth token is persisted to D1 or shared with the public collector.
   const oauth=await tokenForAccount(env,session.fetch);

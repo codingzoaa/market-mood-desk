@@ -2,7 +2,7 @@ name: Deploy private account loss guard
 on:
   push:
     branches: [main]
-    paths: ['src/account/**', 'worker/account/**', 'scripts/build-account*.mjs', 'scripts/deploy-private-account.mjs', '.github/workflows/deploy-private-account.yml']
+    paths: ['src/account/**', 'worker/account/**', 'worker/ls-session.mjs', 'worker/tls.mjs', 'scripts/build-account*.mjs', 'scripts/deploy-private-account.mjs', '.github/workflows/deploy-private-account.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Test private account boundaries and loss calculations
-        run: node --test tests/account*.test.mjs tests/ordinary-ledger.test.mjs tests/loss-guard*.test.mjs
+        run: node --test tests/account*.test.mjs tests/ordinary-ledger.test.mjs tests/loss-guard*.test.mjs tests/ls-shared-session.test.mjs tests/tls.test.mjs
       - run: node scripts/build-account-inline.mjs
       - name: Publish no-login loss guard and remove original account records
         env:

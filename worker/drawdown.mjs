@@ -1,6 +1,6 @@
 import {marketSession,minutes,timeOf} from '../shared/market-session.mjs';
 import {accessToken,tr,kst,number} from './ls.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
 const get=async(env,key)=>{const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();return r?JSON.parse(r.payload):null;};
 const put=(env,key,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify(value)).run();
@@ -20,7 +20,7 @@ export async function stockSearch(env,query){
  if(indexMatches.length)return indexMatches;
  let master=await get(env,'drawdown:master');
  if(master?.date!==kst().date){let session;try{
-  session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);
+  session=await createSession(env);const token=await accessToken(env,session.fetch,Date.now(),false);
   const raw=(await tr(token,'t8436',{gubun:'0'},undefined,session.fetch)).data.t8436OutBlock;
   if(!Array.isArray(raw)||raw.length<1000)throw Error('MASTER_SHAPE');
   const entries=raw.filter(r=>validSymbol(r.shcode)&&['1','2'].includes(String(r.gubun))&&String(r.etfgubun)==='0').map(r=>({symbol:r.shcode,name:String(r.hname).trim(),market:String(r.gubun)==='1'?'KOSPI':'KOSDAQ'}));
@@ -44,7 +44,7 @@ export async function collectDrawdown(env,symbol){
  if(!await env.DB.prepare('UPDATE state SET payload=? WHERE id=? AND CAST(payload AS INTEGER) < ? RETURNING id').bind(lease,leaseId,now).first())return;
  let session;const statusId='drawdown:progress:'+symbol;
  try{
-  session=await createSession();const token=await accessToken(env,session.fetch,Date.now(),false);
+  session=await createSession(env);const token=await accessToken(env,session.fetch,Date.now(),false);
   const target=INDEX_TARGETS[symbol],code=target?'t8429':'t8410';
   const prices=new Map(),seen=new Set();let cursor='',continuation,complete=false,indexEnd=scope.date.replaceAll('-','');
   for(let page=0;page<(target?40:18);page++){

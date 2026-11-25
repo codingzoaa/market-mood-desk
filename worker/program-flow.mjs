@@ -1,6 +1,6 @@
 import {marketSession,sessionRecoveryAllowed,minutes,timeOf} from '../shared/market-session.mjs';
 import {accessToken,tr,kst,number,collectionFetch} from './ls.mjs';
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 const pause=()=>new Promise(r=>setTimeout(r,1100));
 export function programWindow(now=new Date()){const d=kst(now);return !['Sat','Sun'].includes(d.weekday)&&d.time>=marketSession(d.date).open&&d.time<=marketSession(d.date).flowEnd;}
 // Use a backward-only as-of join. No future sample or interpolation is allowed.
@@ -42,7 +42,7 @@ export async function collectProgramFlow(env){
  if(!await env.DB.prepare("UPDATE state SET payload=? WHERE id='program-lease' AND CAST(payload AS INTEGER) < ? RETURNING id").bind(lease,now).first())return;
  let session;const status={date:day.date,asOf:new Date().toISOString(),bucket,alignmentVersion:PROGRAM_ALIGNMENT_VERSION,maxAgeSeconds:PROGRAM_MAX_AGE_SECONDS,unit:'억원',source:'LS증권 KRX · t1662 비차익 누적 금액 / t8409 지수',markets:{...old?.markets},errors:{}};
  try{
-  session=await createSession();const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch,()=>new Date(),'1615'),token=await accessToken(env,fetcher,Date.now(),false),request=(c,b)=>tr(token,c,b,undefined,fetcher);
+  session=await createSession(env);const fetcher=sessionRecoveryAllowed(env)?session.fetch:collectionFetch(session.fetch,()=>new Date(),'1615'),token=await accessToken(env,fetcher,Date.now(),false),request=(c,b)=>tr(token,c,b,undefined,fetcher);
   const daily=(await request('t8410',{shcode:'005930',gubun:'2',qrycnt:2,sdate:'',edate:day.date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'})).data;
   if(daily.t8410OutBlock1?.map(r=>r.date).sort().at(-1)!==day.date.replaceAll('-',''))throw Error('TRADE_DATE');
   const details=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('details:'+day.date).first(),d=JSON.parse(details?.payload||'{}');
@@ -55,7 +55,7 @@ export async function collectProgramFlow(env){
     if(!points.length)throw Error('PROGRAM_NO_POINTS');status.markets[market]=[...new Map([...(old?.markets?.[market]||[]).filter(p=>p.time>=marketSession(day.date).open&&p.time<=marketSession(day.date).flowEnd),...points].map(p=>[p.time,p])).values()].sort((a,b)=>a.time.localeCompare(b.time));
    }catch(e){status.errors[market]=e.code||String(e.message).slice(0,60);}
   }
- }catch(e){status.errors.ls=e.code||String(e.message).slice(0,60);}
+ }catch(e){if(e?.code==='LS_SESSION_BUSY')return;status.errors.ls=e.code||String(e.message).slice(0,60);}
  finally{if(session)await session.close();}
  try{if((!programWindow()&&!sessionRecoveryAllowed(env))||kst().date!==day.date)return;await env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(id,JSON.stringify(status)).run();}
  finally{await env.DB.prepare("UPDATE state SET payload='0' WHERE id='program-lease' AND payload=?").bind(lease).run();}

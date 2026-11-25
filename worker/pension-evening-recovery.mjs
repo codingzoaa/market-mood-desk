@@ -1,4 +1,4 @@
-import {createSession} from './tls.mjs';
+import {createCoordinatedSession as createSession} from './ls-session.mjs';
 import {accessToken,tr,number,kst} from './ls.mjs';
 
 const state=(env,id,value)=>env.DB.prepare(
@@ -20,7 +20,7 @@ export async function recoverPensionAfterClose(env,now=new Date()){
  let session;
  try{
   await state(env,statusId,{date,status:'FETCHING',checkedAt:new Date().toISOString()});
-  session=await createSession();
+  session=await createSession(env);
   const token=await accessToken(env,session.fetch,Date.now(),false);
   const d=(await tr(token,'t1601',{gubun1:'2',gubun2:'2',gubun3:'',gubun4:'2',exchgubun:'K'},undefined,session.fetch)).data;
   const raw=d?.t1601OutBlock1?.svolume_06;
