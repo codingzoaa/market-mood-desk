@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-25T11:26:00.692Z",
+  "observedAt": "2026-11-25T11:45:12.837Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -364,6 +364,31 @@
     },
     {
       "publicationStatus": null,
+      "id": 45607311616,
+      "name": "Relay Naver sector news to Cloudflare",
+      "event": "workflow_run",
+      "branch": "main",
+      "sha": "d95d61ef91cb540b9b52db36e41e0bffafdcb8b7",
+      "status": "queued",
+      "conclusion": null,
+      "createdAt": "2026-11-25T11:45:01Z",
+      "startedAt": "2026-11-25T11:45:01Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45607311616",
+      "jobs": [
+        {
+          "name": "relay",
+          "status": "in_progress",
+          "conclusion": null,
+          "startedAt": "2026-11-25T11:45:04Z",
+          "completedAt": null,
+          "stages": [],
+          "steps": []
+        }
+      ]
+    },
+    {
+      "publicationStatus": null,
       "id": 45604166208,
       "name": "Relay Naver sector news to Cloudflare",
       "event": "workflow_run",
@@ -389,24 +414,24 @@
     },
     {
       "publicationStatus": null,
-      "id": 45603990266,
-      "name": "Relay Naver sector news to Cloudflare",
-      "event": "workflow_run",
+      "id": 45607216499,
+      "name": "Deploy LS Cloudflare Worker",
+      "event": "push",
       "branch": "main",
-      "sha": "c7c858211dfbd1cb664db34cd5d56623b80c7e05",
+      "sha": "d95d61ef91cb540b9b52db36e41e0bffafdcb8b7",
       "status": "completed",
       "conclusion": "success",
-      "createdAt": "2026-11-25T11:23:29Z",
-      "startedAt": "2026-11-25T11:23:29Z",
-      "completedAt": "2026-11-25T11:23:50Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45603990266",
+      "createdAt": "2026-11-25T11:44:24Z",
+      "startedAt": "2026-11-25T11:44:24Z",
+      "completedAt": "2026-11-25T11:44:58Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45607216499",
       "jobs": [
         {
-          "name": "relay",
+          "name": "deploy",
           "status": "completed",
           "conclusion": "success",
-          "startedAt": "2026-11-25T11:23:32Z",
-          "completedAt": "2026-11-25T11:23:49Z",
+          "startedAt": "2026-11-25T11:44:26Z",
+          "completedAt": "2026-11-25T11:44:58Z",
           "stages": [],
           "steps": []
         }
@@ -439,55 +464,47 @@
     },
     {
       "publicationStatus": null,
-      "id": 45603907541,
-      "name": "Deploy LS Cloudflare Worker",
+      "id": 45607216672,
+      "name": "Build and deploy dashboard",
       "event": "push",
       "branch": "main",
-      "sha": "c7c858211dfbd1cb664db34cd5d56623b80c7e05",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-25T11:22:57Z",
-      "startedAt": "2026-11-25T11:22:57Z",
-      "completedAt": "2026-11-25T11:23:24Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45603907541",
-      "jobs": [
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-25T11:22:59Z",
-          "completedAt": "2026-11-25T11:23:23Z",
-          "stages": [],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 45604358021,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
-      "branch": "main",
-      "sha": "a702f8ccd979ce05032cd796afcf571dfeeb65a0",
+      "sha": "d95d61ef91cb540b9b52db36e41e0bffafdcb8b7",
       "status": "in_progress",
       "conclusion": null,
-      "createdAt": "2026-11-25T11:25:47Z",
-      "startedAt": "2026-11-25T11:25:47Z",
+      "createdAt": "2026-11-25T11:44:24Z",
+      "startedAt": "2026-11-25T11:44:24Z",
       "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45604358021",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45607216672",
       "jobs": [
         {
           "name": "build",
-          "status": "in_progress",
-          "conclusion": null,
-          "startedAt": "2026-11-25T11:25:52Z",
-          "completedAt": null,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-25T11:44:26Z",
+          "completedAt": "2026-11-25T11:44:57Z",
           "stages": [
             {
               "name": "Check TypeScript",
-              "status": "pending",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-25T11:44:49Z",
+              "completedAt": "2026-11-25T11:44:53Z"
+            }
+          ],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "in_progress",
+          "conclusion": null,
+          "startedAt": "2026-11-25T11:45:02Z",
+          "completedAt": null,
+          "stages": [
+            {
+              "name": "Deploy dashboard",
+              "status": "in_progress",
               "conclusion": null,
-              "startedAt": null,
+              "startedAt": "2026-11-25T11:45:06Z",
               "completedAt": null
             }
           ],
@@ -497,18 +514,53 @@
     },
     {
       "publicationStatus": null,
-      "id": 45604305730,
+      "id": 45604398222,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "28251cbe8fcabe7721dca1fedafd502eab4d40c0",
+      "sha": "957a826467d92245577cd678498ab969d619521c",
       "status": "completed",
-      "conclusion": "cancelled",
-      "createdAt": "2026-11-25T11:25:27Z",
-      "startedAt": "2026-11-25T11:25:27Z",
-      "completedAt": "2026-11-25T11:25:49Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45604305730",
-      "jobs": []
+      "conclusion": "success",
+      "createdAt": "2026-11-25T11:26:03Z",
+      "startedAt": "2026-11-25T11:26:03Z",
+      "completedAt": "2026-11-25T11:26:57Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45604398222",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-25T11:26:15Z",
+          "completedAt": "2026-11-25T11:26:37Z",
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-25T11:26:30Z",
+              "completedAt": "2026-11-25T11:26:33Z"
+            }
+          ],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-25T11:26:43Z",
+          "completedAt": "2026-11-25T11:26:56Z",
+          "stages": [
+            {
+              "name": "Deploy dashboard",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-25T11:26:47Z",
+              "completedAt": "2026-11-25T11:26:54Z"
+            }
+          ],
+          "steps": []
+        }
+      ]
     }
   ]
 }
