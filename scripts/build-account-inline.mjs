@@ -5,6 +5,6 @@ await mkdir('work/account-deploy',{recursive:true});
 const assets={};
 for(const [path,type] of [['index.html','text/html; charset=utf-8'],['app.js','application/javascript; charset=utf-8'],['app.css','text/css; charset=utf-8']])assets['/'+path]={type,body:await readFile('work/account-assets/'+path,'utf8')};
 await writeFile('work/account-deploy/assets.json',JSON.stringify(assets));
-await writeFile('work/account-deploy/entry.mjs',"import worker from '../../worker/account/index.mjs';import {withPrivateAssets} from '../../worker/account/inline-assets.mjs';import assets from './assets.json';export default withPrivateAssets(worker,assets);");
+await writeFile('work/account-deploy/entry.mjs',"import worker from '../../worker/account/index.mjs';import {withPrivateAssets} from '../../worker/account/inline-assets.mjs';import assets from './assets.json';export {AccountPushMonitor} from '../../worker/account/push-monitor.mjs';export default withPrivateAssets(worker,assets);");
 await build({entryPoints:['work/account-deploy/entry.mjs'],bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:sockets'],minify:true,outfile:'work/account-deploy/worker.mjs'});
 console.log('Built authentication-first inline assets for API upload; no deployment.');

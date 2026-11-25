@@ -1,6 +1,6 @@
 // Public account facade. Only the user's Marketnote origin may read it cross-origin.
-const get=new Set(['/','/index.html','/app.js','/app.css','/api/lossguard']);
-const post=new Set(['/api/lossguard/poll','/api/lossguard/settings','/api/lossguard/reset']);
+const get=new Set(['/','/index.html','/app.js','/app.css','/api/lossguard','/api/lossguard/push/key']);
+const post=new Set(['/api/lossguard/poll','/api/lossguard/settings','/api/lossguard/reset','/api/lossguard/push/subscribe','/api/lossguard/push/status','/api/lossguard/push/unsubscribe','/api/lossguard/push/test']);
 export const MARKETNOTE_ORIGIN='https://codingzoaa.github.io';
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname,origin=request.headers.get('Origin'),allowed=origin===MARKETNOTE_ORIGIN||origin===url.origin;

@@ -1,0 +1,32 @@
+import {readState,writeState} from './store.mjs';
+import {buildPushPayload} from './vendor/web-push.mjs';
+import {nextMonitorAt} from './push-rules.mjs';
+const root='lossguard:push:',bytes=s=>Uint8Array.from(atob(s.replaceAll('-','+').replaceAll('_','/').padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0));
+export const b64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+export const digest=async s=>b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));
+export async function pushLock(env,fn){const owner=crypto.randomUUID(),now=Date.now(),db=env.PRIVATE_DB;await db.prepare("INSERT OR IGNORE INTO account_lease VALUES('push',0,NULL)").run();const got=await db.prepare("UPDATE account_lease SET expires=?,owner=? WHERE id='push' AND expires<=? RETURNING id").bind(now+60000,owner,now).first();if(!got)throw Error('PUSH_BUSY');try{return await fn();}finally{await db.prepare("UPDATE account_lease SET expires=0,owner=NULL WHERE id='push' AND owner=?").bind(owner).run();}}
+export async function ensurePushKeys(env){let v=await readState(env,root+'vapid');if(v)return v;return pushLock(env,async()=>{v=await readState(env,root+'vapid');if(v)return v;const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']),pub=await crypto.subtle.exportKey('raw',pair.publicKey),priv=await crypto.subtle.exportKey('jwk',pair.privateKey);v={subject:'https://codingzoaa.github.io/market-mood-desk/',publicKey:b64url(pub),privateKey:priv.d};await writeState(env,root+'vapid',v);return v;});}
+export function validateSubscription(s){if(!s||typeof s.endpoint!=='string'||s.endpoint.length>2048)throw Error('PUSH_INVALID_SUBSCRIPTION');const u=new URL(s.endpoint);if(u.protocol!=='https:'||u.username||u.password||u.hash||u.port&&u.port!=='443'||!(['fcm.googleapis.com','updates.push.services.mozilla.com','push.services.mozilla.com','web.push.apple.com'].includes(u.hostname)||u.hostname.endsWith('.notify.windows.com')))throw Error('PUSH_ENDPOINT_REJECTED');if(!/^[A-Za-z0-9_-]{80,100}$/.test(s.keys?.p256dh||'')||!/^[-A-Za-z0-9_]{20,24}$/.test(s.keys?.auth||''))throw Error('PUSH_INVALID_KEYS');const key=bytes(s.keys.p256dh);if(key.length!==65||key[0]!==4||bytes(s.keys.auth).length!==16)throw Error('PUSH_INVALID_KEYS');return {endpoint:u.href,expirationTime:null,keys:{p256dh:s.keys.p256dh,auth:s.keys.auth}};}
+export function validCapability(c){return typeof c==='string'&&/^[-A-Za-z0-9_]{40,100}$/.test(c);}
+export const subscriptions=async env=>(await readState(env,root+'subscriptions'))||[];
+export const saveSubscriptions=(env,list)=>writeState(env,root+'subscriptions',list);
+export async function authorizePush(list,input){if(!validCapability(input?.capability)||typeof input?.id!=='string')throw Error('PUSH_DEVICE_REJECTED');const hash=await digest(input.capability),sub=list.find(s=>s.id===input.id&&s.manageHash===hash);if(!sub)throw Error('PUSH_DEVICE_REJECTED');return sub;}
+export async function sendBrowserPush(env,sub,kind,fetcher=fetch){const vapid=await ensurePushKeys(env);const request=await buildPushPayload({data:{kind},options:{ttl:300,urgency:'high',topic:'marketnote-lossguard'}},sub.subscription,vapid);const r=await fetcher(sub.subscription.endpoint,{...request,redirect:'error',signal:AbortSignal.timeout(10000)});return {accepted:r.status>=200&&r.status<300,expired:r.status===404||r.status===410,status:r.status};}
+export async function wakeMonitor(env){if(!env.ACCOUNT_MONITOR)throw Error('PUSH_MONITOR_NOT_CONFIGURED');const stub=env.ACCOUNT_MONITOR.get(env.ACCOUNT_MONITOR.idFromName('lossguard-push-monitor-v1'));const r=await stub.fetch('https://account-monitor.internal/wake',{method:'POST'});if(!r.ok)throw Error('PUSH_MONITOR_UNAVAILABLE');return r.json();}
+export async function handlePush(request,env){
+ const path=new URL(request.url).pathname;
+ if(request.method==='GET'&&path==='/api/lossguard/push/key'){const k=await ensurePushKeys(env);return {publicKey:k.publicKey,serverIntervalSeconds:30,monitorConfigured:!!env.ACCOUNT_MONITOR};}
+ let input;const text=await request.text();if(text.length>4096)throw Error('PUSH_REQUEST_TOO_LARGE');input=JSON.parse(text);
+ if(path==='/api/lossguard/push/subscribe'){
+  if(!validCapability(input.capability))throw Error('PUSH_DEVICE_REJECTED');const subscription=validateSubscription(input.subscription);await crypto.subtle.importKey('raw',bytes(subscription.keys.p256dh),{name:'ECDH',namedCurve:'P-256'},false,[]);
+  const id=await digest(subscription.endpoint),manageHash=await digest(input.capability);await ensurePushKeys(env);
+  await pushLock(env,async()=>{const all=await subscriptions(env),old=all.find(s=>s.id===id),list=all.filter(s=>s.enabled||s.id===id);if(old&&old.manageHash!==manageHash)throw Error('PUSH_DEVICE_REJECTED');if(!old&&list.length>=8)throw Error('PUSH_DEVICE_LIMIT');await saveSubscriptions(env,[...list.filter(s=>s.id!==id),{...old,id,manageHash,subscription,enabled:true,createdAt:old?.createdAt||new Date().toISOString()}]);});
+  const schedule=await wakeMonitor(env);return {id,enabled:true,...schedule,serverIntervalSeconds:30};
+ }
+ if(path==='/api/lossguard/push/status'){const list=await subscriptions(env),sub=await authorizePush(list,input),monitor=await readState(env,root+'monitor');return {enabled:sub.enabled,lastSentAt:sub.lastSentAt||null,lastDeliveryStatus:sub.lastDeliveryStatus||null,monitor,serverIntervalSeconds:30};}
+ if(path==='/api/lossguard/push/unsubscribe'){await pushLock(env,async()=>{const list=await subscriptions(env),sub=await authorizePush(list,input);await saveSubscriptions(env,list.filter(s=>s.id!==sub.id));});await wakeMonitor(env);return {enabled:false};}
+ if(path==='/api/lossguard/push/test'){
+  let sub;await pushLock(env,async()=>{const list=await subscriptions(env);sub=await authorizePush(list,input);if(sub.lastTestAt&&Date.now()-Date.parse(sub.lastTestAt)<60000)throw Error('PUSH_TEST_RATE_LIMIT');sub.lastTestAt=new Date().toISOString();await saveSubscriptions(env,list);});const result=await sendBrowserPush(env,sub,'TEST');await pushLock(env,async()=>{const current=await subscriptions(env),own=current.find(s=>s.id===sub.id);if(own){Object.assign(own,{lastTestAt:new Date().toISOString(),lastDeliveryStatus:result.status,...(result.expired?{enabled:false}:{})});await saveSubscriptions(env,current);}});if(!result.accepted)throw Error(result.expired?'PUSH_SUBSCRIPTION_EXPIRED':'PUSH_DELIVERY_FAILED');return {accepted:true};
+ }
+ throw Error('PUSH_NOT_FOUND');
+}
