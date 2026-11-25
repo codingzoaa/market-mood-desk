@@ -1,0 +1,20 @@
+name: Inspect private account integration
+on:
+  push:
+    branches: [main]
+    paths: ['scripts/inspect-private-account.mjs', '.github/workflows/inspect-private-account.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Inspect deployed source fingerprint and binding names only
+        env:
+          RAW_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node scripts/inspect-private-account.mjs
