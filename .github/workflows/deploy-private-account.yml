@@ -1,0 +1,33 @@
+name: Deploy private account loss guard
+on:
+  push:
+    branches: [main]
+    paths: ['src/account/**', 'worker/account/**', 'scripts/build-account*.mjs', 'scripts/deploy-private-account.mjs', '.github/workflows/deploy-private-account.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: private-account-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Test private account boundaries and loss calculations
+        run: node --test tests/account*.test.mjs tests/ordinary-ledger.test.mjs tests/loss-guard*.test.mjs
+      - run: node scripts/build-account-inline.mjs
+      - name: Update existing private Worker and verify authentication
+        env:
+          RAW_CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node scripts/deploy-private-account.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-account-deployment-report
+          path: work/private-account-deploy-report.json
+          if-no-files-found: error
