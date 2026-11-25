@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-25T11:04:05.143Z",
+  "observedAt": "2026-11-25T11:04:30.943Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -443,6 +443,39 @@
     },
     {
       "publicationStatus": null,
+      "id": 45600925791,
+      "name": "Build and deploy dashboard",
+      "event": "workflow_dispatch",
+      "branch": "main",
+      "sha": "e7d3a3eca599d466f65c147ead6ff80f6fb25411",
+      "status": "in_progress",
+      "conclusion": null,
+      "createdAt": "2026-11-25T11:04:08Z",
+      "startedAt": "2026-11-25T11:04:08Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45600925791",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "in_progress",
+          "conclusion": null,
+          "startedAt": "2026-11-25T11:04:11Z",
+          "completedAt": null,
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-25T11:04:26Z",
+              "completedAt": "2026-11-25T11:04:28Z"
+            }
+          ],
+          "steps": []
+        }
+      ]
+    },
+    {
+      "publicationStatus": null,
       "id": 45600730445,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
@@ -487,48 +520,6 @@
               "completedAt": "2026-11-25T11:03:35Z"
             }
           ],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 45600626775,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
-      "branch": "main",
-      "sha": "c0f169ea9cefc1595a53e712bbebc5a0032c2b6e",
-      "status": "completed",
-      "conclusion": "cancelled",
-      "createdAt": "2026-11-25T11:02:14Z",
-      "startedAt": "2026-11-25T11:02:14Z",
-      "completedAt": "2026-11-25T11:02:57Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45600626775",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-25T11:02:22Z",
-          "completedAt": "2026-11-25T11:02:53Z",
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-25T11:02:45Z",
-              "completedAt": "2026-11-25T11:02:49Z"
-            }
-          ],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "cancelled",
-          "startedAt": "2026-11-25T11:02:53Z",
-          "completedAt": "2026-11-25T11:02:57Z",
-          "stages": [],
           "steps": []
         }
       ]
