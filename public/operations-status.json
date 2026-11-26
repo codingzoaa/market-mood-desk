@@ -1,8 +1,76 @@
 {
   "version": 1,
-  "observedAt": "2026-11-26T19:55:33.038Z",
+  "observedAt": "2026-11-26T19:56:00.238Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
+    {
+      "publicationStatus": "unchanged",
+      "id": 45887234592,
+      "name": "Publish verified sector calendar at 17 KST",
+      "event": "workflow_run",
+      "branch": "main",
+      "sha": "727763cb823d0eb91140b4cc625b6955f78c2d65",
+      "status": "completed",
+      "conclusion": "success",
+      "createdAt": "2026-11-26T19:55:30Z",
+      "startedAt": "2026-11-26T19:55:30Z",
+      "completedAt": "2026-11-26T19:55:38Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45887234592",
+      "jobs": [
+        {
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-26T19:55:32Z",
+          "completedAt": "2026-11-26T19:55:37Z",
+          "stages": [
+            {
+              "name": "Generate same-day evidence-gated editorial review",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            },
+            {
+              "name": "Validate review or status-only update with full test, type check and build",
+              "status": "completed",
+              "conclusion": "skipped",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            },
+            {
+              "name": "Create reviewed calendar PR",
+              "status": "completed",
+              "conclusion": "skipped",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            },
+            {
+              "name": "Run independent calendar CI",
+              "status": "completed",
+              "conclusion": "skipped",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            },
+            {
+              "name": "Merge verified calendar PR",
+              "status": "completed",
+              "conclusion": "skipped",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            },
+            {
+              "name": "Deploy verified calendar to Pages",
+              "status": "completed",
+              "conclusion": "skipped",
+              "startedAt": "2026-11-26T19:55:35Z",
+              "completedAt": "2026-11-26T19:55:35Z"
+            }
+          ],
+          "steps": []
+        }
+      ]
+    },
     {
       "publicationStatus": "unchanged",
       "id": 45887190339,
@@ -344,74 +412,6 @@
       ]
     },
     {
-      "publicationStatus": "unchanged",
-      "id": 45875484805,
-      "name": "Publish verified sector calendar at 17 KST",
-      "event": "workflow_run",
-      "branch": "main",
-      "sha": "74806f1af59b777441432a0e770cfda88c833f09",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-26T18:23:09Z",
-      "startedAt": "2026-11-26T18:23:09Z",
-      "completedAt": "2026-11-26T18:23:19Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45875484805",
-      "jobs": [
-        {
-          "name": "publish",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T18:23:11Z",
-          "completedAt": "2026-11-26T18:23:18Z",
-          "stages": [
-            {
-              "name": "Generate same-day evidence-gated editorial review",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T18:23:14Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            },
-            {
-              "name": "Validate review or status-only update with full test, type check and build",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-26T18:23:15Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            },
-            {
-              "name": "Create reviewed calendar PR",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-26T18:23:15Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            },
-            {
-              "name": "Run independent calendar CI",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-26T18:23:15Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            },
-            {
-              "name": "Merge verified calendar PR",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-26T18:23:15Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            },
-            {
-              "name": "Deploy verified calendar to Pages",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-26T18:23:15Z",
-              "completedAt": "2026-11-26T18:23:15Z"
-            }
-          ],
-          "steps": []
-        }
-      ]
-    },
-    {
       "publicationStatus": null,
       "id": 45882454430,
       "name": "Update KOSPI pension signal data",
@@ -536,11 +536,11 @@
       "event": "workflow_run",
       "branch": "main",
       "sha": "727763cb823d0eb91140b4cc625b6955f78c2d65",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "createdAt": "2026-11-26T19:55:09Z",
       "startedAt": "2026-11-26T19:55:09Z",
-      "completedAt": null,
+      "completedAt": "2026-11-26T19:55:27Z",
       "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45887190300",
       "jobs": [
         {
@@ -606,25 +606,33 @@
     },
     {
       "publicationStatus": null,
-      "id": 45855723495,
-      "name": "Deploy LS Cloudflare Worker",
-      "event": "push",
+      "id": 45887244597,
+      "name": "Build and deploy dashboard",
+      "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "8721ff56791a621630263c52f8cf2c7fbb556786",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-26T16:07:10Z",
-      "startedAt": "2026-11-26T16:07:10Z",
-      "completedAt": "2026-11-26T16:07:39Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45855723495",
+      "sha": "92e016305919c2ea425a4c42d8a57187fef3d2fd",
+      "status": "in_progress",
+      "conclusion": null,
+      "createdAt": "2026-11-26T19:55:35Z",
+      "startedAt": "2026-11-26T19:55:35Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45887244597",
       "jobs": [
         {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T16:07:12Z",
-          "completedAt": "2026-11-26T16:07:39Z",
-          "stages": [],
+          "name": "build",
+          "status": "in_progress",
+          "conclusion": null,
+          "startedAt": "2026-11-26T19:55:39Z",
+          "completedAt": null,
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "pending",
+              "conclusion": null,
+              "startedAt": null,
+              "completedAt": null
+            }
+          ],
           "steps": []
         }
       ]
@@ -673,56 +681,6 @@
               "conclusion": "success",
               "startedAt": "2026-11-26T19:32:19Z",
               "completedAt": "2026-11-26T19:32:25Z"
-            }
-          ],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 45883948593,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
-      "branch": "main",
-      "sha": "3239e38da692e0fa5a68a07234e8a915e81fbf78",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-26T19:28:53Z",
-      "startedAt": "2026-11-26T19:28:53Z",
-      "completedAt": "2026-11-26T19:29:44Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45883948593",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T19:28:56Z",
-          "completedAt": "2026-11-26T19:29:27Z",
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T19:29:19Z",
-              "completedAt": "2026-11-26T19:29:23Z"
-            }
-          ],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T19:29:31Z",
-          "completedAt": "2026-11-26T19:29:43Z",
-          "stages": [
-            {
-              "name": "Deploy dashboard",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T19:29:34Z",
-              "completedAt": "2026-11-26T19:29:41Z"
             }
           ],
           "steps": []
