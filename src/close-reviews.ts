@@ -1,4 +1,7 @@
 import type {ScoreInput} from './close-score';
+import {review20261123} from './close-review-2026-11-23';
+import {review20261120} from './close-review-2026-11-20';
+import {review20261117} from './close-review-2026-11-17';
 import {review20261126} from './close-review-2026-11-26';
 import {review20261125} from './close-review-2026-11-25';
 import {review20261124} from './close-review-2026-11-24';
@@ -20,7 +23,7 @@ import {review20261103} from './close-review-2026-11-03';
 import {review20261104} from './close-review-2026-11-04';
 import {review20261105} from './close-review-2026-11-05';
 export type CloseSector={name:string;status:'NEW'|'HOT'|'RE'|'WEAK';kind:string;leader:string;leaderSymbol?:string;breadthSector?:string;breadthGroup?:string;companions:string;reason:string;outlook:string;change:string;sourceIds:number[];scoreInput?:ScoreInput};
-export type CloseReview={date:string;session:string;summary:string;coverageNote?:string;marketFlow?:string;sectors:CloseSector[];sources:{title:string;url:string}[]};
+export type CloseReview={date:string;session:string;summary:string;coverageNote?:string;marketFlow?:string;emptyReason?:string;sectors:CloseSector[];sources:{title:string;url:string}[]};
 // Source-checked editorial records, independent of incomplete live theme tags.
 const latestReview:CloseReview[]=[{date:'2026-10-23',session:'KRX 정규장 마감 · 15:30 KST',summary:'코스피 5,550.30 (+0.30%) · 코스닥 751.69 (−1.62%). 대형주 반등과 개별 재료 중심의 선별 장세.',sources:[{title:'유안타증권 · 10/23 마감·특징주 (17:10)',url:'https://www.myasset.com/myasset/research/rs_global/RS_0401000_M.cmd?glblGubun=KS'},{title:'연합뉴스 · 삼성E&A 정규장 마감 (15:39)',url:'https://www.yna.co.kr/view/AKR20261023044651008'},{title:'10/23 정규장 상한가 기록 (15:35)',url:'https://sanghanga365.com/daily/2026-10-23'},{title:'이데일리 · 정치 테마 상승 배경 (장중 기사)',url:'https://www2.edaily.co.kr/News/Read?mediaCodeNo=257&newsId=04605126645615872'},{title:'한국경제 · 10/23 솔리다임 상장 중단',url:'https://www.hankyung.com/article/2026102303026'},{title:'조선비즈 · 10/22 삼성E&A 실적·주주환원',url:'https://biz.chosun.com/real_estate/real_estate_general/2026/10/22/CT257TFLAFHKXOBBP5Q4FJSMLI/'}],sectors:[
 {name:'반도체 대형주',scoreInput:{date:'2026-10-23',news:'reported',sourceUrls:['https://www.hankyung.com/article/2026102303026']},status:'RE',kind:'주도 후보 · 대형주 집중',leader:'SK하이닉스 +4.42%',companions:'삼성전자 +0.47% · 관련 지주사 SK스퀘어 +3.20%',reason:'SK하이닉스가 솔리다임의 미국 상장 검토를 중단. 중복상장 우려 완화가 반등 재료로 부각.',outlook:'장비·소재까지 확산됐는지 확인. 반도체 전체의 추세 전환은 판단 보류.',change:'장초반 약세에서 반등 · 전일 섹터 순위 미확인',sourceIds:[4,0]},
@@ -971,8 +974,8 @@ const historicalReviews:CloseReview[]=[
     ]
   }
 ];
-const records=[...historicalReviews,...latestReview,review20261027,review20261028,review20261029,review20261030,review20261102,review20261103,review20261104,review20261105,review20261106,review20261109,review20261110,review20261111,review20261112,review20261113,review20261116,review20261118,review20261119,review20261124,review20261125,review20261126];
-export const closeReviews:CloseReview[]=records.map((review,index)=>({...review,sectors:review.sectors.map(sector=>{
+const records=[...historicalReviews,...latestReview,review20261027,review20261028,review20261029,review20261030,review20261102,review20261103,review20261104,review20261105,review20261106,review20261109,review20261110,review20261111,review20261112,review20261113,review20261116,review20261118,review20261119,review20261124,review20261125,review20261126,review20261117,review20261120,review20261123];
+export const closeReviews:CloseReview[]=[...records].sort((a,b)=>a.date.localeCompare(b.date)).map((review,index)=>({...review,sectors:review.sectors.map(sector=>{
  if(index===0||!historicalReviews.includes(review))return sector;
  const previous=records[index-1],match=previous.sectors.find(s=>s.name===sector.name);
  return {...sector,change:match?`${previous.date.slice(5)} 편집 선정에도 포함 · 이전 ${match.status}. 정량 순위 변화는 미산출.`:`${previous.date.slice(5)} 편집 선정에는 미포함 · 실제 업종 강세 전환 확정은 아님.`};

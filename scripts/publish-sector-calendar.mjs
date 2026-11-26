@@ -47,7 +47,7 @@ const aliases={
  '사이버보안':['보안','사이버'],
  '건설·EPC':['건설','플랜트','EPC']
 };
-const validHeadline=(story,group)=>{
+export const validHeadline=(story,group)=>{
  // A report's broker byline is not evidence that financial stocks rose.
  const h=normalize(story.headline).replace(/\s*[-–]\s*[^-–]*투자증권(?:\s*[-–].*)?$/,'').toLowerCase();
  const stocks=group.stocks.filter(s=>s.name.length>=3).map(s=>s.name.toLowerCase());
@@ -60,8 +60,17 @@ const validHeadline=(story,group)=>{
  // Foreign stock-market features do not establish a catalyst for Korean peers.
  if(/\[(?:[^\]]*(?:인도|유럽|미국|중국|일본|홍콩))[^\]]*특징주\]/.test(h)&&!direct)return false;
  const terms=[group.name,...(aliases[group.name]||[])];
- return direct||terms.some(w=>w.length>=2&&h.includes(w.toLowerCase()));
+ const sectorMention=terms.some(w=>w.length>=2&&new RegExp('(^|[^가-힣a-z])'+w.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^가-힣a-z]|주|株|업종)').test(h));
+ return direct||sectorMention;
 };
+export function briefReason(story,group){
+ const clean=value=>String(value||'').replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\s+/g,' ').trim();
+ const headline=clean(story.headline).replace(/^\[[^\]]+\]\s*/,'').replace(/\s*[-–]\s*[^-–]+$/,'');
+ const text=clean(story.description),sentences=text.split(/(?<=[다요])\.\s+/);
+ const sentence=sentences.find(x=>validHeadline({...story,headline:x},group)&&/기대|수주|공급|계약|실적|수출|해킹|정책|확대|승인/.test(x));
+ const excerpt=(sentence||headline).slice(0,150).replace(/\.\.\.$/,'…');
+ return (sentence?'보도 요약: ':'관련 보도: ')+excerpt;
+}
 const pct=n=>(n>0?'+':'')+n.toFixed(2)+'%';
 const shortStock=s=>s.name+' '+pct(s.changePct);
 
@@ -84,7 +93,7 @@ export function prepareEditorial(date,snapshot,headlines,catalog){
   if(gainers.length<2)continue;
   const leader=gainers[0],companions=gainers.slice(1,5);
   const headline=normalize(story.headline);
-  const reason='['+normalize(story.source)+(story.provider?' · '+story.provider:'')+' · '+date+' 보도] '+headline+'. 기사 제목과 종가 동반 상승은 확인했으나 상승 원인·공통 공시 간 인과관계는 별도 검증이 필요합니다.';
+  const reason=briefReason(story,group);
   sectors.push({
    name:group.name,status:'NEW',kind:'정규장 LS 표본 + 당일 매체 기사 · NEW 잠정',
    leaderSymbol:leader.symbol,leader:shortStock(leader),
@@ -109,7 +118,7 @@ export function updateIndex(original,date){
  return original.replace(importAnchor,importAnchor+'\n'+importLine).replace(match[0],match[0].replace(/\];$/ ,','+identifier+'];'));
 }
 export function nextState(date,review,reason,news=[]){
- if(review?.sectors?.length)return {date,status:'published',checkedAt:new Date().toISOString(),reason:review.sectors.length+'개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포',sources:review.sources.map(s=>s.url).slice(0,5)};
+ if(review?.sectors?.length||review?.emptyReason)return {date,status:'published',checkedAt:new Date().toISOString(),reason:review.sectors.length+'개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포',sources:review.sources.map(s=>s.url).slice(0,5)};
  return {date,status:'pending',checkedAt:new Date().toISOString(),reason:'검증 보류: '+reason+'. 당일 정규장 종가·동반 상승·섹터 관련 기사 등 확인되지 않은 항목은 등록하지 않았습니다.',sources:news.filter(n=>/^https:\/\//.test(n.link)).slice(0,3).map(n=>n.link)};
 }
 async function checkedFetch(url,mode='json'){
@@ -141,10 +150,12 @@ export async function main({date=reviewTargetDate(),readData=checkedFetch,readNe
   const queries=[...candidates.map(g=>g.name),...candidates.slice(0,10).map(g=>g.stocks.slice().sort((a,b)=>b.turnoverKRW-a.turnoverKRW)[0].name)];
   const naver=await readNaver(date,queries);
   console.log('NAVER_SECTOR_NEWS status='+naver.status+' count='+naver.items.length);
-  headlines=mergeSectorNews(naver.items,google);
+  let ls=[];try{const data=await readData('https://market-note-ls-api.kby0991.workers.dev/api/sector-stock-news?date='+date);ls=(data.items||[]).filter(n=>n.provider==='LS증권 종목뉴스'&&n.day===date&&typeof n.id==='string');}catch{console.log('LS_STOCK_NEWS_UNAVAILABLE');}
+  headlines=mergeSectorNews(naver.items,ls,google);
   if(!headlines.length)throw Error('TRUSTED_SAME_DAY_NEWS_MISSING');
   const candidate=prepareEditorial(date,snapshot,headlines,catalog);
   if(candidate.sectors.length)review=candidate;
+  else if(!candidates.length)review={...candidate,emptyReason:'마감 후 LS 표본에서 동반 강세 조건을 충족한 섹터 없음',summary:'검증 완료 · 표본 내 동반 강세 조건 충족 섹터 없음'};
   else reason='LS 표본 동반 상승과 당일 신뢰매체 기사를 동시에 충족한 섹터 없음';
  }catch(e){reason=e instanceof Error?e.message:'EDITORIAL_VERIFICATION_FAILED';}
  const status=nextState(date,review,reason,headlines);

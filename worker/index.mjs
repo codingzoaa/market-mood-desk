@@ -1,3 +1,4 @@
+import {stockNewsWindow,collectStockNews,readStockNews} from './stock-news.mjs';
 import {handleLSSessionLock} from './ls-session-lock.mjs';
 import {recoverPreviousIntraday} from './previous-intraday-recovery.mjs';
 import {handleSessionRecovery} from './session-recovery.mjs';
@@ -117,7 +118,8 @@ export default {
   if(path==='/api/session-recovery-status'){const date=new URL(request.url).searchParams.get('date');if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return reply({error:'DATE'},400);const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('session-recovery:'+date).first();return reply(row?JSON.parse(row.payload):{date,status:'not_attempted'});}
   if(path==='/api/intraday-backfill-status'){const date=new URL(request.url).searchParams.get('date')||kst().date;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>kst().date)return reply({error:'DATE'},400);const row=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind('previous-intraday-recovery:'+date).first();return reply(row?JSON.parse(row.payload):{checkedOn:date,status:'NOT_ATTEMPTED'});}
   if(path==='/health')return reply({service:'market-note-ls',status:READY(env)?'configured':'setup_required'});
-  if(!['/api/drawdown','/api/stock-search','/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
+  if(path==='/api/sector-stock-news'){const date=new URL(request.url).searchParams.get('date'),id=new URL(request.url).searchParams.get('id');if(!/^\d{4}-\d{2}-\d{2}$/.test(date||'')||(id&&!/^[a-zA-Z0-9]{24}$/.test(id)))return reply({error:'INVALID_NEWS_QUERY'},400);try{return reply(await readStockNews(env,date,id));}catch{return reply({error:'NEWS_STORAGE_UNAVAILABLE'},503);}}
+  if(!['/api/drawdown','/api/stock-search','/api/breadth-close','/api/put-kospi-daily','/api/stock-map','/api/dashboard','/api/sector-stock-news','/api/status','/api/market-details','/api/correlation','/api/sector-etfs','/api/etf-holdings','/api/pension-kospi-daily','/api/telegram-delivery-status','/api/investor-flow-venues'].includes(path))return reply({error:'NOT_FOUND'},404);
   if(!READY(env))return reply({error:'LS_KEYS_REQUIRED'},503);
   try{
    const row=await env.DB.prepare("SELECT payload FROM state WHERE id='sync'").first();const sync=row?JSON.parse(row.payload):{};
@@ -208,6 +210,7 @@ export default {
   }catch{return reply({error:'STORAGE_UNAVAILABLE'},503);}
  },
  scheduled(event,env,ctx){ctx.waitUntil((async()=>{
+  if(env.COLLECTOR&&stockNewsWindow()){const id=env.COLLECTOR.idFromName('stock-news-nws-v1');await env.COLLECTOR.get(id).fetch('https://collector.internal/stock-news',{method:'POST'});}
   // Share existing 5-minute collection Cron slots; no additional Cloudflare Cron triggers needed.
   // Telegram sends in a separate waitUntil so market data collection retains its existing path.
   if(DELIVERY_CRONS.includes(event.cron))ctx.waitUntil(deliverScheduled(event,env));
@@ -234,6 +237,7 @@ export class CollectorAlarm {
  constructor(state,env){this.state=state;this.env=env;}
  async fetch(request,now=new Date()){
   if(new URL(request.url).pathname.startsWith('/ls-session/'))return handleLSSessionLock(request,this.state,now.getTime());
+  if(request.method==='POST'&&new URL(request.url).pathname==='/stock-news'){if(!stockNewsWindow(now))return new Response(null,{status:204});await this.state.storage.put('stock-news-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/drawdown'){const symbol=new URL(request.url).searchParams.get('symbol');if(!validSymbol(symbol))return new Response(null,{status:400});await this.state.storage.put('drawdown-symbol',symbol);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/program'){if(!programWindow(now))return new Response(null,{status:204});await this.state.storage.put('program-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
   if(request.method==='POST'&&new URL(request.url).pathname==='/naver'){if(!naverHeatmapWindow(now))return new Response(null,{status:204});await this.state.storage.put('naver-only',true);if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);return new Response(null,{status:202});}
@@ -243,7 +247,7 @@ export class CollectorAlarm {
   if(await this.state.storage.getAlarm()===null)await this.state.storage.setAlarm(Date.now()+100);
   return new Response(null,{status:202});
  }
- async alarm(){const drawdownSymbol=this.state.storage.get&&await this.state.storage.get('drawdown-symbol');if(drawdownSymbol){await collectDrawdown(this.env,drawdownSymbol);return;}if(this.state.storage.get&&await this.state.storage.get('program-only')){await collectProgramFlow(this.env);return;}if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await collectProgramFlow(this.env);await recoverPreviousIntraday(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
+ async alarm(){if(this.state.storage.get&&await this.state.storage.get('stock-news-only')){await collectStockNews(this.env);return;}const drawdownSymbol=this.state.storage.get&&await this.state.storage.get('drawdown-symbol');if(drawdownSymbol){await collectDrawdown(this.env,drawdownSymbol);return;}if(this.state.storage.get&&await this.state.storage.get('program-only')){await collectProgramFlow(this.env);return;}if(this.state.storage.get&&await this.state.storage.get('naver-only')){const pending=await safeCollectNaverHeatmap(this.env);if(pending&&naverHeatmapWindow())await this.state.storage.setAlarm(Date.now()+1500);return;}if(this.state.storage.get&&await this.state.storage.get('breadth-only')){const delay=await collectBreadthClose(this.env);if(delay&&breadthCloseWindow())await this.state.storage.setAlarm(Date.now()+delay);return;}if(!collectWindow())return;const next=(Math.floor(Date.now()/300000)+1)*300000;if(collectWindow(new Date(next)))await this.state.storage.setAlarm(next);await collectDetails(this.env);await collectProgramFlow(this.env);await recoverPreviousIntraday(this.env);await recoverPutHistory(this.env);await recoverIntradayFlows(this.env);await collect(this.env);const detailsPending=await enrichDetails(this.env);const etfsPending=await safeCollectSectorEtfs(this.env);if((detailsPending||etfsPending)&&collectWindow()){const retry=Date.now()+1500,scheduled=await this.state.storage.getAlarm();if(scheduled===null||retry<scheduled)await this.state.storage.setAlarm(retry);}}
 }
 
 

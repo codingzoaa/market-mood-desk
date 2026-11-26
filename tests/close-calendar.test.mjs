@@ -34,7 +34,7 @@ test('latest verified close review preserves TOP3 calendar and variable-size TOP
   assert.equal(document.querySelector('.calendar-update-status'),null);
   assert.equal(document.querySelector('.operations-panel'),null);
   const card=document.querySelector('.close-sector');
-  assert.equal(card.querySelector('.calendar-reason'),null);
+  assert.ok(card.querySelector('.calendar-reason').textContent.length>0);
   assert.deepEqual([...card.querySelectorAll('dt')].map(n=>n.textContent),['대표 종목','동반 종목']);
   assert.ok(card.querySelector('.calendar-key-facts').compareDocumentPosition(card.querySelector('.calendar-news')) & 4);
   assert.match(document.querySelector('.close-review h2').textContent,new RegExp(newest.date));
