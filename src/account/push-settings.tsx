@@ -1,10 +1,11 @@
+import {accountFetch} from './auth-client.ts';
 import React,{useEffect,useState} from 'react';
 const STORAGE='market-note:lossguard-push-device-v1';
 const decode=(s:string)=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0));
 const time=(s:string)=>s?new Date(s).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):'대기 중';
 export default function PushSettings({apiBase=''}:{apiBase?:string}){
  const [device,setDevice]=useState<any>(null),[status,setStatus]=useState<any>(null),[pending,setPending]=useState(false),[message,setMessage]=useState('');
- async function api(path:string,input?:any){const r=await fetch(apiBase+'/api/lossguard/push/'+path,{method:input?'POST':'GET',credentials:apiBase?'omit':'same-origin',redirect:'error',cache:'no-store',headers:input?{'Content-Type':'application/json'}:{},...(input?{body:JSON.stringify(input)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error==='PUSH_SUBSCRIPTION_EXPIRED'?'알림 등록이 만료됐습니다. 알림을 다시 켜주세요.':d.error==='PUSH_TEST_RATE_LIMIT'?'테스트 알림은 1분에 한 번 보낼 수 있습니다.':d.error==='PUSH_DEVICE_LIMIT'?'등록된 알림 기기가 많습니다. 사용하지 않는 기기에서 알림을 꺼주세요.':'서버 알림 설정을 완료하지 못했습니다. 잠시 후 다시 시도하세요.');return d;}
+ async function api(path:string,input?:any){const r=await accountFetch(apiBase+'/api/lossguard/push/'+path,{method:input?'POST':'GET',credentials:apiBase?'omit':'same-origin',redirect:'error',cache:'no-store',headers:input?{'Content-Type':'application/json'}:{},...(input?{body:JSON.stringify(input)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error==='PUSH_SUBSCRIPTION_EXPIRED'?'알림 등록이 만료됐습니다. 알림을 다시 켜주세요.':d.error==='PUSH_TEST_RATE_LIMIT'?'테스트 알림은 1분에 한 번 보낼 수 있습니다.':d.error==='PUSH_DEVICE_LIMIT'?'등록된 알림 기기가 많습니다. 사용하지 않는 기기에서 알림을 꺼주세요.':'서버 알림 설정을 완료하지 못했습니다. 잠시 후 다시 시도하세요.');return d;}
  useEffect(()=>{let saved;try{saved=JSON.parse(localStorage.getItem(STORAGE)||'null');}catch{}if(!saved?.capability)return;setDevice(saved);if(!saved.id)return;let live=true;const refresh=()=>api('status',saved).then(d=>{if(live)setStatus(d);}).catch(()=>{});refresh();const id=setInterval(refresh,30000);return()=>{live=false;clearInterval(id);};},[device?.id]);
  async function enable(){setPending(true);setMessage('');try{
   if(!('serviceWorker'in navigator)||!('PushManager'in window)||typeof Notification==='undefined')throw Error('이 브라우저는 웹 푸시를 지원하지 않습니다. 지원 브라우저에서 접속해 주세요.');
