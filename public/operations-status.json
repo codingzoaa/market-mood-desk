@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-26T16:10:05.923Z",
+  "observedAt": "2026-11-26T16:10:31.030Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -26,16 +26,16 @@
           "stages": [
             {
               "name": "Generate same-day evidence-gated editorial review",
-              "status": "pending",
-              "conclusion": null,
-              "startedAt": null,
-              "completedAt": null
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-26T16:10:11Z",
+              "completedAt": "2026-11-26T16:10:24Z"
             },
             {
               "name": "Validate review or status-only update with full test, type check and build",
-              "status": "pending",
+              "status": "in_progress",
               "conclusion": null,
-              "startedAt": null,
+              "startedAt": "2026-11-26T16:10:24Z",
               "completedAt": null
             },
             {
@@ -559,78 +559,33 @@
     },
     {
       "publicationStatus": null,
-      "id": 45856132590,
+      "id": 45856190695,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
-      "sha": "729aac51de88dcbf37ce9091083d10b19ffbf058",
-      "status": "in_progress",
+      "sha": "942b0def93fe121e9dac0da4526c82fbf27ed39d",
+      "status": "pending",
       "conclusion": null,
-      "createdAt": "2026-11-26T16:09:47Z",
-      "startedAt": "2026-11-26T16:09:47Z",
+      "createdAt": "2026-11-26T16:10:09Z",
+      "startedAt": "2026-11-26T16:10:09Z",
       "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45856132590",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "in_progress",
-          "conclusion": null,
-          "startedAt": "2026-11-26T16:09:55Z",
-          "completedAt": null,
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "pending",
-              "conclusion": null,
-              "startedAt": null,
-              "completedAt": null
-            }
-          ],
-          "steps": []
-        }
-      ]
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45856190695",
+      "jobs": []
     },
     {
       "publicationStatus": null,
-      "id": 45856051025,
+      "id": 45856179317,
       "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
+      "event": "push",
       "branch": "main",
-      "sha": "9743c8550b6312c075040c954a94a40644fff0fe",
+      "sha": "12f7391dcc4720b559093ffff96507630d600014",
       "status": "completed",
       "conclusion": "cancelled",
-      "createdAt": "2026-11-26T16:09:16Z",
-      "startedAt": "2026-11-26T16:09:16Z",
-      "completedAt": "2026-11-26T16:09:52Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45856051025",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "completed",
-          "conclusion": "cancelled",
-          "startedAt": "2026-11-26T16:09:23Z",
-          "completedAt": "2026-11-26T16:09:52Z",
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T16:09:44Z",
-              "completedAt": "2026-11-26T16:09:48Z"
-            }
-          ],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "cancelled",
-          "startedAt": "2026-11-26T16:09:52Z",
-          "completedAt": "2026-11-26T16:09:52Z",
-          "stages": [],
-          "steps": []
-        }
-      ]
+      "createdAt": "2026-11-26T16:10:04Z",
+      "startedAt": "2026-11-26T16:10:04Z",
+      "completedAt": "2026-11-26T16:10:11Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45856179317",
+      "jobs": []
     }
   ]
 }
