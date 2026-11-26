@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "observedAt": "2026-11-26T19:17:49.150Z",
+  "observedAt": "2026-11-26T19:18:07.702Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
     {
@@ -631,12 +631,27 @@
     },
     {
       "publicationStatus": null,
+      "id": 45882580204,
+      "name": "Build and deploy dashboard",
+      "event": "workflow_dispatch",
+      "branch": "main",
+      "sha": "ef1c531fc2d272f47444f0ddea88cc36f7f1f07a",
+      "status": "pending",
+      "conclusion": null,
+      "createdAt": "2026-11-26T19:17:52Z",
+      "startedAt": "2026-11-26T19:17:52Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45882580204",
+      "jobs": []
+    },
+    {
+      "publicationStatus": null,
       "id": 45882538860,
       "name": "Build and deploy dashboard",
       "event": "workflow_dispatch",
       "branch": "main",
       "sha": "3e37f398197cc41adc7f50d46c22cbe80949db7f",
-      "status": "pending",
+      "status": "in_progress",
       "conclusion": null,
       "createdAt": "2026-11-26T19:17:33Z",
       "startedAt": "2026-11-26T19:17:33Z",
@@ -656,56 +671,6 @@
               "conclusion": null,
               "startedAt": null,
               "completedAt": null
-            }
-          ],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 45882479665,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_run",
-      "branch": "main",
-      "sha": "44786ed1a77db5f6a15d2d3bcd2b3101299c0aaa",
-      "status": "in_progress",
-      "conclusion": null,
-      "createdAt": "2026-11-26T19:17:04Z",
-      "startedAt": "2026-11-26T19:17:04Z",
-      "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45882479665",
-      "jobs": [
-        {
-          "name": "build",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T19:17:07Z",
-          "completedAt": "2026-11-26T19:17:26Z",
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T19:17:20Z",
-              "completedAt": "2026-11-26T19:17:22Z"
-            }
-          ],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-26T19:17:32Z",
-          "completedAt": "2026-11-26T19:17:42Z",
-          "stages": [
-            {
-              "name": "Deploy dashboard",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-26T19:17:34Z",
-              "completedAt": "2026-11-26T19:17:41Z"
             }
           ],
           "steps": []
