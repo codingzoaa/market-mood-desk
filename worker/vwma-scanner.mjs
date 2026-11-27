@@ -91,20 +91,20 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
   await publish();
   for(const s of selected){
    if(clock().getTime()-now.getTime()>(bootstrap?90000:30000)||!bootstrap&&(Math.floor(clock().getTime()/300000)!==slot||kst(clock()).time>=market.close))break;
-   const frames={},errors={};
+   const frames={},errors={},diagnostics={};
    for(const f of FRAMES){
     if(!bootstrap&&(kst(clock()).time>=market.close||Math.floor(clock().getTime()/300000)!==slot)||clock().getTime()-now.getTime()>(bootstrap?90000:45000))break;
     try{
      await delay(1100);
      const code=f==='D'?'t8410':'t8412';
-     const body=f==='D'?{shcode:s.symbol,gubun:'2',qrycnt:120,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'}:{shcode:s.symbol,ncnt:Number(f),qrycnt:120,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date:'',cts_time:'',comp_yn:'N'};
+     const body=f==='D'?{shcode:s.symbol,gubun:'2',qrycnt:120,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'}:{shcode:s.symbol,ncnt:Number(f),qrycnt:500,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date:'',cts_time:'',comp_yn:'N'};
      const response=await tr(token,code,body,undefined,fetcher);
-     const bars=normalizeBars(response.data[code+'OutBlock1'],f,clock());frames[f]=summarize(bars);
+     const raw=response.data[code+'OutBlock1'];diagnostics[f]={received:raw?.length,flags:[...new Set((raw||[]).map(r=>r.jongchk))].slice(0,12),rates:[...new Set((raw||[]).map(r=>r.rate))].slice(0,12),sample:(raw||[]).slice(-3).map(({date,time,close,jdiff_vol,jongchk,rate,pricechk})=>({date,time,close,jdiff_vol,jongchk,rate,pricechk})),session:response.data[code+'OutBlock']?.s_time};const bars=normalizeBars(raw,f,clock());frames[f]=summarize(bars);
      if(frames[f])frames[f].samples=bars.length;
      if(!frames[f])errors[f]='INSUFFICIENT_BARS';
     }catch(e){frames[f]=null;errors[f]=/^[A-Z_0-9]+$/.test(e?.code||'')?e.code:/^(?:CHART_[A-Z_]+|CORPORATE_ACTION_REVIEW)$/.test(e?.message||'')?e.message:'CHART_UNAVAILABLE';}
    }
-   rows.set(s.symbol,{frames,errors,checkedAt:clock().toISOString(),pattern:classify(frames)});
+   rows.set(s.symbol,{frames,errors,diagnostics,checkedAt:clock().toISOString(),pattern:classify(frames)});
    await publish();
   }
  }finally{if(session)await session.close();}
