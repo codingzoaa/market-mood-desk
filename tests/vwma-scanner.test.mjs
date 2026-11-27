@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {FRAMES,summarize,normalizeBars,classify,scannerCandidates} from '../worker/vwma-scanner.mjs';
+import {FRAMES,summarize,normalizeBars,classify,scannerCandidates,regularDailyBars} from '../worker/vwma-scanner.mjs';
 test('VWMA weights volume and records cross',()=>{
  const b=[{at:1,p:10,v:1},{at:2,p:8,v:10},{at:3,p:12,v:1}];
  const s=summarize(b,2);assert.ok(Math.abs(s.vwma-92/11)<1e-9);assert.equal(s.state,3);assert.equal(s.crossAt,new Date(3).toISOString());
@@ -28,4 +28,8 @@ test('four-frame scanner maps patterns without a one-minute dependency',()=>{
  }
 });
 test('a provider silently returning shorter intervals cannot masquerade as 240-minute data',()=>{const rows=Array.from({length:5},(_,i)=>({date:'20261126',time:String(100000+i*10000),close:100,jdiff_vol:10}));assert.throws(()=>normalizeBars(rows,'240',new Date('2026-11-28T00:00:00+09:00')),/CHART_INTERVAL_MISMATCH/);});
-test('invalid calendar dates and flagged corporate-action prices do not produce signals',()=>{assert.throws(()=>normalizeBars([{date:'20260230',time:'100000',close:100,jdiff_vol:10}],'5',new Date('2026-11-28')),/CHART_TIMESTAMP/);assert.throws(()=>normalizeBars([{date:'20261126',time:'100000',close:100,jdiff_vol:10,jongchk:1}],'5',new Date('2026-11-28')),/CORPORATE_ACTION_REVIEW/);});
+test('invalid dates fail, normal session flags survive, explicit adjustment rates require review',()=>{assert.throws(()=>normalizeBars([{date:'20260230',time:'100000',close:100,jdiff_vol:10}],'5',new Date('2026-11-28')),/CHART_TIMESTAMP/);assert.equal(normalizeBars([{date:'20261126',time:'100000',close:100,jdiff_vol:10,jongchk:2162688,rate:'0.00'}],'5',new Date('2026-11-28')).length,1);assert.throws(()=>summarize([{at:1,p:100,v:1,adjustmentRate:0},{at:2,p:100,v:1,adjustmentRate:0},{at:3,p:50,v:2,adjustmentRate:-50}],2),/CORPORATE_ACTION_REVIEW/);});
+
+test('daily VWMA uses only complete regular-session pairs and excludes aftermarket volume',()=>{const rows=[{date:'20261126',time:'130000',close:100,jdiff_vol:10,jongchk:2097152,rate:'0.00'},{date:'20261126',time:'153000',close:110,jdiff_vol:20,jongchk:2162688,rate:'0.00'},{date:'20261126',time:'200000',close:500,jdiff_vol:999,jongchk:2162688,rate:'0.00'}],now=new Date('2026-11-28');const daily=regularDailyBars(normalizeBars(rows,'240',now),now);assert.equal(daily.length,1);assert.equal(daily[0].p,110);assert.equal(daily[0].v,30);assert.equal(regularDailyBars(normalizeBars(rows.slice(1),'240',now),now).length,0);});
+
+test('opening auction is included when LS supplies a separate session-open bar',()=>{const now=new Date('2026-11-28'),rows=[{date:'20261126',time:'090000',close:100,jdiff_vol:7},{date:'20261126',time:'130000',close:105,jdiff_vol:10},{date:'20261126',time:'153000',close:110,jdiff_vol:20},{date:'20261126',time:'200000',close:900,jdiff_vol:999}];const daily=regularDailyBars(normalizeBars(rows,'240',now),now);assert.equal(daily.length,1);assert.equal(daily[0].v,37);assert.equal(daily[0].p,110);});

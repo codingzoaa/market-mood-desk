@@ -32,6 +32,6 @@ export default function VwmaScanner(){
    <td className="vwma-pattern" data-label="유형">{r.pattern}</td><td className="vwma-cross" data-label="5분봉 돌파">{format(r.frames?.['5']?.crossAt)}{recent(r)&&<strong> NEW</strong>}</td><td className="vwma-checked" data-label="조회 시각">{format(r.checkedAt)}{r.checkedAt&&tick-Date.parse(r.checkedAt)>1500000&&<small> · 지연</small>}</td></tr>)}
    {!rows.length&&<tr><td colSpan={8}>{data?'조건에 맞는 저장 결과 없음':'첫 검색 데이터 대기'}</td></tr>}
   </tbody></table></div>
-  <p className="footnote">일봉은 당일 봉을 제외한 최근 확정 봉, 분봉은 최신 당일 봉을 보수적으로 제외합니다. 각 셀은 해당 봉 종가와 거래량 가중 100봉 평균의 차이입니다. 회색은 미확인이며 하락 신호가 아닙니다. 돌파 시각은 LS 봉 표기 시각이며 실제 체결 시각이 아닙니다. 기업행사로 가격 기준 확인이 필요한 종목은 미확인으로 표시합니다.</p>
+  <p className="footnote">일봉은 당일 봉을 제외한 최근 확정 봉, 분봉은 최신 당일 봉을 보수적으로 제외합니다. 각 셀은 해당 봉 종가와 거래량 가중 100봉 평균의 차이입니다. 회색은 미확인이며 하락 신호가 아닙니다. 돌파 시각은 LS 봉 표기 시각이며 실제 체결 시각이 아닙니다. 일봉은 시초가 경매를 포함한 정규장 240분봉의 종가·거래량을 합산해 장외 거래를 제외합니다. 수정비율이 확인된 가격은 미확인으로 표시합니다.</p>
  </section>;
 }
