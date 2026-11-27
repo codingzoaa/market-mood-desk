@@ -1,3 +1,7 @@
-# MTF VWMA scanner pilot
+# 거가중 100선 검색기
 
-KRX top 20 eligible stocks from the current verified turnover snapshot. Four frames: 5, 60, 240 minutes and daily; 100 bars each. 120 bars requested per TR, unadjusted prices, volume jdiff_vol. Native t8412 and t8410. Conservative exclusion of latest same-day intraday bar and current daily bar. 4h interval support, time labeling, corporate actions and provider rate limits must be verified in live trading before production use. Missing frames are unknown, never bearish. Top 20 is a pilot, not all-market real-time coverage; maximum 5 stocks per 5-minute slot, 30s start budget, 45s inner budget, existing shared LS session and only after primary collectors. Public read-only cached endpoint, no secrets and no public request-triggered collection. Browser polls 60s. UI default turnover filter 500억원, selectable. Recent-cross filter uses the 5-minute frame with selectable 5/15/30/60 minute lookback (default 30 minutes to accommodate rotation and conservative latest-bar exclusion). The cross timestamp is the provider bar label, not a verified execution timestamp. Cache schema v2 isolates prior five-frame data. No automated orders or alerts. Tests: node --test tests/vwma-scanner.test.mjs; full CI and live data validation required before merging.
+거래대금 탭에서 LS KRX 상위 20개 일반주를 5분·60분·240분·일봉으로 비교합니다. 거래량은 jdiff_vol, 가격은 봉 종가를 사용합니다. 네 프레임의 상회·하회 조합으로 초기 반등, 단기/중기 전환, 상승 정렬, 눌림목 등을 분류합니다. 결측은 미확인이며 하락으로 분류하지 않습니다.
+
+장중 기존 시세·수급 수집이 끝난 경우에만 공유 LS 세션을 사용해 5분 슬롯당 최대 5종목을 순환 조회합니다. 전체 순환은 약 20분이며 개별 조회 시각을 표시합니다. HTTP GET은 저장값만 읽으며 조회를 유발하지 않습니다. 최신 당일 분봉과 당일 일봉을 제외하며 돌파 시각은 체결 시각이 아닌 LS 봉 표기입니다. 가격 변경 기업행사 표시가 있는 봉은 재검토 전까지 제외합니다.
+
+배포 후 장외 시간에 CI가 서명한 일회용 요청으로 직전 마감 거래일의 최대 20종목을 초기화합니다. 장중에는 실행하지 않습니다. 이 절차는 신규 권한·주문·알림 발송 없이 기존 읽기 전용 차트만 조회합니다. 과거 저장값은 실시간 신호와 구분합니다. N분 요청이 다른 간격으로 반환되면 CHART_INTERVAL_MISMATCH로 차단하며 모든 프레임의 100봉 이상 계산을 배포 검증에서 확인합니다.

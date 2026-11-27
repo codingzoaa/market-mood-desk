@@ -27,3 +27,5 @@ test('four-frame scanner maps patterns without a one-minute dependency',()=>{
   assert.equal(classify(data),expected);
  }
 });
+test('a provider silently returning shorter intervals cannot masquerade as 240-minute data',()=>{const rows=Array.from({length:5},(_,i)=>({date:'20261126',time:String(100000+i*10000),close:100,jdiff_vol:10}));assert.throws(()=>normalizeBars(rows,'240',new Date('2026-11-28T00:00:00+09:00')),/CHART_INTERVAL_MISMATCH/);});
+test('invalid calendar dates and flagged corporate-action prices do not produce signals',()=>{assert.throws(()=>normalizeBars([{date:'20260230',time:'100000',close:100,jdiff_vol:10}],'5',new Date('2026-11-28')),/CHART_TIMESTAMP/);assert.throws(()=>normalizeBars([{date:'20261126',time:'100000',close:100,jdiff_vol:10,jongchk:1}],'5',new Date('2026-11-28')),/CORPORATE_ACTION_REVIEW/);});
