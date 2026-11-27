@@ -3,8 +3,8 @@ import {createCoordinatedSession} from './ls-session.mjs';
 import {marketSession} from '../shared/market-session.mjs';
 import {sectorCandidate} from './stock-verification.mjs';
 
-export const FRAMES=['1','5','60','240','D'];
-const KEY='vwma-scanner:v1', LENGTH=100, LIMIT=20, BATCH=5;
+export const FRAMES=['5','60','240','D'];
+const KEY='vwma-scanner:v2', LENGTH=100, LIMIT=20, BATCH=5;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const read=async(env,key)=>{const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();return r?JSON.parse(r.payload):null;};
 const save=(env,key,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify(value)).run();
@@ -56,11 +56,11 @@ export function summarize(bars,length=LENGTH){
 export function classify(frames){
  if(FRAMES.some(f=>!frames[f]))return '데이터 부족';
  const key=FRAMES.map(f=>frames[f].gap>=0?'1':'0').join('');
- return ({'10000':'초기 반등','11000':'단기 전환','11100':'중기 전환','11110':'중장기 전환','11111':'상승 정렬','10111':'눌림목 회복','00000':'하락 정렬'})[key]||'혼합';
+ return ({'1000':'초기 반등','1100':'단기 전환','1110':'중기 전환','1111':'상승 정렬','1011':'눌림목 회복','0111':'눌림목 관찰','0000':'하락 정렬'})[key]||'혼합';
 }
 export async function readVwmaScanner(env){
  const data=await read(env,KEY);
- return data||{date:null,asOf:null,rows:[],status:'not_ready',source:'LS증권 KRX · VWMA 100'};
+ return data||{date:null,asOf:null,frames:FRAMES,rows:[],status:'not_ready',source:'LS증권 KRX · VWMA 100'};
 }
 export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(),open=createCoordinatedSession,delay=wait}={}){
  const k=kst(now),market=marketSession(k.date);
@@ -80,7 +80,7 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
   const token=await accessToken(env,fetcher,now.getTime(),false);
   const rows=new Map((old.date===k.date?old.rows:[]).map(r=>[r.symbol,r]));
   const selected=[...candidates].sort((a,b)=>(Date.parse(rows.get(a.symbol)?.checkedAt||'')||0)-(Date.parse(rows.get(b.symbol)?.checkedAt||'')||0)).slice(0,BATCH);
-  const publish=async()=>save(env,KEY,{date:k.date,asOf:clock().toISOString(),slot,status:'pilot',source:'LS증권 KRX · VWMA 100 · 직전 확정 추정봉',candidateCount:candidates.length,rows:candidates.map(s=>({...rows.get(s.symbol),symbol:s.symbol,name:s.name,market:s.market,turnoverKRW:s.turnoverKRW,changePct:s.changePct,sector:s.themes?.[0]||'',frames:rows.get(s.symbol)?.frames||{},pattern:rows.get(s.symbol)?.pattern||'조회 대기'}))});
+  const publish=async()=>save(env,KEY,{date:k.date,asOf:clock().toISOString(),slot,frames:FRAMES,status:'pilot',source:'LS증권 KRX · VWMA 100 · 직전 확정 추정봉',candidateCount:candidates.length,rows:candidates.map(s=>({...rows.get(s.symbol),symbol:s.symbol,name:s.name,market:s.market,turnoverKRW:s.turnoverKRW,changePct:s.changePct,sector:s.themes?.[0]||'',frames:rows.get(s.symbol)?.frames||{},pattern:rows.get(s.symbol)?.pattern||'조회 대기'}))});
   await publish();
   for(const s of selected){
    if(clock().getTime()-now.getTime()>30000||Math.floor(clock().getTime()/300000)!==slot||kst(clock()).time>=market.close)break;
