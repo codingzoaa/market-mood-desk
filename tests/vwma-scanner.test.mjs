@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {FRAMES,summarize,normalizeBars,classify,scannerCandidates,regularDailyBars} from '../worker/vwma-scanner.mjs';
+import {FRAMES,summarize,normalizeBars,classify,scannerCandidates,regularDailyBars,resampleSession} from '../worker/vwma-scanner.mjs';
 test('VWMA weights volume and records cross',()=>{
  const b=[{at:1,p:10,v:1},{at:2,p:8,v:10},{at:3,p:12,v:1}];
  const s=summarize(b,2);assert.ok(Math.abs(s.vwma-92/11)<1e-9);assert.equal(s.state,3);assert.equal(s.crossAt,new Date(3).toISOString());
@@ -33,3 +33,5 @@ test('invalid dates fail, normal session flags survive, explicit adjustment rate
 test('daily VWMA uses only complete regular-session pairs and excludes aftermarket volume',()=>{const rows=[{date:'20261126',time:'130000',close:100,jdiff_vol:10,jongchk:2097152,rate:'0.00'},{date:'20261126',time:'153000',close:110,jdiff_vol:20,jongchk:2162688,rate:'0.00'},{date:'20261126',time:'200000',close:500,jdiff_vol:999,jongchk:2162688,rate:'0.00'}],now=new Date('2026-11-28');const daily=regularDailyBars(normalizeBars(rows,'240',now),now);assert.equal(daily.length,1);assert.equal(daily[0].p,110);assert.equal(daily[0].v,30);assert.equal(regularDailyBars(normalizeBars(rows.slice(1),'240',now),now).length,0);});
 
 test('opening auction is included when LS supplies a separate session-open bar',()=>{const now=new Date('2026-11-28'),rows=[{date:'20261126',time:'090000',close:100,jdiff_vol:7},{date:'20261126',time:'130000',close:105,jdiff_vol:10},{date:'20261126',time:'153000',close:110,jdiff_vol:20},{date:'20261126',time:'200000',close:900,jdiff_vol:999}];const daily=regularDailyBars(normalizeBars(rows,'240',now),now);assert.equal(daily.length,1);assert.equal(daily[0].v,37);assert.equal(daily[0].p,110);});
+
+test('delayed-session 60/240-minute reconstruction conserves volume and uses the actual close',()=>{const date='2026-11-19',bars=Array.from({length:78},(_,i)=>({day:'20261119',at:Date.parse(date+'T10:05:00+09:00')+i*300000,p:100+i,v:10,adjustmentRate:0})),hours=resampleSession(bars,date,'60'),four=resampleSession(bars,date,'240');assert.equal(hours.length,7);assert.equal(four.length,2);assert.equal(new Date(four[0].at).toISOString(),'2026-11-19T05:00:00.000Z');assert.equal(new Date(four[1].at).toISOString(),'2026-11-19T07:30:00.000Z');assert.equal(four.reduce((a,b)=>a+b.v,0),780);assert.equal(regularDailyBars(four,new Date('2026-11-28'))[0].v,780);assert.throws(()=>resampleSession(bars.slice(0,-1),date,'240'),/CHART_SPECIAL_SESSION_INCOMPLETE/);});

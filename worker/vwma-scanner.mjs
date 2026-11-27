@@ -4,7 +4,7 @@ import {marketSession} from '../shared/market-session.mjs';
 import {sectorCandidate} from './stock-verification.mjs';
 
 export const FRAMES=['5','60','240','D'];
-const KEY='vwma-scanner:v4', LENGTH=100, LIMIT=20, BATCH=5;
+const KEY='vwma-scanner:v5', LENGTH=100, LIMIT=20, BATCH=5;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const read=async(env,key)=>{const r=await env.DB.prepare('SELECT payload FROM state WHERE id=?').bind(key).first();return r?JSON.parse(r.payload):null;};
 const save=(env,key,value)=>env.DB.prepare('INSERT INTO state(id,payload) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').bind(key,JSON.stringify(value)).run();
@@ -36,6 +36,11 @@ export function normalizeBars(rows,frame,now){
  if(frame!=='D'&&sorted.at(-1)?.day===today)sorted.pop();
  if(frame!=='D'){const step=Number(frame)*60000;for(let i=1;i<sorted.length;i++){const a=sorted[i-1],b=sorted[i];if(a.day!==b.day)continue;const close=marketSession(b.day.slice(0,4)+'-'+b.day.slice(4,6)+'-'+b.day.slice(6)).close+'00';const label=new Date(b.at+9*3600000).toISOString().slice(11,19).replaceAll(':','');if(b.at-a.at<step&&label!==close)throw Error('CHART_INTERVAL_MISMATCH');}}
  return sorted;
+}
+export function resampleSession(bars,date,frame){
+ const m=marketSession(date),start=Date.parse(date+'T'+m.open.slice(0,2)+':'+m.open.slice(2)+'+09:00'),end=Date.parse(date+'T'+m.close.slice(0,2)+':'+m.close.slice(2)+'+09:00'),step=Number(frame)*60000,rows=bars.filter(b=>b.day===date.replaceAll('-','')).sort((a,b)=>a.at-b.at);
+ if(!rows.length||rows[0].at>start+300000||rows.at(-1).at!==end)throw Error('CHART_SPECIAL_SESSION_INCOMPLETE');
+ const groups=new Map();for(const b of rows){const n=Math.max(0,Math.ceil((b.at-start)/step)-1),at=Math.min(start+(n+1)*step,end),old=groups.get(at);groups.set(at,{...b,at,v:(old?.v||0)+b.v,adjustmentRate:old?.adjustmentRate||b.adjustmentRate||0});}return [...groups.values()];
 }
 export function regularDailyBars(bars,now,{partialFirstDay=false}={}){
  const today=kst(now).date.replaceAll('-',''),groups=new Map();
@@ -105,7 +110,7 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
   await publish();
   for(const s of selected){
    if(clock().getTime()-now.getTime()>(bootstrap?90000:30000)||!bootstrap&&(Math.floor(clock().getTime()/300000)!==slot||kst(clock()).time>=market.close))break;
-   const frames={},errors={},diagnostics={};let regular240=[];
+   const frames={},errors={},diagnostics={};let regular240=[],delayedBars=null;
    for(const f of FRAMES){
     if(!bootstrap&&(kst(clock()).time>=market.close||Math.floor(clock().getTime()/300000)!==slot)||clock().getTime()-now.getTime()>(bootstrap?90000:45000))break;
     try{
@@ -114,7 +119,7 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
      const code=f==='D'?'t8410':'t8412';
      const body=f==='D'?{shcode:s.symbol,gubun:'2',qrycnt:120,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'}:{shcode:s.symbol,ncnt:Number(f),qrycnt:500,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date:'',cts_time:'',comp_yn:'N'};
      const response=await tr(token,code,body,undefined,fetcher);
-     const raw=response.data[code+'OutBlock1'];diagnostics[f]={received:raw?.length,latestLabels:(raw||[]).filter(r=>r.date===date.replaceAll('-','')).map(r=>r.time).slice(0,100),delayedSessionLabels:(raw||[]).filter(r=>r.date==='20261119').map(r=>r.time).slice(0,15),flags:[...new Set((raw||[]).map(r=>r.jongchk))].slice(0,12),rates:[...new Set((raw||[]).map(r=>r.rate))].slice(0,12),sample:(raw||[]).slice(-3).map(({date,time,close,jdiff_vol,jongchk,rate,pricechk})=>({date,time,close,jdiff_vol,jongchk,rate,pricechk})),session:response.data[code+'OutBlock']?.s_time};const bars=normalizeBars(raw,f,clock());if(f==='240')regular240=bars;diagnostics[f].regular=bars.length;frames[f]=summarize(bars);
+     const raw=response.data[code+'OutBlock1'];diagnostics[f]={received:raw?.length,latestLabels:(raw||[]).filter(r=>r.date===date.replaceAll('-','')).map(r=>r.time).slice(0,100),delayedSessionLabels:(raw||[]).filter(r=>r.date==='20261119').map(r=>r.time).slice(0,15),flags:[...new Set((raw||[]).map(r=>r.jongchk))].slice(0,12),rates:[...new Set((raw||[]).map(r=>r.rate))].slice(0,12),sample:(raw||[]).slice(-3).map(({date,time,close,jdiff_vol,jongchk,rate,pricechk})=>({date,time,close,jdiff_vol,jongchk,rate,pricechk})),session:response.data[code+'OutBlock']?.s_time};let bars;if(['60','240'].includes(f)&&raw.some(r=>r.date==='20261119')){if(!delayedBars){const patchKey='vwma-session-5m:v1:2026-11-19:'+s.symbol,cached=await read(env,patchKey);if(cached?.bars)delayedBars=cached.bars;else{await delay(1100);const special=await tr(token,'t8412',{shcode:s.symbol,ncnt:5,qrycnt:500,nday:'0',sdate:'20261119',edate:'20261119',cts_date:'',cts_time:'',comp_yn:'N'},undefined,fetcher);delayedBars=normalizeBars((special.data.t8412OutBlock1||[]).filter(r=>r.date==='20261119'),'5',clock());resampleSession(delayedBars,'2026-11-19','240');await save(env,patchKey,{date:'2026-11-19',symbol:s.symbol,bars:delayedBars});}}bars=[...normalizeBars(raw.filter(r=>r.date!=='20261119'),f,clock()),...resampleSession(delayedBars,'2026-11-19',f)].sort((a,b)=>a.at-b.at);diagnostics[f].repairedSession='2026-11-19';}else bars=normalizeBars(raw,f,clock());if(f==='240')regular240=bars;diagnostics[f].regular=bars.length;frames[f]=summarize(bars);
      if(frames[f])frames[f].samples=bars.length;
      if(!frames[f])errors[f]='INSUFFICIENT_BARS';
     }catch(e){frames[f]=null;errors[f]=/^[A-Z_0-9]+$/.test(e?.code||'')?e.code:/^(?:CHART_[A-Z_]+|CORPORATE_ACTION_REVIEW)$/.test(e?.message||'')?e.message:'CHART_UNAVAILABLE';}
