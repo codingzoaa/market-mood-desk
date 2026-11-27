@@ -3,6 +3,7 @@ import OperationsPanel from './operations-panel';
 import {marketSession} from '../shared/market-session.mjs';
 import {useStockClassification} from './use-stock-classification';
 import {classifyStocks} from './classification-sync.mjs';
+import VwmaScanner from './vwma-scanner';
 import DrawdownPanel from './drawdown-panel';
 import PutKospiPanel from './put-kospi-panel';
 import CloseCalendar from './close-calendar';
@@ -111,6 +112,7 @@ export default function Desk({initialSnapshots=[],initialView='overview',initial
      {sectorPanel(true)}{rotationPanel()}
     </>}
     {view==='stocks'&&<>
+     {!demo&&<VwmaScanner/>}
      <div className="stock-toolbar"><div className="stock-scope-tabs" aria-label="거래대금 종목 범위"><button className={stockMode==='all'?'active':''} aria-pressed={stockMode==='all'} onClick={()=>setStockMode('all')}>전체 종목</button><button className={stockMode==='strong'?'active':''} aria-pressed={stockMode==='strong'} onClick={()=>setStockMode('strong')}>+4% 강세</button><button className={watchOnly?'active':''} aria-pressed={watchOnly} onClick={()=>setWatchOnly(!watchOnly)}><Star size={13}/>관심종목</button></div><div className="theme-pills"><button className={theme==='ALL'?'active':''} onClick={()=>setTheme('ALL')}>전체 테마</button>{sectors.map(s=><button key={s.name} className={theme===s.name?'active':''} onClick={()=>setTheme(s.name)}>{s.name}</button>)}</div><div className="stock-search"><div className="search"><Search size={16}/><input aria-label="종목·테마 검색" placeholder="종목·코드·테마 검색" value={search} onChange={e=>setSearch(e.target.value)}/></div><select aria-label="종목 정렬" value={sort} onChange={e=>setSort(e.target.value)}><option value="turnover">거래대금 순</option><option value="change">등락률 순</option><option value="name">종목명 순</option></select></div></div>
      {stockTable()}{etfPanels()}
     </>}
