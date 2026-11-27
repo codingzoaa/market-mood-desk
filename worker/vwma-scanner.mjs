@@ -42,6 +42,17 @@ export function resampleSession(bars,date,frame){
  if(!rows.length||rows[0].at>start+300000||rows.at(-1).at!==end)throw Error('CHART_SPECIAL_SESSION_INCOMPLETE');
  const groups=new Map();for(const b of rows){const n=Math.max(0,Math.ceil((b.at-start)/step)-1),at=Math.min(start+(n+1)*step,end),old=groups.get(at);groups.set(at,{...b,at,v:(old?.v||0)+b.v,adjustmentRate:old?.adjustmentRate||b.adjustmentRate||0});}return [...groups.values()];
 }
+export async function loadSessionBars(first,date,now,next){
+ const wanted=date.replaceAll('-',''),unique=new Map(),seen=new Set();let page=first;
+ for(let n=0;n<4;n++){
+  for(const row of page?.data?.t8412OutBlock1||[]){if(row.date!==wanted)continue;const id=row.date+':'+row.time,old=unique.get(id);if(old&&(Number(old.close)!==Number(row.close)||Number(old.jdiff_vol)!==Number(row.jdiff_vol)))throw Error('CHART_DUPLICATE_CONFLICT');unique.set(id,row);}
+  const bars=normalizeBars([...unique.values()],'5',now);
+  try{resampleSession(bars,date,'240');return {bars,pages:n+1};}catch(error){if(error.message!=='CHART_SPECIAL_SESSION_INCOMPLETE')throw error;}
+  const block=page?.data?.t8412OutBlock,dateCursor=String(block?.cts_date||'').trim(),timeCursor=String(block?.cts_time||'').trim(),cursor=dateCursor+':'+timeCursor;
+  if(!/^\d{8}$/.test(dateCursor)||!timeCursor||seen.has(cursor))break;seen.add(cursor);page=await next(dateCursor,timeCursor,page.continuation);
+ }
+ throw Error('CHART_SPECIAL_SESSION_INCOMPLETE');
+}
 export function regularDailyBars(bars,now,{partialFirstDay=false}={}){
  const today=kst(now).date.replaceAll('-',''),groups=new Map();
  for(const b of bars){if(b.day===today)continue;const a=groups.get(b.day)||[];a.push(b);groups.set(b.day,a);}
@@ -110,7 +121,7 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
   await publish();
   for(const s of selected){
    if(clock().getTime()-now.getTime()>(bootstrap?90000:30000)||!bootstrap&&(Math.floor(clock().getTime()/300000)!==slot||kst(clock()).time>=market.close))break;
-   const frames={},errors={},diagnostics={};let regular240=[],delayedBars=null;
+   const frames={},errors={},diagnostics={};let regular240=[],delayedBars=null,minute5Page=null;
    for(const f of FRAMES){
     if(!bootstrap&&(kst(clock()).time>=market.close||Math.floor(clock().getTime()/300000)!==slot)||clock().getTime()-now.getTime()>(bootstrap?90000:45000))break;
     try{
@@ -119,7 +130,7 @@ export async function collectVwmaScanner(env,{now=new Date(),clock=()=>new Date(
      const code=f==='D'?'t8410':'t8412';
      const body=f==='D'?{shcode:s.symbol,gubun:'2',qrycnt:120,sdate:'',edate:date.replaceAll('-',''),cts_date:'',comp_yn:'N',sujung:'N'}:{shcode:s.symbol,ncnt:Number(f),qrycnt:500,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date:'',cts_time:'',comp_yn:'N'};
      const response=await tr(token,code,body,undefined,fetcher);
-     const raw=response.data[code+'OutBlock1'];diagnostics[f]={received:raw?.length,latestLabels:(raw||[]).filter(r=>r.date===date.replaceAll('-','')).map(r=>r.time).slice(0,100),delayedSessionLabels:(raw||[]).filter(r=>r.date==='20261119').map(r=>r.time).slice(0,15),flags:[...new Set((raw||[]).map(r=>r.jongchk))].slice(0,12),rates:[...new Set((raw||[]).map(r=>r.rate))].slice(0,12),sample:(raw||[]).slice(-3).map(({date,time,close,jdiff_vol,jongchk,rate,pricechk})=>({date,time,close,jdiff_vol,jongchk,rate,pricechk})),session:response.data[code+'OutBlock']?.s_time};let bars;if(['60','240'].includes(f)&&raw.some(r=>r.date==='20261119')){if(!delayedBars){const patchKey='vwma-session-5m:v1:2026-11-19:'+s.symbol,cached=await read(env,patchKey);if(cached?.bars)delayedBars=cached.bars;else{await delay(1100);const special=await tr(token,'t8412',{shcode:s.symbol,ncnt:5,qrycnt:500,nday:'0',sdate:'20261119',edate:'20261119',cts_date:'',cts_time:'',comp_yn:'N'},undefined,fetcher);const rawSpecial=(special.data.t8412OutBlock1||[]).filter(r=>r.date==='20261119');diagnostics.delayed5m={count:rawSpecial.length,first:rawSpecial.slice(0,3).map(r=>r.time),last:rawSpecial.slice(-3).map(r=>r.time)};delayedBars=normalizeBars(rawSpecial,'5',clock());resampleSession(delayedBars,'2026-11-19','240');await save(env,patchKey,{date:'2026-11-19',symbol:s.symbol,bars:delayedBars});}}bars=[...normalizeBars(raw.filter(r=>r.date!=='20261119'),f,clock()),...resampleSession(delayedBars,'2026-11-19',f)].sort((a,b)=>a.at-b.at);diagnostics[f].repairedSession='2026-11-19';}else bars=normalizeBars(raw,f,clock());if(f==='240')regular240=bars;diagnostics[f].regular=bars.length;frames[f]=summarize(bars);
+     if(f==='5')minute5Page=response;const raw=response.data[code+'OutBlock1'];diagnostics[f]={received:raw?.length,latestLabels:(raw||[]).filter(r=>r.date===date.replaceAll('-','')).map(r=>r.time).slice(0,100),delayedSessionLabels:(raw||[]).filter(r=>r.date==='20261119').map(r=>r.time).slice(0,15),flags:[...new Set((raw||[]).map(r=>r.jongchk))].slice(0,12),rates:[...new Set((raw||[]).map(r=>r.rate))].slice(0,12),sample:(raw||[]).slice(-3).map(({date,time,close,jdiff_vol,jongchk,rate,pricechk})=>({date,time,close,jdiff_vol,jongchk,rate,pricechk})),session:response.data[code+'OutBlock']?.s_time};let bars;if(['60','240'].includes(f)&&raw.some(r=>r.date==='20261119')){if(!delayedBars){const patchKey='vwma-session-5m:v1:2026-11-19:'+s.symbol,cached=await read(env,patchKey);if(cached?.bars)delayedBars=cached.bars;else{let page=minute5Page;if(!page){await delay(1100);page=await tr(token,'t8412',{shcode:s.symbol,ncnt:5,qrycnt:500,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date:'',cts_time:'',comp_yn:'N'},undefined,fetcher);}const patched=await loadSessionBars(page,'2026-11-19',clock(),async(cts_date,cts_time,continuation)=>{await delay(1100);return tr(token,'t8412',{shcode:s.symbol,ncnt:5,qrycnt:500,nday:'0',sdate:'',edate:date.replaceAll('-',''),cts_date,cts_time,comp_yn:'N'},continuation,fetcher);});delayedBars=patched.bars;diagnostics.delayed5m={count:delayedBars.length,pages:patched.pages};await save(env,patchKey,{date:'2026-11-19',symbol:s.symbol,bars:delayedBars});}}bars=[...normalizeBars(raw.filter(r=>r.date!=='20261119'),f,clock()),...resampleSession(delayedBars,'2026-11-19',f)].sort((a,b)=>a.at-b.at);diagnostics[f].repairedSession='2026-11-19';}else bars=normalizeBars(raw,f,clock());if(f==='240')regular240=bars;diagnostics[f].regular=bars.length;frames[f]=summarize(bars);
      if(frames[f])frames[f].samples=bars.length;
      if(!frames[f])errors[f]='INSUFFICIENT_BARS';
     }catch(e){if(e?.detail)diagnostics[f]={...diagnostics[f],validation:e.detail};frames[f]=null;errors[f]=/^[A-Z_0-9]+$/.test(e?.code||'')?e.code:/^(?:CHART_[A-Z_]+|CORPORATE_ACTION_REVIEW)$/.test(e?.message||'')?e.message:'CHART_UNAVAILABLE';}

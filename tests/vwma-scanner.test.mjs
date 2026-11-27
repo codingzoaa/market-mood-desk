@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {FRAMES,summarize,normalizeBars,classify,scannerCandidates,regularDailyBars,resampleSession} from '../worker/vwma-scanner.mjs';
+import {FRAMES,summarize,normalizeBars,classify,scannerCandidates,regularDailyBars,resampleSession,loadSessionBars} from '../worker/vwma-scanner.mjs';
 test('VWMA weights volume and records cross',()=>{
  const b=[{at:1,p:10,v:1},{at:2,p:8,v:10},{at:3,p:12,v:1}];
  const s=summarize(b,2);assert.ok(Math.abs(s.vwma-92/11)<1e-9);assert.equal(s.state,3);assert.equal(s.crossAt,new Date(3).toISOString());
@@ -37,3 +37,5 @@ test('opening auction is included when LS supplies a separate session-open bar',
 test('delayed-session 60/240-minute reconstruction conserves volume and uses the actual close',()=>{const date='2026-11-19',bars=Array.from({length:78},(_,i)=>({day:'20261119',at:Date.parse(date+'T10:05:00+09:00')+i*300000,p:100+i,v:10,adjustmentRate:0})),hours=resampleSession(bars,date,'60'),four=resampleSession(bars,date,'240');assert.equal(hours.length,7);assert.equal(four.length,2);assert.equal(new Date(four[0].at).toISOString(),'2026-11-19T05:00:00.000Z');assert.equal(new Date(four[1].at).toISOString(),'2026-11-19T07:30:00.000Z');assert.equal(four.reduce((a,b)=>a+b.v,0),780);assert.equal(regularDailyBars(four,new Date('2026-11-28'))[0].v,780);assert.throws(()=>resampleSession(bars.slice(0,-1),date,'240'),/CHART_SPECIAL_SESSION_INCOMPLETE/);});
 
 test('an isolated auction or partial interval does not reject a correctly spaced provider series',()=>{const times=['100000','110000','113000','120000','130000','140000','150000','153000'],rows=times.map(time=>({date:'20261126',time,close:100,jdiff_vol:10}));assert.equal(normalizeBars(rows,'60',new Date('2026-11-28')).length,8);});
+
+test('historical five-minute pagination joins a truncated day without counting a repeated boundary twice',async()=>{const raw=Array.from({length:78},(_,i)=>{const t=605+i*5;return{date:'20261119',time:String(Math.floor(t/60)).padStart(2,'0')+String(t%60).padStart(2,'0')+'00',close:100+i,jdiff_vol:10,rate:'0.00'};}),page={data:{t8412OutBlock1:raw.slice(34),t8412OutBlock:{cts_date:'20261119',cts_time:raw[34].time}},continuation:{flag:'Y',key:'synthetic'}};let calls=0;const result=await loadSessionBars(page,'2026-11-19',new Date('2026-11-28'),async(date,time,continuation)=>{calls++;assert.equal(date,'20261119');assert.equal(time,raw[34].time);assert.equal(continuation.key,'synthetic');return{data:{t8412OutBlock1:raw.slice(0,35)}};});assert.equal(calls,1);assert.equal(result.bars.length,78);assert.equal(result.bars.reduce((s,b)=>s+b.v,0),780);});
