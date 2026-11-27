@@ -26,6 +26,7 @@ export default function VwmaScanner(){
   {error&&<p role="alert" className="negative">{error}</p>}
   {data?.date&&data.date!==today&&<p role="status" className="muted">지난 거래일 저장값 ({data.date}) · 실시간 아님</p>}
   <p className="footnote">조회 {data?.rows?.filter((r:any)=>r.checkedAt).length||0}/{data?.candidateCount||0} · 표시 {rows.length}종목 · 진초록 상회/확대 · 연초록 상회/축소 · 노랑 하회/회복 · 빨강 하회/약화 · 회색 미확인</p>
+  {data?.alerts&&<p className="footnote">텔레그램 전환 알림: {data.alerts.enabled?'사용 중 · 단기 전환·중기 전환·상승 정렬 진입 / 상승 정렬 이탈 · 최초 조회·과거 자료 제외':'서버 설정 필요'} · 검색기 조회 대상 20종목 기준</p>}
   <div className="vwma-table"><table><thead><tr><th>종목 / 거래대금</th>{labels.map(x=><th key={x}>{x}</th>)}<th>유형</th><th>5분봉 돌파</th><th>조회 시각</th></tr></thead><tbody>
    {rows.map((r:any)=><tr key={r.symbol}><td className="vwma-stock"><a href={'https://finance.naver.com/item/main.naver?code='+r.symbol} target="_blank" rel="noopener noreferrer">{r.name}</a><br/><small>{r.sector} · {Math.round(r.turnoverKRW/1e8).toLocaleString()}억</small></td>
    {frames.map(f=>{const v=r.frames?.[f];return <td key={f} data-label={labels[frames.indexOf(f)]}><span title={v?'봉 시각 '+format(v.barAt)+' · VWMA '+v.vwma.toFixed(2):r.errors?.[f]||'조회 대기'} style={{display:'inline-block',minWidth:52,padding:'5px 6px',borderRadius:4,textAlign:'center',background:v?colors[v.state]:'#e5e7eb',color:v&&(v.state===0||v.state===3)?'white':'#17202a'}}>{v?((v.gap>=0?'+':'')+v.gap.toFixed(2)+'%'):'—'}</span></td>;})}
