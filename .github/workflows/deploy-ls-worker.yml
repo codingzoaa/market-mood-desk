@@ -168,3 +168,8 @@ jobs:
           console.log('WORKER_NAVER_CONFIGURATION_READY');
           JS
 
+
+      - name: Initialize and verify VWMA scanner from last closed session
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node scripts/verify-vwma-scanner.mjs
