@@ -1,8 +1,33 @@
 {
   "version": 1,
-  "observedAt": "2026-11-27T16:02:01.648Z",
+  "observedAt": "2026-11-27T16:05:22.433Z",
   "repository": "codingzoaa/market-mood-desk",
   "runs": [
+    {
+      "publicationStatus": null,
+      "id": 46030569077,
+      "name": "Publish verified sector calendar at 17 KST",
+      "event": "workflow_run",
+      "branch": "main",
+      "sha": "82543e13675272a1c0113000608df827f4b310b3",
+      "status": "queued",
+      "conclusion": null,
+      "createdAt": "2026-11-27T16:05:16Z",
+      "startedAt": "2026-11-27T16:05:16Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030569077",
+      "jobs": [
+        {
+          "name": "publish",
+          "status": "queued",
+          "conclusion": null,
+          "startedAt": "2026-11-27T16:05:17Z",
+          "completedAt": null,
+          "stages": [],
+          "steps": []
+        }
+      ]
+    },
     {
       "publicationStatus": "unchanged",
       "id": 46029674576,
@@ -344,102 +369,25 @@
       ]
     },
     {
-      "publicationStatus": "unchanged",
-      "id": 46028609015,
-      "name": "Publish verified sector calendar at 17 KST",
+      "publicationStatus": null,
+      "id": 46030555637,
+      "name": "Relay Naver sector news to Cloudflare",
       "event": "workflow_run",
       "branch": "main",
-      "sha": "cece47e0ad5c023cb1968a492f0a05ddd719247b",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-27T15:51:39Z",
-      "startedAt": "2026-11-27T15:51:39Z",
-      "completedAt": "2026-11-27T15:51:52Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46028609015",
+      "sha": "82543e13675272a1c0113000608df827f4b310b3",
+      "status": "in_progress",
+      "conclusion": null,
+      "createdAt": "2026-11-27T16:05:11Z",
+      "startedAt": "2026-11-27T16:05:11Z",
+      "completedAt": null,
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030555637",
       "jobs": [
         {
-          "name": "publish",
+          "name": "relay",
           "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-27T15:51:41Z",
-          "completedAt": "2026-11-27T15:51:51Z",
-          "stages": [
-            {
-              "name": "Generate same-day evidence-gated editorial review",
-              "status": "completed",
-              "conclusion": "success",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            },
-            {
-              "name": "Validate review or status-only update with full test, type check and build",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            },
-            {
-              "name": "Create reviewed calendar PR",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            },
-            {
-              "name": "Run independent calendar CI",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            },
-            {
-              "name": "Merge verified calendar PR",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            },
-            {
-              "name": "Deploy verified calendar to Pages",
-              "status": "completed",
-              "conclusion": "skipped",
-              "startedAt": "2026-11-27T15:51:47Z",
-              "completedAt": "2026-11-27T15:51:47Z"
-            }
-          ],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 45963858317,
-      "name": "Verify missing stock classifications",
-      "event": "schedule",
-      "branch": "main",
-      "sha": "4883ace87de83482b4e8771fc2315cb14f4505b3",
-      "status": "completed",
-      "conclusion": "success",
-      "createdAt": "2026-11-27T08:12:12Z",
-      "startedAt": "2026-11-27T08:12:12Z",
-      "completedAt": "2026-11-27T08:13:28Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/45963858317",
-      "jobs": [
-        {
-          "name": "verify",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-27T08:12:15Z",
-          "completedAt": "2026-11-27T08:12:55Z",
-          "stages": [],
-          "steps": []
-        },
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "success",
-          "startedAt": "2026-11-27T08:12:57Z",
-          "completedAt": "2026-11-27T08:13:28Z",
+          "conclusion": "skipped",
+          "startedAt": "2026-11-27T16:05:12Z",
+          "completedAt": "2026-11-27T16:05:11Z",
           "stages": [],
           "steps": []
         }
@@ -472,143 +420,83 @@
     },
     {
       "publicationStatus": null,
-      "id": 46029250782,
-      "name": "Relay Naver sector news to Cloudflare",
-      "event": "workflow_run",
-      "branch": "main",
-      "sha": "a7b4288632de9af7aed427263dfa24c2bc724c9a",
-      "status": "completed",
-      "conclusion": "skipped",
-      "createdAt": "2026-11-27T15:56:09Z",
-      "startedAt": "2026-11-27T15:56:09Z",
-      "completedAt": "2026-11-27T15:56:10Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46029250782",
-      "jobs": [
-        {
-          "name": "relay",
-          "status": "completed",
-          "conclusion": "skipped",
-          "startedAt": "2026-11-27T15:56:10Z",
-          "completedAt": "2026-11-27T15:56:10Z",
-          "stages": [],
-          "steps": []
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 46029184157,
+      "id": 46030304765,
       "name": "Deploy LS Cloudflare Worker",
       "event": "push",
       "branch": "main",
-      "sha": "a7b4288632de9af7aed427263dfa24c2bc724c9a",
-      "status": "completed",
-      "conclusion": "failure",
-      "createdAt": "2026-11-27T15:55:41Z",
-      "startedAt": "2026-11-27T15:55:41Z",
-      "completedAt": "2026-11-27T15:59:08Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46029184157",
-      "jobs": [
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "failure",
-          "startedAt": "2026-11-27T15:56:07Z",
-          "completedAt": "2026-11-27T15:59:08Z",
-          "stages": [],
-          "steps": [
-            "Initialize and verify VWMA scanner from last closed session"
-          ]
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 46028720325,
-      "name": "Deploy LS Cloudflare Worker",
-      "event": "push",
-      "branch": "main",
-      "sha": "ad31cf3b209214912df7caeeec6f372cce163f27",
-      "status": "completed",
-      "conclusion": "failure",
-      "createdAt": "2026-11-27T15:52:26Z",
-      "startedAt": "2026-11-27T15:52:26Z",
-      "completedAt": "2026-11-27T15:56:05Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46028720325",
-      "jobs": [
-        {
-          "name": "deploy",
-          "status": "completed",
-          "conclusion": "failure",
-          "startedAt": "2026-11-27T15:52:29Z",
-          "completedAt": "2026-11-27T15:56:05Z",
-          "stages": [],
-          "steps": [
-            "Initialize and verify VWMA scanner from last closed session"
-          ]
-        }
-      ]
-    },
-    {
-      "publicationStatus": null,
-      "id": 46030057037,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
-      "branch": "main",
-      "sha": "c9e58f8ecec24ad15728422b418ca4451bb80426",
+      "sha": "82543e13675272a1c0113000608df827f4b310b3",
       "status": "in_progress",
       "conclusion": null,
-      "createdAt": "2026-11-27T16:01:46Z",
-      "startedAt": "2026-11-27T16:01:46Z",
+      "createdAt": "2026-11-27T16:03:29Z",
+      "startedAt": "2026-11-27T16:03:29Z",
       "completedAt": null,
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030057037",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030304765",
       "jobs": [
         {
-          "name": "build",
+          "name": "deploy",
           "status": "in_progress",
           "conclusion": null,
-          "startedAt": "2026-11-27T16:01:49Z",
+          "startedAt": "2026-11-27T16:05:09Z",
           "completedAt": null,
-          "stages": [
-            {
-              "name": "Check TypeScript",
-              "status": "pending",
-              "conclusion": null,
-              "startedAt": null,
-              "completedAt": null
-            }
-          ],
+          "stages": [],
           "steps": []
         }
       ]
     },
     {
       "publicationStatus": null,
-      "id": 46029898325,
-      "name": "Build and deploy dashboard",
-      "event": "workflow_dispatch",
+      "id": 46030090780,
+      "name": "Deploy LS Cloudflare Worker",
+      "event": "push",
       "branch": "main",
-      "sha": "ce01172ddbad1e41b04a5b285aaeefdc5410479b",
+      "sha": "f6c8c0fc30bdead03c3307076939b27fee3c8d3d",
+      "status": "completed",
+      "conclusion": "failure",
+      "createdAt": "2026-11-27T16:02:00Z",
+      "startedAt": "2026-11-27T16:02:00Z",
+      "completedAt": "2026-11-27T16:05:07Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030090780",
+      "jobs": [
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "failure",
+          "startedAt": "2026-11-27T16:02:03Z",
+          "completedAt": "2026-11-27T16:05:06Z",
+          "stages": [],
+          "steps": [
+            "Initialize and verify VWMA scanner from last closed session"
+          ]
+        }
+      ]
+    },
+    {
+      "publicationStatus": null,
+      "id": 46030304753,
+      "name": "Build and deploy dashboard",
+      "event": "push",
+      "branch": "main",
+      "sha": "82543e13675272a1c0113000608df827f4b310b3",
       "status": "completed",
       "conclusion": "success",
-      "createdAt": "2026-11-27T16:00:44Z",
-      "startedAt": "2026-11-27T16:00:44Z",
-      "completedAt": "2026-11-27T16:01:22Z",
-      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46029898325",
+      "createdAt": "2026-11-27T16:03:29Z",
+      "startedAt": "2026-11-27T16:03:29Z",
+      "completedAt": "2026-11-27T16:04:10Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030304753",
       "jobs": [
         {
           "name": "build",
           "status": "completed",
           "conclusion": "success",
-          "startedAt": "2026-11-27T16:00:47Z",
-          "completedAt": "2026-11-27T16:01:06Z",
+          "startedAt": "2026-11-27T16:03:31Z",
+          "completedAt": "2026-11-27T16:03:57Z",
           "stages": [
             {
               "name": "Check TypeScript",
               "status": "completed",
               "conclusion": "success",
-              "startedAt": "2026-11-27T16:01:00Z",
-              "completedAt": "2026-11-27T16:01:02Z"
+              "startedAt": "2026-11-27T16:03:49Z",
+              "completedAt": "2026-11-27T16:03:53Z"
             }
           ],
           "steps": []
@@ -617,15 +505,65 @@
           "name": "deploy",
           "status": "completed",
           "conclusion": "success",
-          "startedAt": "2026-11-27T16:01:10Z",
-          "completedAt": "2026-11-27T16:01:21Z",
+          "startedAt": "2026-11-27T16:04:00Z",
+          "completedAt": "2026-11-27T16:04:10Z",
           "stages": [
             {
               "name": "Deploy dashboard",
               "status": "completed",
               "conclusion": "success",
-              "startedAt": "2026-11-27T16:01:13Z",
-              "completedAt": "2026-11-27T16:01:20Z"
+              "startedAt": "2026-11-27T16:04:02Z",
+              "completedAt": "2026-11-27T16:04:08Z"
+            }
+          ],
+          "steps": []
+        }
+      ]
+    },
+    {
+      "publicationStatus": null,
+      "id": 46030099833,
+      "name": "Build and deploy dashboard",
+      "event": "workflow_dispatch",
+      "branch": "main",
+      "sha": "86f691889548009b49f4e2bc58d7f3890d2e437c",
+      "status": "completed",
+      "conclusion": "success",
+      "createdAt": "2026-11-27T16:02:04Z",
+      "startedAt": "2026-11-27T16:02:04Z",
+      "completedAt": "2026-11-27T16:03:09Z",
+      "url": "https://github.com/codingzoaa/market-mood-desk/actions/runs/46030099833",
+      "jobs": [
+        {
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-27T16:02:31Z",
+          "completedAt": "2026-11-27T16:02:52Z",
+          "stages": [
+            {
+              "name": "Check TypeScript",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-27T16:02:46Z",
+              "completedAt": "2026-11-27T16:02:49Z"
+            }
+          ],
+          "steps": []
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-11-27T16:02:57Z",
+          "completedAt": "2026-11-27T16:03:08Z",
+          "stages": [
+            {
+              "name": "Deploy dashboard",
+              "status": "completed",
+              "conclusion": "success",
+              "startedAt": "2026-11-27T16:02:59Z",
+              "completedAt": "2026-11-27T16:03:06Z"
             }
           ],
           "steps": []
