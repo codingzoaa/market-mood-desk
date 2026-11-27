@@ -1,0 +1,97 @@
+name: Daily verified sector calendar (17:00 KST)
+on:
+  schedule:
+    - cron: '0 8 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      review_date:
+        description: 'KST date YYYY-MM-DD; empty means today'
+        required: false
+        type: string
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: daily-sector-review
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      changed: ${{ steps.publish.outputs.changed }}
+      pr: ${{ steps.publish.outputs.pr }}
+      head: ${{ steps.publish.outputs.head }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate candidate, or fail closed
+        env:
+          CLOSE_REVIEW_CANDIDATE_URL: ${{ vars.CLOSE_REVIEW_CANDIDATE_URL }}
+          REVIEW_DATE: ${{ inputs.review_date }}
+        run: |
+          npm ci
+          node scripts/prepare-close-review.mjs
+      - name: Validate tests, types and build before PR
+        run: |
+          npm test
+          npx tsc --noEmit
+          npm run build
+      - name: Create isolated branch and PR
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DAY="$(TZ=Asia/Seoul date +%F)"
+          if [ -n "${{ inputs.review_date }}" ]; then DAY="${{ inputs.review_date }}"; fi
+          BRANCH="auto/sector-close-${DAY}-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add src/close-reviews.ts "src/close-review-${DAY}.ts"
+          git diff --cached --quiet && { echo "No changes"; exit 1; }
+          git commit -m "data: verified sector close review ${DAY}"
+          git push origin "$BRANCH"
+          PR="$(gh pr create --base main --head "$BRANCH" --title "data: verified sector close ${DAY}" --body "Automated candidate validated for KRX regular close. CI gates tests, TypeScript and build before merge. Source provenance is embedded in review; unsupported fields omitted.")"
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+          echo "head=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.head }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run build
+  merge-and-deploy:
+    needs: [prepare, verify]
+    if: needs.verify.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Merge only after CI validation and dispatch existing Pages workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.prepare.outputs.pr }}
+        run: |
+          set -euo pipefail
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
+          gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "Pages build/deploy dispatched; verify its completion separately." >> "$GITHUB_STEP_SUMMARY"
