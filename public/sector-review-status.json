@@ -1,13 +1,13 @@
 {
-  "date": "2026-11-26",
+  "date": "2026-11-27",
   "status": "published",
-  "checkedAt": "2026-11-26T16:10:24.096Z",
+  "checkedAt": "2026-11-27T08:13:53.004Z",
   "reason": "5개 강세 섹터의 당일 종가·동반 상승·기사 링크 검증 후 자동 PR/CI/배포",
   "sources": [
-    "https://www.newspim.com/news/view/20261126000288",
-    "https://biz.chosun.com/stock/stock_general/2026/11/26/GGONNS2RAJBHJINGKXRB63GMIE/",
-    "https://www.newsis.com/view/NISX20261126_0003884167",
-    "https://www.etnews.com/20261126000210",
-    "https://www.sedaily.com/article/20119169?ref=naver"
+    "https://www.mk.co.kr/article/12220343",
+    "https://www.hankyung.com/article/2026112740496",
+    "https://www.newspim.com/news/view/20261127000310",
+    "https://www.yna.co.kr/view/AKR20261127032851008?input=1195m",
+    "https://www.sedaily.com/article/20119665?ref=naver"
   ]
 }
